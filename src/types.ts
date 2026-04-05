@@ -1,13 +1,23 @@
-export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+export interface EngineState {
+  premise: string | null;
+  policies: Record<string, 'use' | 'prohibit'>;
+  version: 2;
+}
 
 export interface Decision {
-  kind: string;
-  [key: string]: JsonValue;
+  kind: 'update' | 'passthrough' | 'clarify';
+  state: EngineState | null;
+  prompt_to_user: string | null;
 }
 
-export type EngineState = Record<string, JsonValue>;
-
-export interface StepResult {
-  decision: Decision;
+export interface TranscriptStateResult {
+  kind: 'state';
   state: EngineState;
 }
+
+export interface TranscriptConfirmResult {
+  kind: 'confirm';
+  prompt_to_user: string;
+}
+
+export type TranscriptResult = TranscriptStateResult | TranscriptConfirmResult;

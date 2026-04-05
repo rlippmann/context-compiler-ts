@@ -16,8 +16,7 @@ describe('step fixtures (v2)', () => {
         engine.step(priorInput);
       }
 
-      const result = engine.step(fixture.payload.input);
-      const decision = result.decision as Record<string, unknown>;
+      const decision = engine.step(fixture.payload.input) as Record<string, unknown>;
       const expected = fixture.payload.expected;
       const expectedDecision = expected.decision;
 
