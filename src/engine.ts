@@ -339,22 +339,23 @@ function loadStateObject(raw: unknown): EngineState {
   if (raw === null || typeof raw !== 'object') {
     throw new Error('Invalid state payload.');
   }
-  const keys = Object.keys(raw);
+  const obj = raw as Record<string, unknown>;
+  const keys = Object.keys(obj);
   if (keys.length !== 3 || !keys.includes('premise') || !keys.includes('policies') || !keys.includes('version')) {
     throw new Error('Invalid state payload.');
   }
-  if (raw.version !== 2) {
-    throw new Error(`Unsupported state version: ${String(raw.version)}`);
+  if (obj.version !== 2) {
+    throw new Error(`Unsupported state version: ${String(obj.version)}`);
   }
-  if (raw.premise !== null && typeof raw.premise !== 'string') {
+  if (obj.premise !== null && typeof obj.premise !== 'string') {
     throw new Error('Invalid state payload.');
   }
-  if (raw.policies === null || typeof raw.policies !== 'object' || Array.isArray(raw.policies)) {
+  if (obj.policies === null || typeof obj.policies !== 'object' || Array.isArray(obj.policies)) {
     throw new Error('Invalid state payload.');
   }
 
   const normalizedPolicies: Record<string, 'use' | 'prohibit'> = {};
-  for (const [key, value] of Object.entries(raw.policies)) {
+  for (const [key, value] of Object.entries(obj.policies)) {
     if (value !== 'use' && value !== 'prohibit') {
       throw new Error('Invalid state payload.');
     }
@@ -368,7 +369,7 @@ function loadStateObject(raw: unknown): EngineState {
   }
 
   return {
-    premise: raw.premise === null ? null : sanitizePremiseValue(raw.premise),
+    premise: obj.premise === null ? null : sanitizePremiseValue(obj.premise),
     policies: sortedPolicies,
     version: 2
   };
