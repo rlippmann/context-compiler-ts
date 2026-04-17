@@ -19,6 +19,18 @@ The following are authoritative:
 
 If behavior differs, the TypeScript implementation is incorrect.
 
+## Versioning Policy
+
+- Python is the source of truth for semantics.
+- TypeScript package versions track Python compatibility by minor version.
+- TS `0.N.y` is intended to be semantically compatible with Python `0.N.x`.
+- Patch versions evolve independently by language/repo.
+- Do not reset TS to `0.1.0` for initial releases; use the Python-compatible minor version instead.
+
+Operational rule:
+
+- If a change would break compatibility with the current Python minor version, stop and call it out before changing the version.
+
 ## Conformance Requirements
 
 All changes must preserve:
@@ -107,4 +119,3 @@ Examples:
 - `fix: enforce pending clarification gating`
 - `test: normalize transcript output shape`
 - `chore: add TypeScript scaffold`
-
