@@ -1,5 +1,7 @@
 import { createEngine } from '../src/index.js';
 
+declare const process: { argv: string[] };
+
 type HostAction = 'call_llm_without_state' | 'call_llm_with_state' | 'show_clarify_prompt';
 
 function handleTurn(engine: ReturnType<typeof createEngine>, input: string): HostAction {
@@ -31,4 +33,10 @@ export function runExample05(): {
     actions,
     finalState: engine.state
   };
+}
+
+if (typeof process !== 'undefined' && process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
+  const result = runExample05();
+  console.log('example 05: llm integration pattern');
+  console.log(JSON.stringify(result, null, 2));
 }

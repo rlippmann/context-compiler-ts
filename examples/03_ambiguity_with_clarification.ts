@@ -1,5 +1,7 @@
 import { createEngine } from '../src/index.js';
 
+declare const process: { argv: string[] };
+
 export function runExample03(): {
   clarifyKind: string;
   clarifyPrompt: string | null;
@@ -24,4 +26,10 @@ export function runExample03(): {
     llmCalled,
     resetKind: resetDecision.kind
   };
+}
+
+if (typeof process !== 'undefined' && process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
+  const result = runExample03();
+  console.log('example 03: ambiguity with clarification');
+  console.log(JSON.stringify(result, null, 2));
 }

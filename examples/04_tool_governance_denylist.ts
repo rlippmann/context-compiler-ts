@@ -1,5 +1,7 @@
 import { createEngine, getPolicyItems } from '../src/index.js';
 
+declare const process: { argv: string[] };
+
 export function runExample04(): {
   decisionKind: string;
   blockedTools: string[];
@@ -19,4 +21,10 @@ export function runExample04(): {
     blockedTools,
     allowedTools
   };
+}
+
+if (typeof process !== 'undefined' && process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
+  const result = runExample04();
+  console.log('example 04: tool governance denylist');
+  console.log(JSON.stringify(result, null, 2));
 }

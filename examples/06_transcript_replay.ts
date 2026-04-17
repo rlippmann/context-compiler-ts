@@ -1,5 +1,7 @@
 import { compile_transcript, createEngine, type TranscriptResult } from '../src/index.js';
 
+declare const process: { argv: string[] };
+
 type TranscriptMessage = {
   role: string;
   content: unknown;
@@ -61,4 +63,10 @@ export function runExample06(): {
     freshPolicies,
     currentPolicies
   };
+}
+
+if (typeof process !== 'undefined' && process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
+  const result = runExample06();
+  console.log('example 06: transcript replay');
+  console.log(JSON.stringify(result, null, 2));
 }
