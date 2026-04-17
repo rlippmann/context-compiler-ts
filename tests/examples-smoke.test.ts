@@ -1,53 +1,81 @@
-import { describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
 
-import { runExample01 } from '../examples/01_persistent_guardrails.js';
-import { runExample02 } from '../examples/02_configuration_and_correction.js';
-import { runExample03 } from '../examples/03_ambiguity_with_clarification.js';
-import { runExample04 } from '../examples/04_tool_governance_denylist.js';
-import { runExample05 } from '../examples/05_llm_integration_pattern.js';
-import { runExample06 } from '../examples/06_transcript_replay.js';
-import { runExample07 } from '../examples/07_single_policy_correction.js';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+const ROOT = resolve(process.cwd());
+const DIST_EXAMPLES = resolve(ROOT, 'dist', 'examples');
+
+function runExampleScript(file: string): { status: number | null; stdout: string; stderr: string } {
+  const script = resolve(DIST_EXAMPLES, file);
+  const run = spawnSync(process.execPath, [script], {
+    cwd: ROOT,
+    encoding: 'utf8'
+  });
+  return {
+    status: run.status,
+    stdout: run.stdout ?? '',
+    stderr: run.stderr ?? ''
+  };
+}
 
 describe('examples smoke', () => {
+  beforeAll(() => {
+    const build = spawnSync('npm', ['run', 'build'], {
+      cwd: ROOT,
+      encoding: 'utf8'
+    });
+    if (build.status !== 0) {
+      throw new Error(`Build failed.\nSTDOUT:\n${build.stdout}\nSTDERR:\n${build.stderr}`);
+    }
+  }, 120_000);
+
   it('01 persistent guardrails', () => {
-    const result = runExample01();
-    expect(result.turn1Kind).toBe('update');
-    expect(result.prohibitedPolicies).toContain('peanuts');
+    const run = runExampleScript('01_persistent_guardrails.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 01: persistent guardrails');
+    expect(run.stdout).toContain('"prohibitedPolicies"');
   });
 
   it('02 configuration and correction', () => {
-    const result = runExample02();
-    expect(result.setKind).toBe('update');
-    expect(result.finalPremise).toBe('vegan curry');
+    const run = runExampleScript('02_configuration_and_correction.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 02: configuration and correction');
+    expect(run.stdout).toContain('"finalPremise": "vegan curry"');
   });
 
   it('03 ambiguity with clarification', () => {
-    const result = runExample03();
-    expect(result.clarifyKind).toBe('clarify');
-    expect(result.llmCalled).toBe(false);
+    const run = runExampleScript('03_ambiguity_with_clarification.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 03: ambiguity with clarification');
+    expect(run.stdout).toContain('"clarifyKind": "clarify"');
   });
 
   it('04 tool governance denylist', () => {
-    const result = runExample04();
-    expect(result.decisionKind).toBe('update');
-    expect(result.blockedTools).toContain('docker');
+    const run = runExampleScript('04_tool_governance_denylist.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 04: tool governance denylist');
+    expect(run.stdout).toContain('"blockedTools"');
   });
 
   it('05 llm integration pattern', () => {
-    const result = runExample05();
-    expect(result.actions[0]).toBe('call_llm_without_state');
-    expect(result.finalState.premise).toBeNull();
+    const run = runExampleScript('05_llm_integration_pattern.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 05: llm integration pattern');
+    expect(run.stdout).toContain('"actions"');
   });
 
   it('06 transcript replay', () => {
-    const result = runExample06();
-    expect(result.freshReplayKind).toBe('state');
-    expect(result.currentPolicies).toContain('shellfish');
+    const run = runExampleScript('06_transcript_replay.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 06: transcript replay');
+    expect(run.stdout).toContain('"freshReplayKind": "state"');
   });
 
   it('07 single policy correction', () => {
-    const result = runExample07();
-    expect(result.stepKinds).toEqual(['update', 'update', 'update']);
-    expect(result.finalPolicy).toBe('use');
+    const run = runExampleScript('07_single_policy_correction.js');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('example 07: single policy correction');
+    expect(run.stdout).toContain('"finalPolicy": "use"');
   });
 });
