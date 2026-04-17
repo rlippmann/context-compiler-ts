@@ -27,6 +27,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "fixtures:sync": "bash scripts/fixtures-sync.sh",
+    "fixtures:check": "bash scripts/fixtures-check.sh",
     "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest"
