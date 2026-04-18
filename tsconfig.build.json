@@ -7,6 +7,6 @@
     "declarationMap": false,
     "types": []
   },
-  "include": ["index.ts", "src/**/*.ts", "examples/**/*.ts"],
+  "include": ["index.ts", "src/**/*.ts", "examples/**/*.ts", "demos/**/*.ts", "demos/**/*.d.ts"],
   "exclude": ["tests", "dist", "node_modules"]
 }

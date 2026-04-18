@@ -22,4 +22,4 @@ yarn-error.log*
 .idea/
 
 # npm pack artifacts
-context-compiler-ts-*.tgz
+rlippmann-context-compiler-*.tgz

@@ -1,5 +1,5 @@
 {
-  "name": "context-compiler-ts",
+  "name": "@rlippmann/context-compiler",
   "version": "0.5.0",
   "license": "Apache-2.0",
   "repository": {
@@ -26,7 +26,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "fixtures:sync": "bash scripts/fixtures-sync.sh",
     "fixtures:check": "bash scripts/fixtures-check.sh",
     "prepack": "npm run build",

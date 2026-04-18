@@ -1,4 +1,4 @@
-# context-compiler-ts
+# @rlippmann/context-compiler
 
 TypeScript port of the Context Compiler core.
 
@@ -28,13 +28,13 @@ Behavioral conformance is defined by the upstream Python fixture corpus and dire
 ## Installation
 
 ```bash
-npm install context-compiler-ts
+npm install @rlippmann/context-compiler
 ```
 
 ## Quick Start
 
 ```ts
-import { createEngine } from 'context-compiler-ts';
+import { createEngine } from '@rlippmann/context-compiler';
 
 const engine = createEngine();
 const decision = engine.step('set premise concise replies');
