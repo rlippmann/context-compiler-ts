@@ -9,6 +9,13 @@ Scored demos compare three paths:
 
 Demo 06 is informational (context/prompt compaction metrics), not scored.
 
+## Result variability note
+
+LLM demo outcomes can vary across environments. In practice, PASS/FAIL patterns may differ based on:
+- provider
+- client layer
+- model serving path
+
 ## Demo overview
 
 | Demo | Behavior | Concept |
