@@ -40,6 +40,7 @@ npm install @rlippmann/context-compiler
   - compiler-mediated request flow
   - `clarify` blocks LLM calls
   - per-session state via `exportJson()` / `importJson()`
+- `examples/node-basic/` — minimal Node HTTP server integration
 
 ## Quick Start
 
