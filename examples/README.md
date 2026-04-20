@@ -3,6 +3,8 @@
 TypeScript examples showing host-side usage of the Context Compiler core API.
 
 These examples target Python 0.5 semantic compatibility and only use core APIs.
+In 0.5.x, `exportJson()` / `importJson()` persist authoritative state only (`premise`, `policies`) and do not persist pending clarify/confirm interaction state.
+For stateless HTTP hosts, pending clarification context must be persisted separately if you need request-to-request clarify/confirm continuity.
 
 ## 01_persistent_guardrails.ts
 

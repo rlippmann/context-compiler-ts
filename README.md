@@ -55,5 +55,7 @@ if (decision.kind === 'update') {
 - `engine.step(input)` -> apply one user input and return a `Decision`.
 - `engine.state` -> authoritative current state snapshot.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
+- Note: in 0.5.x, export/import serialize authoritative state only (`premise`, `policies`), not pending clarify/confirm interaction state.
+- For stateless HTTP integrations, hosts must persist pending clarification context separately when needed; a checkpoint-style full-resume API is planned for 0.6.
 - `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
