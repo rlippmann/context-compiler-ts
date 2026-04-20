@@ -34,6 +34,13 @@ Behavioral conformance is defined by the upstream Python fixture corpus and dire
 npm install @rlippmann/context-compiler
 ```
 
+## Examples
+
+- `examples/nextjs-basic/` — minimal Next.js App Router integration
+  - compiler-mediated request flow
+  - `clarify` blocks LLM calls
+  - per-session state via `exportJson()` / `importJson()`
+
 ## Quick Start
 
 ```ts
