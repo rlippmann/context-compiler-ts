@@ -1,6 +1,9 @@
 # @rlippmann/context-compiler
 
 TypeScript port of the Context Compiler core.
+Deterministic control layer for LLM applications.
+Compiles explicit user directives into authoritative context state before model calls.
+Helps hosts enforce premise and policy guardrails consistently across turns.
 
 Reference implementation (Python):
 https://github.com/rlippmann/context-compiler
