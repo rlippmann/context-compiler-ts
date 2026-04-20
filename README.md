@@ -1,6 +1,9 @@
 # @rlippmann/context-compiler
 
 TypeScript port of the Context Compiler core.
+Deterministic control layer for LLM applications.
+Compiles explicit user directives into authoritative context state before model calls.
+Helps hosts enforce premise and policy guardrails consistently across turns.
 
 Reference implementation (Python):
 https://github.com/rlippmann/context-compiler
@@ -31,6 +34,13 @@ Behavioral conformance is defined by the upstream Python fixture corpus and dire
 npm install @rlippmann/context-compiler
 ```
 
+## Examples
+
+- `examples/nextjs-basic/` — minimal Next.js App Router integration
+  - compiler-mediated request flow
+  - `clarify` blocks LLM calls
+  - per-session state via `exportJson()` / `importJson()`
+
 ## Quick Start
 
 ```ts
@@ -55,5 +65,7 @@ if (decision.kind === 'update') {
 - `engine.step(input)` -> apply one user input and return a `Decision`.
 - `engine.state` -> authoritative current state snapshot.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
+- Note: in 0.5.x, export/import serialize authoritative state only (`premise`, `policies`), not pending clarify/confirm interaction state.
+- For stateless HTTP integrations, hosts must persist pending clarification context separately when needed; a checkpoint-style full-resume API is planned for 0.6.
 - `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.

@@ -1,0 +1,24 @@
+{
+  "name": "nextjs-basic-context-compiler-example",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test:integration": "node ../../scripts/test-nextjs-integration.js"
+  },
+  "dependencies": {
+    "@rlippmann/context-compiler": "file:../..",
+    "next": "^15.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "typescript": "^5.7.2"
+  }
+}

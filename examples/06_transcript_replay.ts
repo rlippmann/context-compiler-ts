@@ -1,4 +1,4 @@
-import { compile_transcript, createEngine, type TranscriptResult } from '../src/index.js';
+import { compile_transcript, createEngine, getPolicyItems, type TranscriptResult } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -51,11 +51,8 @@ export function runExample06(): {
   const currentReplay = applyTranscriptOnCurrentEngine(engine, transcript);
 
   const freshPolicies =
-    freshReplay.kind === 'state' ? Object.keys(freshReplay.state.policies).sort((a, b) => a.localeCompare(b)) : [];
-  const currentPolicies =
-    currentReplay.kind === 'state'
-      ? Object.keys(currentReplay.state.policies).sort((a, b) => a.localeCompare(b))
-      : [];
+    freshReplay.kind === 'state' ? getPolicyItems(freshReplay.state) : [];
+  const currentPolicies = currentReplay.kind === 'state' ? getPolicyItems(currentReplay.state) : [];
 
   return {
     freshReplayKind: freshReplay.kind,
