@@ -1,4 +1,4 @@
-import { createEngine } from '../src/index.js';
+import { createEngine, getPolicyItems } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -11,10 +11,12 @@ export function runExample07(): {
   const decision1 = engine.step('prohibit peanuts');
   const decision2 = engine.step('remove policy peanuts');
   const decision3 = engine.step('use peanuts');
+  const useItems = getPolicyItems(engine.state, 'use');
+  const prohibitItems = getPolicyItems(engine.state, 'prohibit');
 
   return {
     stepKinds: [decision1.kind, decision2.kind, decision3.kind],
-    finalPolicy: engine.state.policies.peanuts ?? null
+    finalPolicy: useItems.includes('peanuts') ? 'use' : prohibitItems.includes('peanuts') ? 'prohibit' : null
   };
 }
 

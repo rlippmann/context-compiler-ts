@@ -1,4 +1,4 @@
-import { createEngine, type EngineState } from '@rlippmann/context-compiler';
+import { createEngine, getPolicyItems, getPremiseValue, type EngineState } from '@rlippmann/context-compiler';
 import { loadSessionState, saveSessionState } from '../../../lib/context-sessions';
 
 type ChatBody = {
@@ -12,15 +12,16 @@ type ChatResponse =
   | { kind: 'continue'; output: string };
 
 function stateToSystemPrompt(state: EngineState): string {
-  const policies = Object.entries(state.policies)
-    .map(([item, mode]) => `- ${mode.toUpperCase()}: ${item}`)
+  const useItems = new Set(getPolicyItems(state, 'use'));
+  const policies = getPolicyItems(state)
+    .map((item) => `- ${useItems.has(item) ? 'USE' : 'PROHIBIT'}: ${item}`)
     .join('\n');
 
   return [
     'You are an assistant operating under compiled context.',
     '',
     'PREMISE:',
-    state.premise ?? '(none)',
+    getPremiseValue(state) ?? '(none)',
     '',
     'POLICIES:',
     policies || '(none)',
