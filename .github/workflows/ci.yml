@@ -31,3 +31,11 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Install Next.js example
+        working-directory: examples/nextjs-basic
+        run: npm ci
+
+      - name: Build Next.js example
+        working-directory: examples/nextjs-basic
+        run: npm run build
