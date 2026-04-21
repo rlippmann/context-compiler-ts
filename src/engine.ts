@@ -359,7 +359,11 @@ function loadStateObject(raw: unknown): EngineState {
     if (value !== 'use' && value !== 'prohibit') {
       throw new Error('Invalid state payload.');
     }
-    normalizedPolicies[normalizeItem(key)] = value;
+    const normalizedKey = normalizeItem(key);
+    if (normalizedKey === '') {
+      throw new Error('Invalid state payload.');
+    }
+    normalizedPolicies[normalizedKey] = value;
   }
 
   const sortedEntries = Object.entries(normalizedPolicies).sort(([a], [b]) => compareStringsByCodepoint(a, b));
