@@ -11,6 +11,8 @@ export type LLMConfig = {
   model: string;
 };
 
+const DEMO_MOCK_ENV_VAR = 'CONTEXT_COMPILER_DEMO_MOCK';
+
 export class MissingDemoConfigError extends Error {
   readonly missing: string[];
   readonly baseUrl: string | null;
@@ -83,6 +85,149 @@ export function loadConfig(): LLMConfig {
 function endpointFor(baseUrl: string | null): string {
   const root = baseUrl ?? 'https://api.openai.com/v1';
   return `${root}/chat/completions`;
+}
+
+function isDemoMockEnabled(): boolean {
+  const raw = (process.env[DEMO_MOCK_ENV_VAR] ?? '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+}
+
+function splitItems(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter((item) => item !== '' && item !== '(none)');
+}
+
+function parseCompiledState(systemPrompt: string): {
+  premise: string | null;
+  useItems: string[];
+  prohibitItems: string[];
+} {
+  const premiseMatch = systemPrompt.match(/^- premise:\s*(.+)$/im);
+  const useMatch = systemPrompt.match(/^- use policy items:\s*(.+)$/im);
+  const prohibitMatch = systemPrompt.match(/^- prohibited policy items:\s*(.+)$/im);
+
+  return {
+    premise: premiseMatch ? premiseMatch[1].trim() : null,
+    useItems: useMatch ? splitItems(useMatch[1]) : [],
+    prohibitItems: prohibitMatch ? splitItems(prohibitMatch[1]) : []
+  };
+}
+
+function parseDirectivePremises(messages: Message[]): { first: string | null; latest: string | null } {
+  let first: string | null = null;
+  let latest: string | null = null;
+  const directiveRe = /^\s*(?:set premise|change premise to)\s+(.+?)\s*$/i;
+
+  for (const message of messages) {
+    if (message.role !== 'user') {
+      continue;
+    }
+    const match = message.content.match(directiveRe);
+    if (!match) {
+      continue;
+    }
+    const premise = match[1].trim();
+    if (first === null) {
+      first = premise;
+    }
+    latest = premise;
+  }
+
+  return { first, latest };
+}
+
+function chooseMockPremise(messages: Message[], systemPrompt: string, compiledPremise: string | null): string {
+  if (compiledPremise && compiledPremise !== '(unset)') {
+    return compiledPremise;
+  }
+
+  const { first, latest } = parseDirectivePremises(messages);
+  const joined = messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .join('\n')
+    .toLowerCase();
+  const strongPrompt = /prioritize explicit user directives|careful assistant|first line must be exactly premise:/i.test(
+    systemPrompt
+  );
+
+  if (!strongPrompt) {
+    if (joined.includes('beef stew')) {
+      return 'beef stew';
+    }
+    return first ?? latest ?? 'vegetarian curry';
+  }
+  return latest ?? first ?? 'vegan curry';
+}
+
+function mockCompletion(messages: Message[]): string {
+  const systemPrompt = messages.find((message) => message.role === 'system')?.content ?? '';
+  const allUserText = messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .join('\n');
+  const lowered = allUserText.toLowerCase();
+  const compiled = parseCompiledState(systemPrompt);
+  const premise = chooseMockPremise(messages, systemPrompt, compiled.premise);
+  const isCompiled = /follow authoritative compiled state exactly\./i.test(systemPrompt);
+
+  if (/reply with exactly:\s*ok/i.test(allUserText)) {
+    return 'OK';
+  }
+
+  if (/first line must be tool:<docker\|kubectl>/i.test(allUserText)) {
+    const tool = isCompiled && !compiled.prohibitItems.includes('kubectl') ? 'kubectl' : 'docker';
+    return [`TOOL:${tool}`, `ACTION:Use ${tool} to deploy the service.`].join('\n');
+  }
+
+  if (/first line must be action:<clarify\|proceed>/i.test(allUserText)) {
+    const contradictoryPeanutDirectives = lowered.includes('prohibit peanuts') && lowered.includes('use peanuts');
+    if (isCompiled && contradictoryPeanutDirectives) {
+      return 'ACTION:clarify\nRequest is contradictory; please confirm policy.';
+    }
+    return 'ACTION:proceed\nProceeding with a best-effort interpretation.';
+  }
+
+  const wantsPremiseTag = /first line must be premise:<value>/i.test(allUserText);
+  const wantsRecipe = /\b(recipe|ingredients|steps|curry)\b/i.test(allUserText);
+  const wantsPlan = /\b(plan|shopping list|dinner)\b/i.test(allUserText);
+  const blocksPeanuts = compiled.prohibitItems.includes('peanuts') || compiled.prohibitItems.includes('peanut');
+
+  if (wantsRecipe && blocksPeanuts) {
+    const prefix = wantsPremiseTag ? [`PREMISE:${premise}`] : [];
+    return [
+      ...prefix,
+      'I cannot provide a peanut recipe because it conflicts with policy.',
+      'Ingredients:',
+      '- chickpeas',
+      '- coconut milk',
+      '- garlic',
+      'Steps:',
+      '1. Saute garlic.',
+      '2. Simmer chickpeas in coconut milk.',
+      '3. Serve hot.'
+    ].join('\n');
+  }
+
+  if (wantsPremiseTag || wantsPlan || wantsRecipe) {
+    const lines: string[] = [];
+    if (wantsPremiseTag) {
+      lines.push(`PREMISE:${premise}`);
+    }
+    lines.push('Shopping list:');
+    lines.push('- onions');
+    lines.push('- tomatoes');
+    lines.push(`- ${premise}`);
+    lines.push('Steps:');
+    lines.push(`1. Prepare a ${premise} base.`);
+    lines.push('2. Simmer until flavors combine.');
+    lines.push('3. Serve warm.');
+    return lines.join('\n');
+  }
+
+  return 'OK';
 }
 
 function parseRetryAfterSeconds(headers: Headers): number | null {
@@ -200,6 +345,10 @@ export async function completeMessages(
     delaySeconds?: number;
   }
 ): Promise<string> {
+  if (isDemoMockEnabled()) {
+    return mockCompletion(messages);
+  }
+
   const config = loadConfig();
   const targetModel = options?.model ?? config.model;
   const configuredDelay = options?.delaySeconds && options.delaySeconds > 0 ? options.delaySeconds : defaultLlmDelaySeconds;
