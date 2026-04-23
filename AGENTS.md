@@ -78,6 +78,10 @@ A change is correct only if all fixtures pass.
 
 Do not modify fixtures to make tests pass.
 
+Fixture updates are allowed only when syncing from the authoritative Python source for the targeted compatibility line.
+
+If synced fixtures introduce failures, fix TypeScript behavior rather than editing fixture expectations.
+
 ## Test Coverage Expectations
 
 Before opening a PR, consider:
