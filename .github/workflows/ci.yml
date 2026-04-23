@@ -27,6 +27,8 @@ jobs:
         run: npm ci
 
       - name: Checkout Python fixture source
+        # TS 0.5.2 fixtures include cases added after Python v0.5.2; pin to v0.6.0
+        # to keep fixture drift checks aligned with the current TS fixture corpus.
         run: git clone --depth 1 --branch v0.6.0 https://github.com/rlippmann/context-compiler ../context-compiler
 
       - name: Check fixture drift
