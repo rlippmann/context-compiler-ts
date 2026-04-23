@@ -6,8 +6,6 @@ import { beforeAll, describe, expect, it } from 'vitest';
 const ROOT = resolve(process.cwd());
 const DIST_DEMOS = resolve(ROOT, 'dist', 'demos');
 
-const HAS_DEMO_ENV = Boolean(process.env.OPENAI_API_KEY && process.env.MODEL);
-
 function runNodeScript(file: string, args: string[] = [], envOverride?: Record<string, string | undefined>) {
   const script = resolve(DIST_DEMOS, file);
   const run = spawnSync(process.execPath, [script, ...args], {
@@ -23,6 +21,16 @@ function runNodeScript(file: string, args: string[] = [], envOverride?: Record<s
     stdout: run.stdout ?? '',
     stderr: run.stderr ?? ''
   };
+}
+
+function runNodeScriptWithMock(file: string, args: string[] = []) {
+  // Force deterministic/offline smoke behavior in CI: no real LLM calls.
+  // Mock mode keeps demo smoke runs stable and fast.
+  return runNodeScript(file, args, {
+    CONTEXT_COMPILER_DEMO_MOCK: '1',
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim() !== '' ? process.env.OPENAI_API_KEY : 'mock-key',
+    MODEL: process.env.MODEL && process.env.MODEL.trim() !== '' ? process.env.MODEL : 'mock-model'
+  });
 }
 
 describe('demos smoke', () => {
@@ -42,13 +50,12 @@ describe('demos smoke', () => {
       MODEL: ''
     });
     expect(run.status).toBe(2);
+    expect(run.stderr.trim()).toBe('');
     expect(run.stdout).toContain('Unable to run LLM demos: missing model configuration.');
     expect(run.stdout).toContain('Missing variables: OPENAI_API_KEY, MODEL');
   });
 
-  const describeWhenConfigured = HAS_DEMO_ENV ? describe : describe.skip;
-
-  describeWhenConfigured('with configured llm env', () => {
+  describe('with configured llm env or demo mock', () => {
     it('runs scored demos with comparative markers', () => {
       const demos = [
         ['01_llm_contradiction_clarify.js', '01_contradiction_block'],
@@ -60,8 +67,9 @@ describe('demos smoke', () => {
       ] as const;
 
       for (const [file, marker] of demos) {
-        const run = runNodeScript(file);
+        const run = runNodeScriptWithMock(file);
         expect(run.status).toBe(0);
+        expect(run.stderr.trim()).toBe('');
         expect(run.stdout).toContain(marker);
         expect(run.stdout).toContain('baseline:');
         expect(run.stdout).toContain('compiler:');
@@ -73,8 +81,9 @@ describe('demos smoke', () => {
     }, 180_000);
 
     it('runs informational demo 06 with compaction markers', () => {
-      const run = runNodeScript('06_llm_context_compaction.js');
+      const run = runNodeScriptWithMock('06_llm_context_compaction.js');
       expect(run.status).toBe(0);
+      expect(run.stderr.trim()).toBe('');
       expect(run.stdout).toContain('06_context_compaction');
       expect(run.stdout).toContain('context scaling:');
       expect(run.stdout).toContain('compacted transcript:');
@@ -85,14 +94,16 @@ describe('demos smoke', () => {
     }, 120_000);
 
     it('runs demo runner for single and all with summary markers', () => {
-      const single = runNodeScript('run_demo.js', ['1']);
+      const single = runNodeScriptWithMock('run_demo.js', ['1']);
       expect(single.status).toBe(0);
+      expect(single.stderr.trim()).toBe('');
       expect(single.stdout).toContain('01_contradiction_block');
       expect(single.stdout).toContain('baseline:');
       expect(single.stdout).toContain('compiler:');
 
-      const all = runNodeScript('run_demo.js', ['all']);
+      const all = runNodeScriptWithMock('run_demo.js', ['all']);
       expect(all.status).toBe(0);
+      expect(all.stderr.trim()).toBe('');
       expect(all.stdout).toContain('Summary:');
       expect(all.stdout).toContain('Evaluative demos:');
       expect(all.stdout).toContain('Baseline results:');

@@ -78,6 +78,30 @@ A change is correct only if all fixtures pass.
 
 Do not modify fixtures to make tests pass.
 
+Fixture updates are allowed only when syncing from the authoritative Python source for the targeted compatibility line.
+
+If synced fixtures introduce failures, fix TypeScript behavior rather than editing fixture expectations.
+
+## Test Coverage Expectations
+
+Before opening a PR, consider:
+
+- Does this change affect any user-facing behavior?
+- If so, is that behavior covered by tests?
+
+User-facing behavior includes:
+
+- Engine decision outcomes (`kind`, `prompt_to_user`, and returned `state`)
+- Checkpoint export/import and continuation behavior
+- Clarify/confirmation flows (`yes` / `no`)
+- Transcript replay behavior and compaction-related behavior
+- Integration behavior (examples, demo runner, and integration scripts)
+- Integration error-path normalization
+
+If a user-facing behavior is changed or introduced, add or update tests to cover it.
+
+Do not rely solely on coverage metrics.
+
 ## Workflow
 
 Typical workflow:
