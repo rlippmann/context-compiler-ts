@@ -27,10 +27,7 @@ jobs:
         run: npm ci
 
       - name: Checkout Python fixture source
-        run: |
-          git clone --depth 1 https://github.com/rlippmann/context-compiler ../context-compiler
-          git -C ../context-compiler fetch --depth 1 origin 391a186
-          git -C ../context-compiler checkout --detach 391a186
+        run: git clone --depth 1 --branch v0.6.0 https://github.com/rlippmann/context-compiler ../context-compiler
 
       - name: Check fixture drift
         run: npm run fixtures:check
