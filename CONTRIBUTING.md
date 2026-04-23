@@ -25,6 +25,26 @@ All changes must:
   - Exact match when a fixture specifies a string
   - Non-empty string when a fixture uses `null`
 
+## Test Coverage Expectations
+
+Before opening a PR, consider:
+
+- Does this change affect any user-facing behavior?
+- If so, is that behavior covered by tests?
+
+User-facing behavior includes:
+
+- Engine decision outcomes (`kind`, `prompt_to_user`, and returned `state`)
+- Checkpoint export/import and continuation behavior
+- Clarify/confirmation flows (`yes` / `no`)
+- Transcript replay behavior and compaction-related behavior
+- Integration behavior (examples, demo runner, and integration scripts)
+- Integration error-path normalization
+
+If a user-facing behavior is changed or introduced, add or update tests to cover it.
+
+Do not rely solely on coverage metrics.
+
 ## What Not to Do
 
 Do not:
