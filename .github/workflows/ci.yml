@@ -26,6 +26,12 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Checkout Python fixture source
+        run: git clone --depth 1 https://github.com/rlippmann/context-compiler ../context-compiler
+
+      - name: Check fixture drift
+        run: npm run fixtures:check
+
       - name: Build
         run: npm run build
 
