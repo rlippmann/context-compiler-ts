@@ -54,7 +54,7 @@ class EngineImpl implements Engine {
   }
 
   exportJson(): string {
-    return JSON.stringify(sortKeysDeep(this._state));
+    return stringifyCanonicalJson(sortKeysDeep(this._state));
   }
 
   importJson(payload: string): void {
@@ -301,12 +301,12 @@ export function getPremiseValue(state: EngineState): string | null {
 
 export function getPolicyItems(state: EngineState, value?: 'use' | 'prohibit' | null): string[] {
   if (value == null) {
-    return Object.keys(state.policies).sort((a, b) => a.localeCompare(b));
+    return Object.keys(state.policies).sort(compareStringsByCodepoint);
   }
   return Object.entries(state.policies)
     .filter(([, policy]) => policy === value)
     .map(([item]) => item)
-    .sort((a, b) => a.localeCompare(b));
+    .sort(compareStringsByCodepoint);
 }
 
 function initialState(): EngineState {
@@ -359,10 +359,14 @@ function loadStateObject(raw: unknown): EngineState {
     if (value !== 'use' && value !== 'prohibit') {
       throw new Error('Invalid state payload.');
     }
-    normalizedPolicies[normalizeItem(key)] = value;
+    const normalizedKey = normalizeItem(key);
+    if (normalizedKey === '') {
+      throw new Error('Invalid state payload.');
+    }
+    normalizedPolicies[normalizedKey] = value;
   }
 
-  const sortedEntries = Object.entries(normalizedPolicies).sort(([a], [b]) => a.localeCompare(b));
+  const sortedEntries = Object.entries(normalizedPolicies).sort(([a], [b]) => compareStringsByCodepoint(a, b));
   const sortedPolicies: Record<string, 'use' | 'prohibit'> = {};
   for (const [key, value] of sortedEntries) {
     sortedPolicies[key] = value;
@@ -497,7 +501,7 @@ function diagnosticPolicyContainsHints(policies: Record<string, 'use' | 'prohibi
   if (probe === '') {
     return '';
   }
-  const matches = Object.keys(policies).filter((key) => key.includes(probe)).sort((a, b) => a.localeCompare(b));
+  const matches = Object.keys(policies).filter((key) => key.includes(probe)).sort(compareStringsByCodepoint);
   if (matches.length === 0) {
     return '';
   }
@@ -540,7 +544,7 @@ function sortKeysDeep(value: unknown): unknown {
     return value.map((v) => sortKeysDeep(v));
   }
   if (value !== null && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => compareStringsByCodepoint(a, b));
     const out: Record<string, unknown> = {};
     for (const [k, v] of entries) {
       out[k] = sortKeysDeep(v);
@@ -548,6 +552,37 @@ function sortKeysDeep(value: unknown): unknown {
     return out;
   }
   return value;
+}
+
+function compareStringsByCodepoint(left: string, right: string): number {
+  const leftCodepoints = Array.from(left);
+  const rightCodepoints = Array.from(right);
+  const limit = Math.min(leftCodepoints.length, rightCodepoints.length);
+
+  for (let idx = 0; idx < limit; idx += 1) {
+    const leftCodepoint = leftCodepoints[idx].codePointAt(0) as number;
+    const rightCodepoint = rightCodepoints[idx].codePointAt(0) as number;
+    if (leftCodepoint < rightCodepoint) {
+      return -1;
+    }
+    if (leftCodepoint > rightCodepoint) {
+      return 1;
+    }
+  }
+
+  if (leftCodepoints.length < rightCodepoints.length) {
+    return -1;
+  }
+  if (leftCodepoints.length > rightCodepoints.length) {
+    return 1;
+  }
+  return 0;
+}
+
+function stringifyCanonicalJson(value: unknown): string {
+  return JSON.stringify(value).replace(/[\u0080-\uFFFF]/g, (char) =>
+    `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
+  );
 }
 
 export type { Decision, EngineState, TranscriptResult };

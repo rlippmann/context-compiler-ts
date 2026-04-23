@@ -1,6 +1,6 @@
 {
   "name": "@rlippmann/context-compiler",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Deterministic TypeScript control layer for LLM apps. Compiles explicit user directives into authoritative context state before model calls.",
   "keywords": [
     "llm",
