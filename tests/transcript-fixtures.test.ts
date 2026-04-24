@@ -4,7 +4,7 @@ import { loadTranscriptFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadTranscriptFixtures();
 
-describe('transcript fixtures (v2)', () => {
+describe('transcript fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('transcript');

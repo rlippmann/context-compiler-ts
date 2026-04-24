@@ -4,7 +4,7 @@ import { loadStepFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadStepFixtures();
 
-describe('step fixtures (v2)', () => {
+describe('step fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('step');

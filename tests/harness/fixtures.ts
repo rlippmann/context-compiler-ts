@@ -40,7 +40,7 @@ export interface NamedFixture<T> {
   payload: T;
 }
 
-const FIXTURE_ROOT = resolve(process.cwd(), 'tests', 'fixtures', 'v2');
+const FIXTURE_ROOT = resolve(process.cwd(), 'tests', 'fixtures', 'conformance');
 
 async function listJsonFilesRecursive(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });

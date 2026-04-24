@@ -105,7 +105,7 @@ describe('engine error-path regressions', () => {
     expectClarifyNoMutation(
       missingSource,
       'use kubectl instead of docker',
-      'No exact policy found for "docker".\nReplacement requires an exact policy match.\nConfirm to use "kubectl" and keep existing policies?'
+      'Did you mean to use "kubectl" instead?'
     );
 
     const oldIsProhibit = createEngine({ state: { premise: null, policies: { docker: 'prohibit' }, version: 2 } });
