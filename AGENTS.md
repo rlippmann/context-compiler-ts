@@ -78,9 +78,45 @@ A change is correct only if all fixtures pass.
 
 Do not modify fixtures to make tests pass.
 
-Fixture updates are allowed only when syncing from the authoritative Python source for the targeted compatibility line.
+Fixture updates must follow the process defined in 'Conformance fixtures' below.
 
 If synced fixtures introduce failures, fix TypeScript behavior rather than editing fixture expectations.
+
+## Conformance fixtures
+
+Conformance fixtures are sourced from the Python repository and define the canonical cross-port contract.
+
+### Rules
+
+- Do not hand-edit fixture JSON files.
+- Do not modify fixture JSON to make TS tests pass.
+- TS implementation must conform to the fixtures, not the reverse.
+- Fixture JSON files are read-only artifacts in this repository.
+
+### Updating fixtures
+
+When fixtures need to be updated:
+
+1. Obtain the Python source of truth (pinned commit or tag).
+2. Run the sync script with an explicit source:
+
+   FIXTURES_SOURCE=<python repo>/tests/fixtures/conformance npm run fixtures:sync
+
+3. Commit only the resulting changes.
+
+### Verification
+
+After syncing:
+
+npm test
+FIXTURES_SOURCE=<same python fixtures path> npm run fixtures:check
+
+### Constraints
+
+- FIXTURES_SOURCE must be explicitly provided; no implicit local fallback is allowed.
+- Do not copy/paste or manually edit fixture contents, even for single-file fixes.
+- If a fixture appears incorrect, fix it in the Python repo first, then re-sync.
+- Manual fixture JSON edits should be rejected in review.
 
 ## Test Coverage Expectations
 
