@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PY_FIXTURE_REF: v0.6.0
+      PY_FIXTURE_REF: dba101b662410c0ae0c85842cd78d8adb55f184b
       PY_FIXTURE_CHECKOUT: ${{ runner.temp }}/context-compiler-source
 
     steps:
@@ -30,12 +30,14 @@ jobs:
         run: npm ci
 
       - name: Checkout Python fixture source
-        # TS 0.5.2 fixtures include cases added after Python v0.5.2; pin to v0.6.0
-        # to keep fixture drift checks aligned with the current TS fixture corpus.
+        # Pin to an explicit Python commit SHA for deterministic fixture drift checks.
         run: |
           echo "Python fixture ref: ${PY_FIXTURE_REF}"
           echo "Python checkout path: ${PY_FIXTURE_CHECKOUT}"
-          git clone --depth 1 --branch "${PY_FIXTURE_REF}" https://github.com/rlippmann/context-compiler "${PY_FIXTURE_CHECKOUT}"
+          git init "${PY_FIXTURE_CHECKOUT}"
+          git -C "${PY_FIXTURE_CHECKOUT}" remote add origin https://github.com/rlippmann/context-compiler
+          git -C "${PY_FIXTURE_CHECKOUT}" fetch --depth 1 origin "${PY_FIXTURE_REF}"
+          git -C "${PY_FIXTURE_CHECKOUT}" checkout --detach FETCH_HEAD
           echo "Resolved fixture source: ${PY_FIXTURE_CHECKOUT}/tests/fixtures/conformance"
 
       - name: Check fixture drift

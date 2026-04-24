@@ -235,18 +235,7 @@ class EngineImpl implements Engine {
       const oldState = this._state.policies[oldKey];
       const newState = this._state.policies[newKey];
       if (!Object.prototype.hasOwnProperty.call(this._state.policies, oldKey)) {
-        const promptLines = [
-          `No exact policy found for "${action.old_item}".`,
-          'Replacement requires an exact policy match.'
-        ];
-        const diagnosticHints = diagnosticPolicyContainsHints(this._state.policies, action.old_item);
-        if (diagnosticHints !== '') {
-          promptLines.push(`Existing policies containing that text: ${diagnosticHints}.`);
-          promptLines.push(`Confirm to use "${action.new_item}" and keep ${diagnosticHints}?`);
-        } else {
-          promptLines.push(`Confirm to use "${action.new_item}" and keep existing policies?`);
-        }
-        const prompt = promptLines.join('\n');
+        const prompt = `Did you mean to use "${action.new_item}" instead?`;
         this._pendingReplacement = { kind: 'use_only', new_item: action.new_item };
         this._pendingPrompt = prompt;
         return clarify(prompt);
