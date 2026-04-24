@@ -70,17 +70,17 @@ Python fixtures are the source of truth.
 
 Default source path:
 
-- `../context-compiler/tests/fixtures/v2`
+- `../context-compiler/tests/fixtures/conformance`
 
 Commands:
 
-- `npm run fixtures:sync` to copy fixtures from Python into `tests/fixtures/v2`
+- `npm run fixtures:sync` to copy fixtures from Python into `tests/fixtures/conformance`
 - `npm run fixtures:check` to detect drift between local fixtures and Python fixtures
 
 Optional override:
 
 - Set `FIXTURES_SOURCE` to use a different source path, for example:
-  - `FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/v2 npm run fixtures:check`
+  - `FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/conformance npm run fixtures:check`
 
 ## Pull Requests
 

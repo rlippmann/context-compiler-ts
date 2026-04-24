@@ -14,7 +14,7 @@ Behavior is defined by the upstream Python project:
 
 The following are authoritative:
 - Directive grammar specification
-- Fixture corpus under `tests/fixtures/v2`
+- Fixture corpus under `tests/fixtures/conformance`
 - Python engine behavior as exercised by those fixtures
 
 If behavior differs, the TypeScript implementation is incorrect.

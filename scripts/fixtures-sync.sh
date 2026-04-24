@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE_DIR="${FIXTURES_SOURCE:-../context-compiler/tests/fixtures/v2}"
-TARGET_DIR="tests/fixtures/v2"
+SOURCE_DIR="${FIXTURES_SOURCE:-../context-compiler/tests/fixtures/conformance}"
+TARGET_DIR="tests/fixtures/conformance"
 
 if [[ ! -d "$SOURCE_DIR" ]]; then
   echo "[fixtures:sync] Source fixture directory not found: $SOURCE_DIR" >&2
