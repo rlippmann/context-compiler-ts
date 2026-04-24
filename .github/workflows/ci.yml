@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 15
     env:
       PY_FIXTURE_REF: dba101b662410c0ae0c85842cd78d8adb55f184b
-      PY_FIXTURE_CHECKOUT: ${{ runner.temp }}/context-compiler-source
+      PY_FIXTURE_CHECKOUT: /tmp/context-compiler-source
 
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
 
       - name: Check fixture drift
         env:
-          FIXTURES_SOURCE: ${{ runner.temp }}/context-compiler-source/tests/fixtures/conformance
+          FIXTURES_SOURCE: /tmp/context-compiler-source/tests/fixtures/conformance
         run: |
           echo "Using FIXTURES_SOURCE=${FIXTURES_SOURCE}"
           npm run fixtures:check
