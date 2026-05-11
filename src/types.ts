@@ -37,3 +37,11 @@ export interface TranscriptConfirmResult {
 }
 
 export type TranscriptResult = TranscriptStateResult | TranscriptConfirmResult;
+
+export interface TranscriptMessage {
+  role: string;
+  content: unknown;
+}
+
+export type Transcript = TranscriptMessage[];
+export type ApplyResult = TranscriptResult;
