@@ -10,6 +10,7 @@ import type {
 export interface Engine {
   step(input: string): Decision;
   readonly state: EngineState;
+  apply_transcript(messages: unknown[]): TranscriptResult;
   exportJson(): string;
   importJson(payload: string): void;
   exportCheckpoint(): EngineCheckpoint;
@@ -167,6 +168,22 @@ class EngineImpl implements Engine {
     }
 
     return { ...PASSTHROUGH };
+  }
+
+  apply_transcript(messages: unknown[]): TranscriptResult {
+    for (const content of iterUserContents(messages)) {
+      const decision = this.step(content);
+      if (decision.kind === 'clarify') {
+        return {
+          kind: 'confirm',
+          prompt_to_user: decision.prompt_to_user as string
+        };
+      }
+    }
+    return {
+      kind: 'state',
+      state: this.state
+    };
   }
 
   private _replaceState(state: EngineState): void {
@@ -330,19 +347,7 @@ export function createEngine(init?: EngineInit): Engine {
 
 export function compile_transcript(messages: unknown[]): TranscriptResult {
   const engine = createEngine();
-  for (const content of iterUserContents(messages)) {
-    const decision = engine.step(content);
-    if (decision.kind === 'clarify') {
-      return {
-        kind: 'confirm',
-        prompt_to_user: decision.prompt_to_user as string
-      };
-    }
-  }
-  return {
-    kind: 'state',
-    state: engine.state
-  };
+  return engine.apply_transcript(messages);
 }
 
 export function getPremiseValue(state: EngineState): string | null {
