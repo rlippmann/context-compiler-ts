@@ -7,29 +7,6 @@ type TranscriptMessage = {
   content: unknown;
 };
 
-function applyTranscriptOnCurrentEngine(
-  engine: ReturnType<typeof createEngine>,
-  messages: TranscriptMessage[]
-): TranscriptResult {
-  for (const message of messages) {
-    if (message.role !== 'user' || typeof message.content !== 'string') {
-      continue;
-    }
-    const decision = engine.step(message.content);
-    if (decision.kind === 'clarify') {
-      return {
-        kind: 'confirm',
-        prompt_to_user: decision.prompt_to_user as string
-      };
-    }
-  }
-
-  return {
-    kind: 'state',
-    state: engine.state
-  };
-}
-
 export function runExample06(): {
   freshReplayKind: string;
   currentReplayKind: string;
@@ -48,7 +25,7 @@ export function runExample06(): {
 
   const engine = createEngine();
   engine.step('prohibit shellfish');
-  const currentReplay = applyTranscriptOnCurrentEngine(engine, transcript);
+  const currentReplay: TranscriptResult = engine.apply_transcript(transcript);
 
   const freshPolicies =
     freshReplay.kind === 'state' ? getPolicyItems(freshReplay.state) : [];
