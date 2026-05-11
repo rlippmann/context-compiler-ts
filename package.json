@@ -42,6 +42,8 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "fixtures:sync": "bash scripts/fixtures-sync.sh",
     "fixtures:check": "bash scripts/fixtures-check.sh",
+    "fixtures:structured:sync": "bash scripts/structured-fixtures-sync.sh",
+    "fixtures:structured:check": "bash scripts/structured-fixtures-check.sh",
     "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest"

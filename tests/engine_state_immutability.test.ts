@@ -89,14 +89,14 @@ describe('engine error-path regressions', () => {
     expectClarifyNoMutation(
       prohibitToUse,
       'use docker',
-      "'docker' is already prohibited.\nOnly one policy per item is allowed.\nUse 'reset policies' to change it."
+      '"docker" is currently prohibited.\nRemove or replace it before using it.'
     );
 
     const useToProhibit = createEngine({ state: { premise: null, policies: { docker: 'use' }, version: 2 } });
     expectClarifyNoMutation(
       useToProhibit,
       'prohibit docker',
-      "'docker' is already in use.\nOnly one policy per item is allowed.\nUse 'reset policies' to change it."
+      '"docker" is currently in use.\nRemove or replace it before prohibiting it.'
     );
   });
 

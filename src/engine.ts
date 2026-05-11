@@ -258,13 +258,11 @@ class EngineImpl implements Engine {
     }
 
     if (action.kind === 'set_premise' && this._state.premise !== null) {
-      return clarify(
-        "Premise already exists.\nUse 'change premise to ...' to replace it.\nPremise is a single slot.\nTo keep multiple ideas, rewrite them as one premise value."
-      );
+      return clarify("Premise already set.\nUse 'change premise to <value>' to modify it.");
     }
 
     if (action.kind === 'change_premise' && this._state.premise === null) {
-      return clarify("No premise exists yet. Use 'set premise ...' first.");
+      return clarify("No premise is set.\nUse 'set premise <value>' to define one.");
     }
 
     if (action.kind === 'remove_policy_item') {
@@ -279,9 +277,7 @@ class EngineImpl implements Engine {
         return clarify("Policy item cannot be empty.\nUse 'use <item>' with a non-empty value.");
       }
       if (this._state.policies[itemKey] === 'prohibit') {
-        return clarify(
-          `'${itemKey}' is already prohibited.\nOnly one policy per item is allowed.\nUse 'reset policies' to change it.`
-        );
+        return clarify(`"${itemKey}" is currently prohibited.\nRemove or replace it before using it.`);
       }
     }
 
@@ -291,9 +287,7 @@ class EngineImpl implements Engine {
         return clarify("Policy item cannot be empty.\nUse 'prohibit <item>' with a non-empty value.");
       }
       if (this._state.policies[itemKey] === 'use') {
-        return clarify(
-          `'${itemKey}' is already in use.\nOnly one policy per item is allowed.\nUse 'reset policies' to change it.`
-        );
+        return clarify(`"${itemKey}" is currently in use.\nRemove or replace it before prohibiting it.`);
       }
     }
 
