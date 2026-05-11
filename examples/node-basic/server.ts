@@ -82,15 +82,15 @@ const server = http.createServer(async (req, res) => {
     if (saved) {
       engine.importJson(saved);
     } else if (history?.length) {
-      for (const m of history) {
-        if (m.role !== 'user' || typeof m.content !== 'string') continue;
-        const d = engine.step(m.content);
-        if (d.kind === 'clarify') {
-          saveState(sessionId, engine.exportJson());
-          const payload: ChatResponse = { kind: 'clarify', prompt_to_user: d.prompt_to_user };
-          sendJson(res, 200, payload);
-          return;
-        }
+      const replayMessages = history.filter(
+        (m): m is { role: 'user'; content: string } => m.role === 'user' && typeof m.content === 'string'
+      );
+      const replay = engine.apply_transcript(replayMessages);
+      if (replay.kind === 'confirm') {
+        saveState(sessionId, engine.exportJson());
+        const payload: ChatResponse = { kind: 'clarify', prompt_to_user: replay.prompt_to_user };
+        sendJson(res, 200, payload);
+        return;
       }
       saveState(sessionId, engine.exportJson());
     }
