@@ -19,6 +19,13 @@ The following are authoritative:
 
 If behavior differs, the TypeScript implementation is incorrect.
 
+## Cross-Repo Parity Guidance
+
+- Treat Python behavior and specification documents as authoritative when resolving ambiguity.
+- Treat conformance fixtures as cross-repo behavioral contracts, not editable implementation hints.
+- Do not reinterpret semantics for convenience; preserve directive meaning and evaluation order.
+- Prefer minimal parity fixes over redesigns or broad rewrites.
+
 ## Versioning Policy
 
 - Python is the source of truth for semantics.
@@ -148,6 +155,14 @@ Typical workflow:
 4. Re-run tests
 
 Do not refactor broadly while tests are failing.
+
+## Validation
+
+Required before reporting task completion:
+
+- Run `npm test`
+
+If changes affect only documentation or non-executable metadata, state that explicitly and report whether tests were run.
 
 ## Non-Goals
 

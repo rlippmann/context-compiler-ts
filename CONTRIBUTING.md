@@ -92,3 +92,9 @@ Commands:
 This is a conformance-driven port, not a redesign.
 
 When in doubt, match the Python implementation and fixtures exactly.
+
+## Repository Governance Files
+
+- [AGENTS.md](./AGENTS.md) defines agent-facing parity constraints and fixture contract rules.
+- [SECURITY.md](./SECURITY.md) explains responsible vulnerability reporting for this repository.
+- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) defines baseline community conduct expectations.
