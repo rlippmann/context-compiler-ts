@@ -1,7 +1,10 @@
 export { createEngine, compile_transcript, getPremiseValue, getPolicyItems } from './engine.js';
 export type { Engine, EngineInit } from './engine.js';
 export type {
+  CheckpointPendingReplacement,
   Decision,
+  EngineCheckpointPending,
+  EngineCheckpoint,
   EngineState,
   TranscriptResult,
   TranscriptStateResult,
