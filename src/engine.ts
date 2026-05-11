@@ -1,10 +1,21 @@
-import type { Decision, EngineState, TranscriptResult } from './types.js';
+import type {
+  CheckpointPendingReplacement,
+  Decision,
+  EngineCheckpoint,
+  EngineCheckpointPending,
+  EngineState,
+  TranscriptResult
+} from './types.js';
 
 export interface Engine {
   step(input: string): Decision;
   readonly state: EngineState;
   exportJson(): string;
   importJson(payload: string): void;
+  exportCheckpoint(): EngineCheckpoint;
+  importCheckpoint(checkpoint: EngineCheckpoint): void;
+  exportCheckpointJson(): string;
+  importCheckpointJson(payload: string): void;
 }
 
 export interface EngineInit {
@@ -31,9 +42,7 @@ type Action =
   | { kind: 'replace_use'; new_item: string; old_item: string }
   | { kind: 'replace_use_incomplete' };
 
-type PendingReplacement =
-  | { kind: 'use_only'; new_item: string }
-  | { kind: 'replace_use'; new_item: string; old_item: string };
+type PendingReplacement = CheckpointPendingReplacement;
 
 const AFFIRMATIVE_CONFIRMATIONS = new Set(['yes', 'yes please', 'yep', 'yeah', 'sure', 'ok', 'okay']);
 const NEGATIVE_CONFIRMATIONS = new Set(['no', 'nope', 'no thanks']);
@@ -59,6 +68,44 @@ class EngineImpl implements Engine {
 
   importJson(payload: string): void {
     this._replaceState(loadStateJson(payload));
+  }
+
+  exportCheckpoint(): EngineCheckpoint {
+    const authoritativeState = loadStateJson(this.exportJson());
+    let pending: EngineCheckpointPending | null = null;
+
+    if (this._pendingReplacement !== null) {
+      const prompt = this._pendingPrompt as string;
+      pending = {
+        kind: 'replacement',
+        replacement: clonePendingReplacement(this._pendingReplacement) as CheckpointPendingReplacement,
+        prompt_to_user: prompt
+      };
+    }
+
+    return cloneCheckpoint({
+      checkpoint_version: 1,
+      authoritative_state: authoritativeState,
+      pending
+    });
+  }
+
+  importCheckpoint(checkpoint: EngineCheckpoint): void {
+    this._replaceCheckpoint(loadCheckpointObject(checkpoint));
+  }
+
+  exportCheckpointJson(): string {
+    return stringifyCanonicalJson(sortKeysDeep(this.exportCheckpoint()));
+  }
+
+  importCheckpointJson(payload: string): void {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(payload);
+    } catch {
+      throw new Error('Invalid JSON payload.');
+    }
+    this._replaceCheckpoint(loadCheckpointObject(raw));
   }
 
   step(input: string): Decision {
@@ -126,6 +173,20 @@ class EngineImpl implements Engine {
     this._state = state;
     this._pendingReplacement = null;
     this._pendingPrompt = null;
+  }
+
+  private _replaceCheckpoint(checkpoint: EngineCheckpoint): void {
+    this._state = checkpoint.authoritative_state;
+
+    const pending = checkpoint.pending ?? null;
+    if (pending === null) {
+      this._pendingReplacement = null;
+      this._pendingPrompt = null;
+      return;
+    }
+
+    this._pendingReplacement = pending.replacement;
+    this._pendingPrompt = pending.prompt_to_user;
   }
 
   private resolveOrRepromptPending(userInput: string): Decision {
@@ -236,7 +297,7 @@ class EngineImpl implements Engine {
       const newState = this._state.policies[newKey];
       if (!Object.prototype.hasOwnProperty.call(this._state.policies, oldKey)) {
         const prompt = `Did you mean to use "${action.new_item}" instead?`;
-        this._pendingReplacement = { kind: 'use_only', new_item: action.new_item };
+        this._pendingReplacement = { kind: 'use_only', new_item: action.new_item, old_item: null };
         this._pendingPrompt = prompt;
         return clarify(prompt);
       }
@@ -322,6 +383,136 @@ function loadStateJson(payload: string): EngineState {
     throw new Error('Invalid JSON payload.');
   }
   return loadStateObject(raw);
+}
+
+function loadCheckpointObject(raw: unknown): EngineCheckpoint {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  const obj = raw as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  const hasValidKeySet =
+    (keys.length === 2 && keys.includes('checkpoint_version') && keys.includes('authoritative_state')) ||
+    (keys.length === 3 &&
+      keys.includes('checkpoint_version') &&
+      keys.includes('authoritative_state') &&
+      keys.includes('pending'));
+  if (!hasValidKeySet) {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  if (obj.checkpoint_version !== 1) {
+    throw new Error(`Unsupported checkpoint version: ${String(obj.checkpoint_version)}`);
+  }
+
+  const authoritativeState = loadStateObject(obj.authoritative_state);
+  const pending = loadCheckpointPending(obj.pending);
+
+  return {
+    checkpoint_version: 1,
+    authoritative_state: authoritativeState,
+    pending
+  };
+}
+
+function loadCheckpointPending(raw: unknown): EngineCheckpointPending | null {
+  if (raw === undefined || raw === null) {
+    return null;
+  }
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  const obj = raw as Record<string, unknown>;
+  if (
+    Object.keys(obj).length !== 3 ||
+    !Object.keys(obj).includes('kind') ||
+    !Object.keys(obj).includes('replacement') ||
+    !Object.keys(obj).includes('prompt_to_user')
+  ) {
+    throw new Error('Invalid checkpoint payload.');
+  }
+  if (obj.kind !== 'replacement') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+  if (typeof obj.prompt_to_user !== 'string') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  return {
+    kind: 'replacement',
+    replacement: loadCheckpointReplacement(obj.replacement),
+    prompt_to_user: obj.prompt_to_user
+  };
+}
+
+function loadCheckpointReplacement(raw: unknown): PendingReplacement {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    throw new Error('Invalid checkpoint payload.');
+  }
+  const obj = raw as Record<string, unknown>;
+  if (
+    Object.keys(obj).length !== 3 ||
+    !Object.keys(obj).includes('kind') ||
+    !Object.keys(obj).includes('new_item') ||
+    !Object.keys(obj).includes('old_item')
+  ) {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  if (obj.kind !== 'use_only' && obj.kind !== 'replace_use') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+  if (typeof obj.new_item !== 'string') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+  if (normalizeItem(obj.new_item) === '') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  if (obj.kind === 'use_only') {
+    if (obj.old_item !== null) {
+      throw new Error('Invalid checkpoint payload.');
+    }
+    return { kind: 'use_only', new_item: obj.new_item, old_item: null };
+  }
+
+  if (typeof obj.old_item !== 'string') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+  if (normalizeItem(obj.old_item) === '') {
+    throw new Error('Invalid checkpoint payload.');
+  }
+
+  return { kind: 'replace_use', new_item: obj.new_item, old_item: obj.old_item };
+}
+
+function clonePendingReplacement(pending: PendingReplacement | null): PendingReplacement | null {
+  if (pending === null) {
+    return null;
+  }
+  if (pending.kind === 'use_only') {
+    return { kind: 'use_only', new_item: pending.new_item, old_item: null };
+  }
+  return { kind: 'replace_use', new_item: pending.new_item, old_item: pending.old_item };
+}
+
+function cloneCheckpoint(checkpoint: EngineCheckpoint): EngineCheckpoint {
+  let pending: EngineCheckpointPending | null = null;
+  if (checkpoint.pending != null) {
+    pending = {
+      kind: 'replacement',
+      replacement: clonePendingReplacement(checkpoint.pending.replacement) as CheckpointPendingReplacement,
+      prompt_to_user: checkpoint.pending.prompt_to_user
+    };
+  }
+
+  return {
+    checkpoint_version: 1,
+    authoritative_state: cloneState(checkpoint.authoritative_state),
+    pending
+  };
 }
 
 function loadStateObject(raw: unknown): EngineState {
