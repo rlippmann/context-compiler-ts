@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { createEngine, getPolicyItems, getPremiseValue, type EngineState } from '@rlippmann/context-compiler';
+import { parse_preprocessor_output, preprocess_heuristic } from '../../src/experimental/preprocessor/index.js';
 
 type ChatBody = {
   sessionId: string;
@@ -11,14 +12,14 @@ type ChatResponse =
   | { kind: 'clarify'; prompt_to_user: string | null }
   | { kind: 'continue'; output: string };
 
-const stateBySession = new Map<string, string>(); // sessionId -> engine.exportJson()
+const checkpointBySession = new Map<string, string>(); // sessionId -> engine.exportCheckpointJson()
 
-function loadState(sessionId: string): string | null {
-  return stateBySession.get(sessionId) ?? null;
+function loadCheckpoint(sessionId: string): string | null {
+  return checkpointBySession.get(sessionId) ?? null;
 }
 
-function saveState(sessionId: string, json: string): void {
-  stateBySession.set(sessionId, json);
+function saveCheckpoint(sessionId: string, json: string): void {
+  checkpointBySession.set(sessionId, json);
 }
 
 function stateToSystemPrompt(state: EngineState): string {
@@ -51,6 +52,17 @@ function minimalRecentContext(history: ChatBody['history']) {
     .map((m) => ({ role: m.role, content: m.content }));
 }
 
+function normalizeInputWithPreprocessor(input: string): string {
+  const heuristic = preprocess_heuristic(input);
+  if (heuristic.classification === 'directive' && heuristic.output !== null) {
+    const parsed = parse_preprocessor_output(heuristic.output, { source_input: input });
+    if (parsed !== null) {
+      return parsed;
+    }
+  }
+  return input;
+}
+
 async function parseJson(req: http.IncomingMessage): Promise<any> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(Buffer.from(chunk));
@@ -77,33 +89,34 @@ const server = http.createServer(async (req, res) => {
     }
 
     const engine = createEngine();
-    const saved = loadState(sessionId);
+    const saved = loadCheckpoint(sessionId);
 
     if (saved) {
-      engine.importJson(saved);
+      engine.importCheckpointJson(saved);
     } else if (history?.length) {
       const replayMessages = history.filter(
         (m): m is { role: 'user'; content: string } => m.role === 'user' && typeof m.content === 'string'
       );
       const replay = engine.apply_transcript(replayMessages);
       if (replay.kind === 'confirm') {
-        saveState(sessionId, engine.exportJson());
+        saveCheckpoint(sessionId, engine.exportCheckpointJson());
         const payload: ChatResponse = { kind: 'clarify', prompt_to_user: replay.prompt_to_user };
         sendJson(res, 200, payload);
         return;
       }
-      saveState(sessionId, engine.exportJson());
+      saveCheckpoint(sessionId, engine.exportCheckpointJson());
     }
 
-    const decision = engine.step(input);
+    const preprocessedInput = normalizeInputWithPreprocessor(input);
+    const decision = engine.step(preprocessedInput);
     if (decision.kind === 'clarify') {
-      saveState(sessionId, engine.exportJson());
+      saveCheckpoint(sessionId, engine.exportCheckpointJson());
       const payload: ChatResponse = { kind: 'clarify', prompt_to_user: decision.prompt_to_user };
       sendJson(res, 200, payload);
       return;
     }
 
-    saveState(sessionId, engine.exportJson());
+    saveCheckpoint(sessionId, engine.exportCheckpointJson());
 
     const usedReplay = !saved && !!history?.length;
     const messages = [

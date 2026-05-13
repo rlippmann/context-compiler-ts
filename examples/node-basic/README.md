@@ -15,5 +15,9 @@ npm install
 npx tsx examples/node-basic/server.ts
 ```
 
-This example uses `exportJson()` / `importJson()` for per-session state persistence.
-In 0.5.x, pending clarify/confirm interaction state is not persisted across requests.
+This example uses `exportCheckpointJson()` / `importCheckpointJson()` for per-session persistence.
+That preserves both authoritative state and pending clarify/confirm continuation state.
+
+It also demonstrates a minimal experimental preprocessor pass before `engine.step(...)`
+using `preprocess_heuristic(...)` plus `parse_preprocessor_output(...)` from
+`src/experimental/preprocessor/index.ts`.
