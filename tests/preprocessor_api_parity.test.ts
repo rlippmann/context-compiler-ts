@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as cc from '../src/experimental/preprocessor/index.js';
+import * as cc from '@rlippmann/context-compiler/experimental/preprocessor';
 import { loadPreprocessorApiContractFixture } from './harness/fixtures.js';
 
 const fixture = await loadPreprocessorApiContractFixture();

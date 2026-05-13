@@ -1,6 +1,9 @@
 import http from 'node:http';
 import { createEngine, getPolicyItems, getPremiseValue, type EngineState } from '@rlippmann/context-compiler';
-import { parse_preprocessor_output, preprocess_heuristic } from '../../src/experimental/preprocessor/index.js';
+import {
+  parse_preprocessor_output,
+  preprocess_heuristic
+} from '@rlippmann/context-compiler/experimental/preprocessor';
 
 type ChatBody = {
   sessionId: string;

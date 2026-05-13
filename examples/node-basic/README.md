@@ -20,4 +20,4 @@ That preserves both authoritative state and pending clarify/confirm continuation
 
 It also demonstrates a minimal experimental preprocessor pass before `engine.step(...)`
 using `preprocess_heuristic(...)` plus `parse_preprocessor_output(...)` from
-`src/experimental/preprocessor/index.ts`.
+`@rlippmann/context-compiler/experimental/preprocessor`.
