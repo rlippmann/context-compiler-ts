@@ -1,0 +1,320 @@
+import type {
+  EngineState,
+  PreprocessOutcome as PreprocessOutcomeType,
+  PreprocessResult as PreprocessResultType
+} from '../../types.js';
+
+export const PREPROCESSOR_NO_DIRECTIVE_SENTINEL = '<NO_DIRECTIVE>';
+export const PREPROCESS_OUTCOME_DIRECTIVE: PreprocessOutcomeType = 'directive';
+export const PREPROCESS_OUTCOME_NO_DIRECTIVE: PreprocessOutcomeType = 'no_directive';
+export const PREPROCESS_OUTCOME_UNKNOWN: PreprocessOutcomeType = 'unknown';
+export const PreprocessOutcome = {
+  DIRECTIVE: PREPROCESS_OUTCOME_DIRECTIVE,
+  NO_DIRECTIVE: PREPROCESS_OUTCOME_NO_DIRECTIVE,
+  UNKNOWN: PREPROCESS_OUTCOME_UNKNOWN
+} as const;
+export const PreprocessResult = {
+  classification: PREPROCESS_OUTCOME_UNKNOWN,
+  output: null
+} as const;
+
+const PROMPT_TOKEN_NULL_OR_VALUE = '<NULL_OR_VALUE>';
+const PROMPT_TOKEN_POLICY_SET = '<SET OF CURRENT POLICY ITEMS>';
+
+const CANONICAL_DIRECTIVE_PATTERNS: RegExp[] = [
+  /^set premise (?!to\b)\S(?:.*\S)?$/,
+  /^change premise to \S(?:.*\S)?$/,
+  /^use \S(?:.*\S)? instead of \S(?:.*\S)?$/,
+  /^use (?!.*\sinstead of(?:\s|$))\S(?:.*\S)?$/,
+  /^prohibit \S(?:.*\S)?$/,
+  /^remove policy \S(?:.*\S)?$/
+];
+
+const CANONICAL_DIRECTIVE_EXACT = new Set(['clear premise', 'reset policies', 'clear state']);
+
+const LIST_MARKER_PATTERN = /^\s*(?:\d+[.)]|[-*])\s+\S/;
+const META_PREFIX_PATTERN = /^\s*(?:example:|for example\b|the command is\b|(?:i|he|she|they) said\b)/;
+const MULTI_SEGMENT_PATTERN =
+  /^\s*(?:use|prohibit|remove policy|set premise|change premise to|clear premise|reset policies|clear state)\b.*\b(?:because|then continue|and)\b/;
+const DIRECTIVE_CUE_PATTERN =
+  /\b(set premise|change premise|use|prohibit|remove policy|clear premise|reset policies|clear state)\b/;
+const PUNCTUATION_TRIM_PATTERN = /[.!]+\s*$/;
+const MALFORMED_REPLACEMENT_PATTERN = /\buse\b.*\binstead\b/;
+const MULTI_CANDIDATE_DIRECTIVE_PATTERN =
+  /(?:\band\b|\bthen\b|;|,)\s*(?:set premise\b|change premise\b|use\b|prohibit\b|remove policy\b|clear premise\b|reset policies\b|clear state\b)/;
+
+const NEAR_MISS_ALIAS_CASES = new Set([
+  'allow docker',
+  'set policy peanuts prohibit',
+  'stop using peanuts',
+  'use instead of docker',
+  'use podman instead of',
+  'use podman not docker',
+  'wipe policies'
+]);
+const ADMIN_NEAR_MISS_CASES = new Set(['reset policy', 'remove policies docker']);
+
+function unknown(): PreprocessResultType {
+  return { classification: PREPROCESS_OUTCOME_UNKNOWN, output: null };
+}
+
+function directive(output: string): PreprocessResultType {
+  return { classification: PREPROCESS_OUTCOME_DIRECTIVE, output };
+}
+
+function noDirective(): PreprocessResultType {
+  return { classification: PREPROCESS_OUTCOME_NO_DIRECTIVE, output: null };
+}
+
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function normalizeMatchInput(message: string): string {
+  return normalizeWhitespace(message).toLowerCase();
+}
+
+function stripExactWrapper(text: string): string {
+  const s = text.trim();
+  if (s.length < 2) return s;
+  const first = s[0];
+  const last = s[s.length - 1];
+  const wrapper = `${first}${last}`;
+  if (!['""', "''", '``', '()', '[]'].includes(wrapper)) {
+    return s;
+  }
+  const inner = s.slice(1, -1).trim();
+  return inner.length > 0 ? inner : s;
+}
+
+function normalizeCandidate(message: string): string {
+  const noPunct = message.trim().replace(PUNCTUATION_TRIM_PATTERN, '').trim();
+  const unwrapped = stripExactWrapper(noPunct);
+  return normalizeWhitespace(unwrapped).toLowerCase();
+}
+
+function isQuotedOrBacktickedExact(message: string): boolean {
+  const s = message.trim();
+  if (s.length < 2) return false;
+  const pair = `${s[0]}${s[s.length - 1]}`;
+  return pair === '""' || pair === "''" || pair === '``';
+}
+
+function isAllowedDirective(text: string): boolean {
+  if (CANONICAL_DIRECTIVE_EXACT.has(text)) return true;
+  return CANONICAL_DIRECTIVE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function containsMultipleCandidateDirectives(text: string): boolean {
+  return MULTI_CANDIDATE_DIRECTIVE_PATTERN.test(normalizeMatchInput(text));
+}
+
+function isSafeFallbackDirectiveRewrite(sourceInput: string, directiveOutput: string): boolean {
+  const source = normalizeMatchInput(sourceInput);
+  const directiveText = normalizeMatchInput(directiveOutput);
+
+  const setPremiseTo = /^set premise to\s+(.+\S)$/.exec(source);
+  if (setPremiseTo != null) {
+    const payload = setPremiseTo[1].trim();
+    if (directiveText === `set premise ${payload}`) {
+      return false;
+    }
+  }
+
+  const changePremiseMissingTo = /^change premise\s+(?!to\b)(.+\S)$/.exec(source);
+  if (changePremiseMissingTo != null) {
+    const payload = changePremiseMissingTo[1].trim();
+    if (directiveText === `change premise to ${payload}`) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function validateStructuredOutput(rawOutput: unknown): PreprocessResultType {
+  if (typeof rawOutput !== 'object' || rawOutput === null || Array.isArray(rawOutput)) {
+    return unknown();
+  }
+
+  const rec = rawOutput as Record<string, unknown>;
+  const keys = Object.keys(rec);
+  if (keys.length !== 2 || !keys.includes('classification') || !keys.includes('output')) {
+    return unknown();
+  }
+
+  const classification = rec.classification;
+  const output = rec.output;
+
+  if (classification === PREPROCESS_OUTCOME_DIRECTIVE) {
+    if (typeof output !== 'string') {
+      return unknown();
+    }
+    const normalized = output.trim();
+    if (normalized === '' || containsMultipleCandidateDirectives(normalized) || !isAllowedDirective(normalized)) {
+      return unknown();
+    }
+    return directive(normalized);
+  }
+
+  if (classification === PREPROCESS_OUTCOME_NO_DIRECTIVE) {
+    return output === null ? noDirective() : unknown();
+  }
+
+  if (classification === PREPROCESS_OUTCOME_UNKNOWN) {
+    return output === null ? unknown() : unknown();
+  }
+
+  return unknown();
+}
+
+function validateTextOutput(rawOutput: string): PreprocessResultType {
+  const stripped = rawOutput.trim();
+  if (stripped === '') {
+    return unknown();
+  }
+
+  if (stripped.toUpperCase() === PREPROCESSOR_NO_DIRECTIVE_SENTINEL) {
+    return noDirective();
+  }
+
+  if (containsMultipleCandidateDirectives(stripped)) {
+    return unknown();
+  }
+
+  if (isAllowedDirective(stripped)) {
+    return directive(stripped);
+  }
+
+  if (stripped[0] === '{' || stripped[0] === '[') {
+    try {
+      const parsed = JSON.parse(stripped) as unknown;
+      return validateStructuredOutput(parsed);
+    } catch {
+      return unknown();
+    }
+  }
+
+  return unknown();
+}
+
+export function validate_preprocessor_output(
+  rawOutput: unknown,
+  opts?: { source_input?: string }
+): PreprocessResultType {
+  const validated = typeof rawOutput === 'string' ? validateTextOutput(rawOutput) : validateStructuredOutput(rawOutput);
+
+  const sourceInput = opts?.source_input;
+  if (
+    sourceInput != null &&
+    validated.classification === PREPROCESS_OUTCOME_DIRECTIVE &&
+    validated.output != null &&
+    !isSafeFallbackDirectiveRewrite(sourceInput, validated.output)
+  ) {
+    return unknown();
+  }
+
+  return validated;
+}
+
+export function parse_preprocessor_output(rawOutput: unknown, opts?: { source_input?: string }): string | null {
+  const validated = validate_preprocessor_output(rawOutput, opts);
+  return validated.classification === PREPROCESS_OUTCOME_DIRECTIVE ? validated.output : null;
+}
+
+export function preprocess_heuristic(message: string): PreprocessResultType {
+  if (LIST_MARKER_PATTERN.test(message)) {
+    return unknown();
+  }
+
+  const normalized = normalizeMatchInput(message);
+  if (message.includes('?') && DIRECTIVE_CUE_PATTERN.test(normalized)) {
+    return unknown();
+  }
+
+  if (META_PREFIX_PATTERN.test(normalized)) {
+    return unknown();
+  }
+
+  if (MULTI_SEGMENT_PATTERN.test(normalized)) {
+    return unknown();
+  }
+
+  if (isQuotedOrBacktickedExact(message)) {
+    return unknown();
+  }
+
+  const normalizedCandidate = normalizeCandidate(message);
+
+  if (NEAR_MISS_ALIAS_CASES.has(normalized) || ADMIN_NEAR_MISS_CASES.has(normalized)) {
+    return unknown();
+  }
+
+  if (
+    (MALFORMED_REPLACEMENT_PATTERN.test(normalizedCandidate) && !normalizedCandidate.includes(' instead of ')) ||
+    normalizedCandidate.includes(' in stead of ')
+  ) {
+    return unknown();
+  }
+
+  if (containsMultipleCandidateDirectives(normalizedCandidate)) {
+    return unknown();
+  }
+
+  if (isAllowedDirective(normalizedCandidate)) {
+    return directive(normalizedCandidate);
+  }
+
+  if (DIRECTIVE_CUE_PATTERN.test(normalizedCandidate)) {
+    return unknown();
+  }
+
+  return noDirective();
+}
+
+function stripLeadingHeaders(promptTemplate: string): string {
+  const lines = promptTemplate.split(/\r?\n/);
+  let start = 0;
+  while (start < lines.length) {
+    const line = lines[start];
+    const trimmed = line.trim();
+    if (trimmed === '' || line.trimStart().startsWith('#')) {
+      start += 1;
+      continue;
+    }
+    break;
+  }
+  return lines.slice(start).join('\n');
+}
+
+export function render_prompt(promptTemplate: string, state: EngineState): string | null {
+  if (typeof promptTemplate !== 'string') {
+    return null;
+  }
+  const stripped = stripLeadingHeaders(promptTemplate);
+  const premiseValue = state.premise === null ? 'null' : state.premise;
+  const policyKeys = Object.keys(state.policies)
+    .map((k) => normalizeItem(k))
+    .filter((k) => k !== '');
+  const sortedUniquePolicyKeys = [...new Set(policyKeys)].sort((a, b) => a.localeCompare(b));
+  const policiesValue = sortedUniquePolicyKeys.length > 0 ? sortedUniquePolicyKeys.join(', ') : '(none)';
+
+  return stripped.replaceAll(PROMPT_TOKEN_NULL_OR_VALUE, premiseValue).replaceAll(PROMPT_TOKEN_POLICY_SET, policiesValue);
+}
+
+function normalizeItem(input: string): string {
+  let out = input.toLowerCase();
+  out = out.normalize('NFKC');
+  out = out.replace(/[\u2018\u2019]/g, "'");
+  out = out.replace(/[\s_-]+/g, ' ');
+  out = out.trim();
+  const articlePrefixes = ['the ', 'a ', 'an '];
+  for (const prefix of articlePrefixes) {
+    if (out.startsWith(prefix)) {
+      out = out.slice(prefix.length).trim();
+      break;
+    }
+  }
+  out = out.replace(/\bdont\b/g, "don't");
+  return out;
+}

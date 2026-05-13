@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as cc from '../src/index.js';
+import * as cc from '../src/experimental/preprocessor/index.js';
 import { loadPreprocessorFixtures } from './harness/fixtures.js';
 
 type PreprocessorLike = {
