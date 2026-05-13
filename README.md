@@ -8,25 +8,32 @@ Helps hosts enforce premise and policy guardrails consistently across turns.
 Reference implementation (Python):
 https://github.com/rlippmann/context-compiler
 
-Behavioral conformance is defined by the upstream Python fixture corpus and directive specification.
+Behavioral conformance is validated against the upstream Python fixture/contracts corpus and directive specification.
 
 ## Versioning
 
 - Python is the source of truth for semantics.
 - TypeScript package versions track Python compatibility by minor version.
-- TS `0.N.y` is intended to be semantically compatible with Python `0.N.x`.
+- TS `0.N.y` targets semantic compatibility with the Python `0.N.x` line.
 - Patch versions evolve independently by language/repo.
 
-## Included in 0.5.0
+## Included in 0.6.0
 
-- Deterministic core engine semantics aligned with Python 0.5 behavior.
-- Fixture-driven conformance for step and transcript behavior.
+- Deterministic core engine semantics aligned to the Python 0.6.19 fixture/contracts baseline.
+- Fixture-driven conformance coverage for:
+  - step behavior
+  - transcript replay behavior
+  - checkpoint/state serialization behavior
+  - structured regression behavior
+  - experimental preprocessor behavior
+  - public API contract fixtures (core + experimental preprocessor surface)
 - Core public API for engine usage and transcript compilation.
+- Checkpoint export/import APIs for full continuation-safe persistence.
+- Experimental preprocessor module exposed via package subpath import.
 
 ## Not Included Yet
 
 - REPL port
-- Experimental preprocessor
 
 ## Installation
 
@@ -39,7 +46,7 @@ npm install @rlippmann/context-compiler
 - `examples/nextjs-basic/` — minimal Next.js App Router integration
   - compiler-mediated request flow
   - `clarify` blocks LLM calls
-  - per-session state via `exportJson()` / `importJson()`
+  - per-session state via checkpoint export/import for continuation-safe resume
 - `examples/node-basic/` — minimal Node HTTP server integration
 
 ## Quick Start
@@ -66,7 +73,22 @@ if (decision.kind === 'update') {
 - `engine.step(input)` -> apply one user input and return a `Decision`.
 - `engine.state` -> authoritative current state snapshot.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
-- Note: in 0.5.x, export/import serialize authoritative state only (`premise`, `policies`), not pending clarify/confirm interaction state.
-- For stateless HTTP integrations, hosts must persist pending clarification context separately when needed; a checkpoint-style full-resume API is planned for 0.6.
+- `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> continuation-safe checkpoint persistence (`authoritative_state` + pending continuation state).
+- `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint persistence helpers.
 - `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
+- `engine.apply_transcript(messages)` -> replay user messages onto an existing engine instance.
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
+
+## Experimental Preprocessor
+
+Experimental preprocessor APIs are available via package subpath:
+
+```ts
+import {
+  preprocess_heuristic,
+  parse_preprocessor_output,
+  validate_preprocessor_output
+} from '@rlippmann/context-compiler/experimental/preprocessor';
+```
+
+This module is intentionally experimental and separate from the deterministic core engine API.
