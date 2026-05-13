@@ -55,14 +55,14 @@ export async function POST(req: Request): Promise<Response> {
   const saved = loadSessionState(sessionId);
 
   if (saved) {
-    engine.importJson(saved);
+    engine.importCheckpointJson(saved);
   } else if (history?.length) {
     const replayMessages = history.filter(
       (m): m is { role: 'user'; content: string } => m.role === 'user' && typeof m.content === 'string'
     );
     const replay = engine.apply_transcript(replayMessages);
     if (replay.kind === 'confirm') {
-      saveSessionState(sessionId, engine.exportJson());
+      saveSessionState(sessionId, engine.exportCheckpointJson());
       const payload: ChatResponse = {
         kind: 'clarify',
         prompt_to_user: replay.prompt_to_user
@@ -70,13 +70,13 @@ export async function POST(req: Request): Promise<Response> {
       return Response.json(payload);
     }
 
-    saveSessionState(sessionId, engine.exportJson());
+    saveSessionState(sessionId, engine.exportCheckpointJson());
   }
 
   const decision = engine.step(input);
 
   if (decision.kind === 'clarify') {
-    saveSessionState(sessionId, engine.exportJson());
+    saveSessionState(sessionId, engine.exportCheckpointJson());
     const payload: ChatResponse = {
       kind: 'clarify',
       prompt_to_user: decision.prompt_to_user
@@ -84,7 +84,7 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json(payload);
   }
 
-  saveSessionState(sessionId, engine.exportJson());
+  saveSessionState(sessionId, engine.exportCheckpointJson());
 
   const usedReplay = !saved && !!history?.length;
   const messages = [

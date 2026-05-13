@@ -2,9 +2,8 @@
 
 TypeScript examples showing host-side usage of the Context Compiler core API.
 
-These examples target Python 0.5 semantic compatibility and only use core APIs.
-In 0.5.x, `exportJson()` / `importJson()` persist authoritative state only (`premise`, `policies`) and do not persist pending clarify/confirm interaction state.
-For stateless HTTP hosts, pending clarification context must be persisted separately if you need request-to-request clarify/confirm continuity.
+These examples target Python 0.6 semantic compatibility and primarily use core APIs.
+Request-scoped integrations can now persist full continuation state with checkpoint APIs.
 
 ## 01_persistent_guardrails.ts
 
@@ -31,7 +30,7 @@ Includes single-item correction with `remove policy <item>`.
 
 ## 06_transcript_replay.ts
 
-Demonstrates transcript replay behavior with `compile_transcript(messages)` and replay on current engine state via `engine.step(...)`.
+Demonstrates transcript replay behavior with `compile_transcript(messages)` and replay onto current engine state via `engine.apply_transcript(...)`.
 
 ## 07_single_policy_correction.ts
 
