@@ -1,14 +1,24 @@
 # @rlippmann/context-compiler
 
 TypeScript port of the Context Compiler core.
-Deterministic control layer for LLM applications.
-Compiles explicit user directives into authoritative context state before model calls.
-Helps hosts enforce premise and policy guardrails consistently across turns.
 
-Reference implementation (Python):
-https://github.com/rlippmann/context-compiler
+Context Compiler lets LLM hosts treat user directives as explicit state instead of relying on conversational memory.
 
-Behavioral conformance is validated against the upstream Python fixture/contracts corpus and directive specification.
+## What it does
+
+Directive examples:
+- `set premise concise replies`
+- `use sqlite`
+- `prohibit docker`
+- `remove policy docker`
+- `clear premise`
+
+The compiler processes user input before the model call and produces deterministic decisions:
+- `update` -> authoritative state changed
+- `clarify` -> ambiguous directive, block the model call
+- `passthrough` -> normal chat input
+
+Hosts can persist checkpoints between requests to preserve continuation-safe state across conversations.
 
 ## Versioning
 
@@ -80,6 +90,15 @@ if (decision.kind === 'update') {
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
 
 ## Experimental Preprocessor
+
+The preprocessor can optionally recognize directive-shaped natural language before engine processing.
+
+For example:
+- "keep replies concise"
+- "don't suggest docker"
+- "forget that previous policy"
+
+Preprocessor output should always be parsed/validated before passing it to the engine.
 
 Experimental preprocessor APIs are available via package subpath:
 
