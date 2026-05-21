@@ -1,10 +1,25 @@
 # @rlippmann/context-compiler
 
-TypeScript port of the Context Compiler core.
+Tell the AI your rules once and keep them consistent across turns.
 
-Context Compiler lets LLM hosts treat user directives as explicit state instead of relying on conversational memory.
+Context Compiler helps applications keep explicit user instructions separate from the chat transcript. Rules and corrections are stored as compiler state, so hosts can apply them consistently to future model calls.
+
+The model writes responses. The compiler stores premise and policy rules.
+
+This package is the TypeScript implementation of the Context Compiler engine, aligned with the Python reference implementation.
 
 ## What it does
+
+Context Compiler lets a host application:
+- store explicit rules such as `use sqlite` or `prohibit docker`
+- replace or remove earlier rules without relying on the model to infer the correction
+- block ambiguous or conflicting rule updates before calling the model
+- save and restore stored rules between requests
+
+Each user input produces a decision for the host:
+- `update` -> stored premise/policy rules changed
+- `clarify` -> ask the user for clarification; do not call the model
+- `passthrough` -> normal chat input
 
 Directive examples:
 - `set premise concise replies`
@@ -12,13 +27,6 @@ Directive examples:
 - `prohibit docker`
 - `remove policy docker`
 - `clear premise`
-
-The compiler processes user input before the model call and produces deterministic decisions:
-- `update` -> authoritative state changed
-- `clarify` -> ambiguous directive, block the model call
-- `passthrough` -> normal chat input
-
-Hosts can persist checkpoints between requests to preserve continuation-safe state across conversations.
 
 ## Versioning
 
@@ -54,9 +62,9 @@ npm install @rlippmann/context-compiler
 ## Examples
 
 - `examples/nextjs-basic/` — minimal Next.js App Router integration
-  - compiler-mediated request flow
+  - compiler-mediated request flow where explicit instructions stay consistent across turns
   - `clarify` blocks LLM calls
-  - per-session state via checkpoint export/import for continuation-safe resume
+  - saved compiler state per session via checkpoint export/import for continuation-safe resume
 - `examples/node-basic/` — minimal Node HTTP server integration
 
 ## Quick Start
@@ -68,7 +76,7 @@ const engine = createEngine();
 const decision = engine.step('set premise concise replies');
 
 if (decision.kind === 'update') {
-  // Use authoritative state snapshot from the engine.
+  // Use the updated stored rules from the engine.
   console.log(engine.state);
 } else if (decision.kind === 'clarify') {
   console.log(decision.prompt_to_user);
@@ -81,7 +89,7 @@ if (decision.kind === 'update') {
 
 - `createEngine(init?)` -> create an engine instance.
 - `engine.step(input)` -> apply one user input and return a `Decision`.
-- `engine.state` -> authoritative current state snapshot.
+- `engine.state` -> current stored premise/policy rules snapshot.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
 - `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> continuation-safe checkpoint persistence (`authoritative_state` + pending continuation state).
 - `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint persistence helpers.
@@ -91,7 +99,7 @@ if (decision.kind === 'update') {
 
 ## Experimental Preprocessor
 
-The preprocessor can optionally recognize directive-shaped natural language before engine processing.
+The optional preprocessor can recognize natural-language rule updates before they reach the engine.
 
 For example:
 - "keep replies concise"
