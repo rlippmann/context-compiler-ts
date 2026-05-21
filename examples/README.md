@@ -2,7 +2,7 @@
 
 TypeScript examples showing how host applications keep rules and corrections consistent across turns.
 
-These examples target the Python 0.6.19 fixture/contracts compatibility baseline and primarily use core APIs.
+These examples follow the Python 0.6 behavior baseline and use only core APIs.
 Request-scoped integrations can persist saved compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
 
 ## 01_persistent_guardrails.ts

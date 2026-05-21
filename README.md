@@ -37,17 +37,17 @@ Directive examples:
 
 ## Included in 0.6.0
 
-- Deterministic core engine semantics aligned to the Python 0.6.19 fixture/contracts baseline.
-- Fixture-driven conformance coverage for:
-  - step behavior
-  - transcript replay behavior
-  - checkpoint/state serialization behavior
-  - structured regression behavior
+- Core engine behavior aligned with Python 0.6 behavior.
+- Shared behavior test coverage for:
+  - single-turn rule updates
+  - transcript replay
+  - saving and restoring state
+  - checkpoint restore
   - experimental preprocessor behavior
-  - public API contract fixtures (core + experimental preprocessor surface)
+  - public API behavior
 - Core public API for engine usage and transcript compilation.
-- Checkpoint export/import APIs for full continuation-safe persistence.
-- Experimental preprocessor module exposed via package subpath import.
+- Checkpoint APIs for saving and restoring rules plus pending clarification state.
+- Experimental preprocessor module exposed through a package subpath import.
 
 ## Not Included Yet
 
