@@ -2,7 +2,7 @@
 
 TypeScript examples showing host-side usage of the Context Compiler core API.
 
-These examples target Python 0.6 semantic compatibility and primarily use core APIs.
+These examples target the Python 0.6.19 fixture/contracts compatibility baseline and primarily use core APIs.
 Request-scoped integrations can now persist full continuation state with checkpoint APIs.
 
 ## 01_persistent_guardrails.ts
