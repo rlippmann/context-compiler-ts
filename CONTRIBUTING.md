@@ -14,6 +14,26 @@ Behavior is defined by the Python reference implementation:
 
 The fixture corpus and directive grammar specification are authoritative.
 
+## Documentation Style
+
+For README, demo, integration, and package-listing docs, explain user-visible behavior before architecture.
+
+Prefer plain, concrete wording when accurate. Examples:
+- "rules and corrections that stick"
+- "saved compiler state"
+- "stored premise and policy rules"
+- "fixed, repeatable"
+- "explicit instructions stay consistent across turns"
+
+Avoid describing features only in architectural terms when a behavior-first explanation is possible.
+
+Specification and contract documents are different:
+- Preserve precise terminology
+- Preserve unambiguous behavioral guarantees
+- Do not weaken formal semantics for readability
+
+Do not rewrite captured outputs, fixture-sensitive examples, or eval evidence unless explicitly asked.
+
 ## Requirements
 
 All changes must:

@@ -1,13 +1,13 @@
 # Examples
 
-TypeScript examples showing host-side usage of the Context Compiler core API.
+TypeScript examples showing how host applications keep rules and corrections consistent across turns.
 
-These examples target Python 0.6 semantic compatibility and primarily use core APIs.
-Request-scoped integrations can now persist full continuation state with checkpoint APIs.
+These examples follow the Python 0.6 behavior baseline and use only core APIs.
+Request-scoped integrations can persist saved compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
 
 ## 01_persistent_guardrails.ts
 
-Demonstrates how a prohibition persists as authoritative state across later turns.
+Demonstrates how a prohibition persists as stored policy state across later turns.
 
 ## 02_configuration_and_correction.ts
 

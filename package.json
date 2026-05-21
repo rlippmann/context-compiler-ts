@@ -1,7 +1,7 @@
 {
   "name": "@rlippmann/context-compiler",
-  "version": "0.5.2",
-  "description": "Deterministic TypeScript control layer for LLM apps. Compiles explicit user directives into authoritative context state before model calls.",
+  "version": "0.6.1",
+  "description": "Store AI rules and corrections separately from chat history so they stay consistent across turns.",
   "keywords": [
     "llm",
     "prompt",
