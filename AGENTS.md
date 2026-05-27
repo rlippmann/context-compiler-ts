@@ -156,6 +156,12 @@ Prefer plain, concrete wording when accurate. Examples:
 - "fixed, repeatable"
 - "explicit instructions stay consistent across turns"
 
+Prefer direct phrasing:
+- Avoid noun stacks that make simple ideas sound abstract.
+- Avoid passive constructions when an active subject is clearer.
+- Prefer strong verbs and direct subjects.
+- Use simpler wording unless technical precision requires otherwise.
+
 Avoid describing features only in architectural terms when a behavior-first explanation is possible.
 
 Specification and contract documents are different:
