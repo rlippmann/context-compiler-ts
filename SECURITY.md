@@ -1,6 +1,6 @@
 # Security Policy
 
-Context Compiler is a deterministic directive/state engine for LLM applications.
+Context Compiler is a deterministic engine for directive/state handling in LLM applications.
 It is not positioned as a standalone security product.
 
 ## Reporting a Vulnerability
@@ -12,5 +12,5 @@ If that is not available, open a regular issue only after redacting sensitive de
 
 ## Scope Notes
 
-Reports are most useful when they include a minimal reproduction and expected vs actual behavior.
+Reports help most when they include a minimal reproduction and expected vs actual behavior.
 For parity-related concerns, include the relevant fixture or transcript-style reproduction.

@@ -2,7 +2,7 @@
 
 Tell the AI your rules once and keep them consistent across turns.
 
-Context Compiler helps applications keep explicit user instructions separate from the chat transcript. Rules and corrections are stored as compiler state, so hosts can apply them consistently to future model calls.
+Context Compiler helps applications keep explicit user instructions separate from the chat transcript. It stores rules and corrections as compiler state so hosts can apply them consistently on later model calls.
 
 The model writes responses. The compiler stores premise and policy rules.
 
@@ -12,9 +12,9 @@ This package is the TypeScript implementation of the Context Compiler engine, al
 
 Context Compiler lets a host application:
 - store explicit rules such as `use sqlite` or `prohibit docker`
-- replace or remove earlier rules without relying on the model to infer the correction
+- replace or remove earlier rules without asking the model to infer the correction
 - block ambiguous or conflicting rule updates before calling the model
-- save and restore stored rules between requests
+- save and restore rules between requests
 
 Each user input produces a decision for the host:
 - `update` -> stored premise/policy rules changed
@@ -62,9 +62,9 @@ npm install @rlippmann/context-compiler
 ## Examples
 
 - `examples/nextjs-basic/` — minimal Next.js App Router integration
-  - compiler-mediated request flow where explicit instructions stay consistent across turns
+  - request flow with compiler state where explicit instructions stay consistent across turns
   - `clarify` blocks LLM calls
-  - saved compiler state per session via checkpoint export/import for continuation-safe resume
+  - per-session compiler state via checkpoint export/import so sessions can resume safely
 - `examples/node-basic/` — minimal Node HTTP server integration
 
 ## Quick Start
@@ -91,7 +91,7 @@ if (decision.kind === 'update') {
 - `engine.step(input)` -> apply one user input and return a `Decision`.
 - `engine.state` -> current stored premise/policy rules snapshot.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
-- `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> continuation-safe checkpoint persistence (`authoritative_state` + pending continuation state).
+- `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> checkpoint persistence (`authoritative_state` + pending confirmation state) for safe resume.
 - `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint persistence helpers.
 - `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
 - `engine.apply_transcript(messages)` -> replay user messages onto an existing engine instance.

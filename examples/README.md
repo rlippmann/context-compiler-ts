@@ -3,7 +3,7 @@
 TypeScript examples showing how host applications keep rules and corrections consistent across turns.
 
 These examples follow the Python 0.6 behavior baseline and use only core APIs.
-Request-scoped integrations can persist saved compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
+Request-scoped integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
 
 ## 01_persistent_guardrails.ts
 
@@ -16,8 +16,8 @@ Demonstrates explicit premise lifecycle in 0.5:
 
 ## 03_ambiguity_with_clarification.ts
 
-Demonstrates contradiction clarify behavior before state mutation.
-Shows host-side clarify handling and LLM-call blocking behavior.
+Shows contradiction clarify behavior before state mutation.
+Shows host-side clarify handling and blocks LLM calls on clarify.
 
 ## 04_tool_governance_denylist.ts
 
