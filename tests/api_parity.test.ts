@@ -22,6 +22,9 @@ const PYTHON_TO_TS_EXPORT_MAP: Record<string, string> = {
   compile_transcript: 'compile_transcript',
   get_premise_value: 'getPremiseValue',
   get_policy_items: 'getPolicyItems',
+  DECISION_PASSTHROUGH: 'DECISION_PASSTHROUGH',
+  DECISION_UPDATE: 'DECISION_UPDATE',
+  DECISION_CLARIFY: 'DECISION_CLARIFY',
   TranscriptMessage: '__type_only__',
   Transcript: '__type_only__',
   ApplyResult: '__type_only__'
@@ -36,7 +39,8 @@ const PYTHON_TO_TS_ENGINE_MEMBER_MAP: Record<string, string> = {
   export_checkpoint: 'exportCheckpoint',
   import_checkpoint: 'importCheckpoint',
   export_checkpoint_json: 'exportCheckpointJson',
-  import_checkpoint_json: 'importCheckpointJson'
+  import_checkpoint_json: 'importCheckpointJson',
+  has_pending_clarification: 'has_pending_clarification'
 };
 
 function loadApiContractFixture(): ApiContractFixture {

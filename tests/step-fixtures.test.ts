@@ -4,6 +4,25 @@ import { loadStepFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadStepFixtures();
 
+function assertOptionalPendingFlag(expectedObj: unknown, engine: object, fixtureName: string): void {
+  if (typeof expectedObj !== 'object' || expectedObj === null) {
+    return;
+  }
+  if (!Object.prototype.hasOwnProperty.call(expectedObj, 'has_pending_clarification')) {
+    return;
+  }
+
+  const expectedPending = (expectedObj as Record<string, unknown>).has_pending_clarification;
+  expect(typeof expectedPending, `${fixtureName}: has_pending_clarification must be boolean`).toBe('boolean');
+
+  const maybeEngine = engine as Record<string, unknown>;
+  expect(typeof maybeEngine.has_pending_clarification, `${fixtureName}: missing has_pending_clarification()`).toBe(
+    'function'
+  );
+  const actualPending = (maybeEngine.has_pending_clarification as () => unknown)();
+  expect(actualPending).toBe(expectedPending);
+}
+
 describe('step fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
@@ -41,6 +60,7 @@ describe('step fixtures (conformance)', () => {
       }
 
       expect(engine.state).toEqual(expected.state);
+      assertOptionalPendingFlag(expected, engine, fixture.name);
     });
   }
 });

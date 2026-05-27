@@ -59,11 +59,14 @@ export interface CheckpointFixtureCase {
   initial_state: Record<string, JsonValue>;
   prelude?: string[];
   action: {
-    fn: 'import_checkpoint';
-    payload: unknown;
+    fn: 'import_checkpoint' | 'export_checkpoint_json' | 'import_checkpoint_json' | 'checkpoint_json_round_trip';
+    payload?: unknown;
   };
   expected: {
     state: Record<string, JsonValue>;
+    has_pending_clarification?: boolean;
+    payload_json_parseable?: boolean;
+    payload_object?: Record<string, JsonValue>;
     error?: {
       type: string;
       message_contains: string;
@@ -76,6 +79,7 @@ export interface CheckpointFixtureCase {
         prompt_to_user: string | null;
       };
       state: Record<string, JsonValue>;
+      has_pending_clarification?: boolean;
     };
   };
 }
@@ -83,12 +87,31 @@ export interface CheckpointFixtureCase {
 export interface PreprocessorFixtureCase {
   name: string;
   input?: string;
-  kind?: 'validator';
+  kind?: 'validator' | 'parse';
   raw_output?: unknown;
   source_input?: string;
-  expected: {
+  expected?: {
     classification: string;
     output: string | null;
+  };
+  expected_parsed?: string | null;
+}
+
+export interface ControllerFixtureCase {
+  id: string;
+  kind: 'controller';
+  initial_state: Record<string, JsonValue>;
+  prelude?: string[];
+  action:
+    | { fn: 'step'; input: string }
+    | { fn: 'preview'; input: string }
+    | { fn: 'state_diff'; before: Record<string, JsonValue>; after: Record<string, JsonValue> };
+  expected: {
+    result?: Record<string, JsonValue>;
+    diff?: Record<string, JsonValue>;
+    state?: Record<string, JsonValue>;
+    state_after_preview?: Record<string, JsonValue>;
+    has_pending_clarification?: boolean;
   };
 }
 
@@ -158,6 +181,10 @@ export async function loadStateJsonFixtures(): Promise<NamedFixture<StateJsonFix
 
 export async function loadCheckpointFixtures(): Promise<NamedFixture<CheckpointFixtureCase>[]> {
   return loadFixtureFiles<CheckpointFixtureCase>('checkpoint');
+}
+
+export async function loadControllerFixtures(): Promise<NamedFixture<ControllerFixtureCase>[]> {
+  return loadFixtureFiles<ControllerFixtureCase>('controller');
 }
 
 export async function loadPreprocessorFixtures(): Promise<NamedFixture<PreprocessorFixtureCase>[]> {
