@@ -6,7 +6,7 @@ Context Compiler helps applications keep explicit user instructions separate fro
 
 The model writes responses. The compiler stores premise and policy rules.
 
-This package is the TypeScript implementation of the Context Compiler engine, aligned with the Python reference implementation.
+This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.7 API behavior.
 
 ## What it does
 
@@ -35,9 +35,9 @@ Directive examples:
 - TS `0.N.y` targets semantic compatibility with the Python `0.N.x` line.
 - Patch versions evolve independently by language/repo.
 
-## Included in 0.6.0
+## 0.7 Parity Scope
 
-- Core engine behavior aligned with Python 0.6 behavior.
+- Core engine behavior aligned with Python 0.7 behavior.
 - Shared behavior test coverage for:
   - single-turn rule updates
   - transcript replay
@@ -47,7 +47,10 @@ Directive examples:
   - public API behavior
 - Core public API for engine usage and transcript compilation.
 - Checkpoint APIs for saving and restoring rules plus pending clarification state.
+- Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
+- Decision constants exported for host-side checks.
 - Experimental preprocessor module exposed through a package subpath import.
+- Fixture parity aligned to the Python 0.7.3 fixture snapshot.
 
 ## Not Included Yet
 
@@ -90,12 +93,17 @@ if (decision.kind === 'update') {
 - `createEngine(init?)` -> create an engine instance.
 - `engine.step(input)` -> apply one user input and return a `Decision`.
 - `engine.state` -> current stored premise/policy rules snapshot.
+- `engine.has_pending_clarification()` -> check whether confirmation-only input is currently required.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
 - `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> checkpoint persistence (`authoritative_state` + pending confirmation state) for safe resume.
-- `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint persistence helpers.
+- `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint wrapper persistence helpers.
 - `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
 - `engine.apply_transcript(messages)` -> replay user messages onto an existing engine instance.
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
+- `step(engine, input)` -> controller step envelope (`output_version`, `mode`, `decision`, `state`).
+- `preview(engine, input)` -> dry-run step envelope with `state_before`, `state_after`, `diff`, and `would_mutate` (live engine state is restored).
+- `state_diff(before, after)` -> structural state diff used by preview.
+- `DECISION_PASSTHROUGH` / `DECISION_UPDATE` / `DECISION_CLARIFY` -> decision kind constants.
 
 ## Experimental Preprocessor
 
