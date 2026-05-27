@@ -183,6 +183,7 @@ Typical workflow:
 Do not refactor broadly while tests are failing.
 
 When opening a PR, use the repository PR template (`.github/pull_request_template.md`) and fill each section.
+When creating issues, use `bug_report.md` for defects/regressions and `feature_request.md` for enhancements/new capabilities (under `.github/ISSUE_TEMPLATE/`).
 
 ## Validation
 
