@@ -1,10 +1,10 @@
 # LLM Demos
 
-These scripts show side-by-side LLM outcomes with and without stored compiler rules, aligned to the [Python reference demos](https://github.com/rlippmann/context-compiler/blob/main/demos/README.md).
+These scripts show side-by-side LLM outcomes with and without stored compiler rules, aligned with the [Python reference demos](https://github.com/rlippmann/context-compiler/blob/main/demos/README.md).
 
-Scored demos compare three host behaviors:
+Scored demos compare three host flows:
 - baseline
-- compiler-mediated (full transcript + injected stored rules/state)
+- compiler path (full transcript + injected stored rules/state)
 - compiler+compact (compacted transcript + injected stored rules/state)
 
 Demo 06 is informational (context/prompt compaction metrics), not scored.

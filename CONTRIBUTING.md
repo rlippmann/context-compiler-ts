@@ -109,7 +109,7 @@ Commands:
 
 ## Notes
 
-This is a conformance-driven port, not a redesign.
+This port follows conformance fixtures; it is not a redesign.
 
 When in doubt, match the Python implementation and fixtures exactly.
 

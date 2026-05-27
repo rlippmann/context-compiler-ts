@@ -1,6 +1,6 @@
 # Structured Regression Fixtures
 
-These fixtures define deterministic, per-turn behavioral regression coverage for the Python engine.
+These fixtures define deterministic per-turn regression coverage for the Python engine.
 
 ## Layout
 
@@ -22,7 +22,7 @@ Each expected turn uses:
 
 ## Why Checkpoint Every Turn
 
-A full checkpoint is stored and compared on every turn so regressions are visible in:
+A full checkpoint is stored and compared on every turn so you can see regressions in:
 
 * authoritative state
 * pending continuation state
@@ -55,7 +55,7 @@ These surfaces are tested separately because:
 - REPL output may intentionally differ from the underlying state representation
 - preprocessor behavior is non-deterministic and outside the engine contract
 
-This fixture set is the **canonical engine-level conformance surface**, and may be reused by other implementations (e.g., TypeScript) to validate identical engine behavior.
+This fixture set is the **canonical engine-level conformance surface**. Other implementations (for example, TypeScript) can reuse it to validate identical engine behavior.
 
 ## Fixture Policy
 
@@ -63,4 +63,4 @@ These fixtures are contract artifacts. Changes should be intentional and reviewe
 
 If deterministic engine behavior changes, update the corresponding `engine-regression/structured` fixtures in the same PR and explain the behavioral contract change.
 
-Fixture regeneration must be explicit and opt-in. Normal test runs are read-only and must fail on mismatches rather than rewriting fixtures.
+Fixture regeneration must be explicit and opt-in. Normal test runs are read-only and fail on mismatches instead of rewriting fixtures.
