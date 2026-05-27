@@ -182,6 +182,8 @@ Typical workflow:
 
 Do not refactor broadly while tests are failing.
 
+When opening a PR, use the repository PR template (`.github/pull_request_template.md`) and fill each section.
+
 ## Validation
 
 Required before reporting task completion:
