@@ -1,27 +1,14 @@
 {
-  "id": "checkpoint_import_checkpoint_pending_null_clears_existing_pending",
+  "id": "checkpoint_import_checkpoint_json_restores_authoritative_state_no_pending",
   "kind": "checkpoint",
   "initial_state": {
     "premise": null,
     "policies": {},
     "version": 2
   },
-  "prelude": [
-    "use kubectl instead of docker"
-  ],
   "action": {
-    "fn": "import_checkpoint",
-    "payload": {
-      "checkpoint_version": 1,
-      "authoritative_state": {
-        "premise": "baseline",
-        "policies": {
-          "pytest": "use"
-        },
-        "version": 2
-      },
-      "pending": null
-    }
+    "fn": "import_checkpoint_json",
+    "payload": "{\"authoritative_state\":{\"policies\":{\"pytest\":\"use\"},\"premise\":\"baseline\",\"version\":2},\"checkpoint_version\":1,\"pending\":null}"
   },
   "expected": {
     "has_pending_clarification": false,
@@ -45,7 +32,8 @@
           "pytest": "use"
         },
         "version": 2
-      }
+      },
+      "has_pending_clarification": false
     }
   }
 }

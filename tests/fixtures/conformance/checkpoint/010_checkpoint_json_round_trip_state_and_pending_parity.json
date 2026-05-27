@@ -1,5 +1,5 @@
 {
-  "id": "checkpoint_import_checkpoint_invalid_authoritative_state_rejected_atomically",
+  "id": "checkpoint_checkpoint_json_round_trip_state_and_pending_parity",
   "kind": "checkpoint",
   "initial_state": {
     "premise": null,
@@ -10,28 +10,15 @@
     "use kubectl instead of docker"
   ],
   "action": {
-    "fn": "import_checkpoint",
-    "payload": {
-      "checkpoint_version": 1,
-      "authoritative_state": {
-        "premise": null,
-        "policies": [],
-        "version": 2
-      },
-      "pending": null
-    }
+    "fn": "checkpoint_json_round_trip"
   },
   "expected": {
-    "error": {
-      "type": "ValueError",
-      "message_contains": "Invalid state payload"
-    },
-    "has_pending_clarification": true,
     "state": {
       "premise": null,
       "policies": {},
       "version": 2
     },
+    "has_pending_clarification": true,
     "followup": {
       "input": "maybe",
       "decision": {
@@ -43,7 +30,8 @@
         "premise": null,
         "policies": {},
         "version": 2
-      }
+      },
+      "has_pending_clarification": true
     }
   }
 }

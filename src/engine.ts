@@ -10,6 +10,7 @@ import type {
 export interface Engine {
   step(input: string): Decision;
   readonly state: EngineState;
+  has_pending_clarification(): boolean;
   apply_transcript(messages: unknown[]): TranscriptResult;
   exportJson(): string;
   importJson(payload: string): void;
@@ -61,6 +62,10 @@ class EngineImpl implements Engine {
 
   get state(): EngineState {
     return cloneState(this._state);
+  }
+
+  has_pending_clarification(): boolean {
+    return this._pendingReplacement !== null;
   }
 
   exportJson(): string {

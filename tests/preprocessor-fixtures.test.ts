@@ -5,6 +5,7 @@ import { loadPreprocessorFixtures } from './harness/fixtures.js';
 type PreprocessorLike = {
   preprocess_heuristic?: (message: string) => unknown;
   validate_preprocessor_output?: (raw: unknown, opts?: { source_input?: string }) => unknown;
+  parse_preprocessor_output?: (raw: unknown, opts?: { source_input?: string }) => string | null;
 };
 
 const fixtures = await loadPreprocessorFixtures();
@@ -69,6 +70,17 @@ describe('preprocessor fixtures (conformance)', () => {
           })
         );
         expect(actual).toEqual(fixture.payload.expected);
+        return;
+      }
+
+      if (fixture.payload.kind === 'parse') {
+        if (typeof preprocessor.parse_preprocessor_output !== 'function') {
+          throw new Error('Missing parse_preprocessor_output export');
+        }
+        const parsed = preprocessor.parse_preprocessor_output(fixture.payload.raw_output, {
+          source_input: fixture.payload.source_input
+        });
+        expect(parsed).toEqual(fixture.payload.expected_parsed);
         return;
       }
 
