@@ -98,8 +98,10 @@ Commands:
 
 - `FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/conformance npm run fixtures:sync` to copy fixtures from Python into `tests/fixtures/conformance`
 - `FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/conformance npm run fixtures:check` to detect drift between local fixtures and Python fixtures
+- `PREPROCESSOR_FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/preprocessor npm run fixtures:preprocessor:check` to detect preprocessor fixture drift
+- `STRUCTURED_FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/engine-regression/structured npm run fixtures:structured:check` to detect structured regression fixture drift
 
-`FIXTURES_SOURCE` is required for both commands.
+Each check command requires its matching `*_SOURCE` variable.
 
 ## Pull Requests
 
