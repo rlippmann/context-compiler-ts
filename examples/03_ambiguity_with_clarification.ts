@@ -1,4 +1,4 @@
-import { createEngine } from '../src/index.js';
+import { createEngine, get_clarify_prompt, is_clarify } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -14,7 +14,7 @@ export function runExample03(): {
   const contradictionDecision = engine.step('use peanuts');
 
   let llmCalled = false;
-  if (contradictionDecision.kind !== 'clarify') {
+  if (!is_clarify(contradictionDecision)) {
     llmCalled = true;
   }
 
@@ -22,7 +22,7 @@ export function runExample03(): {
 
   return {
     clarifyKind: contradictionDecision.kind,
-    clarifyPrompt: contradictionDecision.prompt_to_user,
+    clarifyPrompt: get_clarify_prompt(contradictionDecision),
     llmCalled,
     resetKind: resetDecision.kind
   };
