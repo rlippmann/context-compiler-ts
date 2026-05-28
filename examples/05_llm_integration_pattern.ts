@@ -1,4 +1,4 @@
-import { createEngine } from '../src/index.js';
+import { createEngine, is_passthrough, is_update } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -6,10 +6,10 @@ type HostAction = 'call_llm_without_state' | 'call_llm_with_state' | 'show_clari
 
 function handleTurn(engine: ReturnType<typeof createEngine>, input: string): HostAction {
   const decision = engine.step(input);
-  if (decision.kind === 'passthrough') {
+  if (is_passthrough(decision)) {
     return 'call_llm_without_state';
   }
-  if (decision.kind === 'update') {
+  if (is_update(decision)) {
     return 'call_llm_with_state';
   }
   return 'show_clarify_prompt';

@@ -1,5 +1,13 @@
 import http from 'node:http';
-import { createEngine, getPolicyItems, getPremiseValue, type EngineState } from '@rlippmann/context-compiler';
+import {
+  DECISION_CLARIFY,
+  POLICY_USE,
+  createEngine,
+  getPolicyItems,
+  getPremiseValue,
+  is_clarify,
+  type EngineState
+} from '@rlippmann/context-compiler';
 import {
   parse_preprocessor_output,
   preprocess_heuristic
@@ -12,7 +20,7 @@ type ChatBody = {
 };
 
 type ChatResponse =
-  | { kind: 'clarify'; prompt_to_user: string | null }
+  | { kind: typeof DECISION_CLARIFY; prompt_to_user: string | null }
   | { kind: 'continue'; output: string };
 
 const checkpointBySession = new Map<string, string>(); // sessionId -> engine.exportCheckpointJson()
@@ -26,7 +34,7 @@ function saveCheckpoint(sessionId: string, json: string): void {
 }
 
 function stateToSystemPrompt(state: EngineState): string {
-  const useItems = new Set(getPolicyItems(state, 'use'));
+  const useItems = new Set(getPolicyItems(state, POLICY_USE));
   const policies = getPolicyItems(state)
     .map((item: string) => `- ${useItems.has(item) ? 'USE' : 'PROHIBIT'}: ${item}`)
     .join('\n');
@@ -103,7 +111,7 @@ const server = http.createServer(async (req, res) => {
       const replay = engine.apply_transcript(replayMessages);
       if (replay.kind === 'confirm') {
         saveCheckpoint(sessionId, engine.exportCheckpointJson());
-        const payload: ChatResponse = { kind: 'clarify', prompt_to_user: replay.prompt_to_user };
+        const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: replay.prompt_to_user };
         sendJson(res, 200, payload);
         return;
       }
@@ -112,9 +120,9 @@ const server = http.createServer(async (req, res) => {
 
     const preprocessedInput = normalizeInputWithPreprocessor(input);
     const decision = engine.step(preprocessedInput);
-    if (decision.kind === 'clarify') {
+    if (is_clarify(decision)) {
       saveCheckpoint(sessionId, engine.exportCheckpointJson());
-      const payload: ChatResponse = { kind: 'clarify', prompt_to_user: decision.prompt_to_user };
+      const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: decision.prompt_to_user };
       sendJson(res, 200, payload);
       return;
     }

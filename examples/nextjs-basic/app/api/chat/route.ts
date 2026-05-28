@@ -1,4 +1,12 @@
-import { createEngine, getPolicyItems, getPremiseValue, type EngineState } from '@rlippmann/context-compiler';
+import {
+  DECISION_CLARIFY,
+  POLICY_USE,
+  createEngine,
+  getPolicyItems,
+  getPremiseValue,
+  is_clarify,
+  type EngineState
+} from '@rlippmann/context-compiler';
 import { loadSessionState, saveSessionState } from '../../../lib/context-sessions';
 
 type ChatBody = {
@@ -8,11 +16,11 @@ type ChatBody = {
 };
 
 type ChatResponse =
-  | { kind: 'clarify'; prompt_to_user: string | null }
+  | { kind: typeof DECISION_CLARIFY; prompt_to_user: string | null }
   | { kind: 'continue'; output: string };
 
 function stateToSystemPrompt(state: EngineState): string {
-  const useItems = new Set(getPolicyItems(state, 'use'));
+  const useItems = new Set(getPolicyItems(state, POLICY_USE));
   const policies = getPolicyItems(state)
     .map((item) => `- ${useItems.has(item) ? 'USE' : 'PROHIBIT'}: ${item}`)
     .join('\n');
@@ -64,7 +72,7 @@ export async function POST(req: Request): Promise<Response> {
     if (replay.kind === 'confirm') {
       saveSessionState(sessionId, engine.exportCheckpointJson());
       const payload: ChatResponse = {
-        kind: 'clarify',
+        kind: DECISION_CLARIFY,
         prompt_to_user: replay.prompt_to_user
       };
       return Response.json(payload);
@@ -75,10 +83,10 @@ export async function POST(req: Request): Promise<Response> {
 
   const decision = engine.step(input);
 
-  if (decision.kind === 'clarify') {
+  if (is_clarify(decision)) {
     saveSessionState(sessionId, engine.exportCheckpointJson());
     const payload: ChatResponse = {
-      kind: 'clarify',
+      kind: DECISION_CLARIFY,
       prompt_to_user: decision.prompt_to_user
     };
     return Response.json(payload);

@@ -73,16 +73,16 @@ npm install @rlippmann/context-compiler
 ## Quick Start
 
 ```ts
-import { createEngine } from '@rlippmann/context-compiler';
+import { createEngine, get_clarify_prompt, is_clarify, is_update } from '@rlippmann/context-compiler';
 
 const engine = createEngine();
 const decision = engine.step('set premise concise replies');
 
-if (decision.kind === 'update') {
+if (is_update(decision)) {
   // Use the updated stored rules from the engine.
   console.log(engine.state);
-} else if (decision.kind === 'clarify') {
-  console.log(decision.prompt_to_user);
+} else if (is_clarify(decision)) {
+  console.log(get_clarify_prompt(decision));
 } else {
   // passthrough
 }

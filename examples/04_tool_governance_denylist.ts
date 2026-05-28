@@ -1,4 +1,4 @@
-import { createEngine, getPolicyItems } from '../src/index.js';
+import { POLICY_PROHIBIT, createEngine, getPolicyItems } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -10,7 +10,7 @@ export function runExample04(): {
   const engine = createEngine();
 
   const decision = engine.step('prohibit docker');
-  const prohibited = new Set(getPolicyItems(engine.state, 'prohibit'));
+  const prohibited = new Set(getPolicyItems(engine.state, POLICY_PROHIBIT));
 
   const tools = ['docker', 'kubectl'];
   const blockedTools = tools.filter((tool) => prohibited.has(tool));

@@ -1,4 +1,13 @@
-import { createEngine, getPolicyItems, getPremiseValue } from '../src/index.js';
+import {
+  POLICY_PROHIBIT,
+  POLICY_USE,
+  createEngine,
+  getPolicyItems,
+  getPremiseValue,
+  get_clarify_prompt,
+  is_clarify,
+  is_update
+} from '../src/index.js';
 import type { Decision, EngineState } from '../src/index.js';
 import type { Message } from './llm_client.js';
 
@@ -41,8 +50,8 @@ function printStateSummary(state: EngineState): void {
   const premiseText = premiseValue ?? '(none)';
   console.log('compiled state:');
   console.log(`- premise: ${premiseText}`);
-  console.log(`- use policies: ${policyValuesText(state, 'use')}`);
-  console.log(`- prohibit policies: ${policyValuesText(state, 'prohibit')}`);
+  console.log(`- use policies: ${policyValuesText(state, POLICY_USE)}`);
+  console.log(`- prohibit policies: ${policyValuesText(state, POLICY_PROHIBIT)}`);
 }
 
 function printMultilinePrompt(label: string, prompt: string): void {
@@ -73,13 +82,14 @@ export function printDecision(title: string, decision: Decision, state: EngineSt
     return;
   }
   console.log(`Compiler decision (${title}):`);
-  if (decision.kind === 'update') {
+  if (is_update(decision)) {
     console.log('result: updated');
     printStateSummary(state);
-  } else if (decision.kind === 'clarify') {
+  } else if (is_clarify(decision)) {
     console.log('result: clarify');
-    if (decision.prompt_to_user) {
-      printMultilinePrompt('clarify prompt', decision.prompt_to_user);
+    const clarifyPrompt = get_clarify_prompt(decision);
+    if (clarifyPrompt) {
+      printMultilinePrompt('clarify prompt', clarifyPrompt);
     }
     printStateSummary(state);
   } else {
@@ -227,12 +237,12 @@ export function compactUserTurns(userTurns: string[]): {
 
   for (const turn of userTurns) {
     const decision = engine.step(turn);
-    if (decision.kind === 'update') {
+    if (is_update(decision)) {
       continue;
     }
     compactedTurns.push(turn);
-    if (decision.kind === 'clarify') {
-      promptToUser = decision.prompt_to_user;
+    if (is_clarify(decision)) {
+      promptToUser = get_clarify_prompt(decision);
       break;
     }
   }
@@ -246,8 +256,8 @@ export function compactUserTurns(userTurns: string[]): {
 
 export function buildCompiledSystemPrompt(state: EngineState): string {
   const premise = getPremiseValue(state) ?? '(unset)';
-  const useItems = getPolicyItems(state, 'use');
-  const prohibitItems = getPolicyItems(state, 'prohibit');
+  const useItems = getPolicyItems(state, POLICY_USE);
+  const prohibitItems = getPolicyItems(state, POLICY_PROHIBIT);
   const useText = useItems.length > 0 ? useItems.join(', ') : '(none)';
   const prohibitText = prohibitItems.length > 0 ? prohibitItems.join(', ') : '(none)';
 
