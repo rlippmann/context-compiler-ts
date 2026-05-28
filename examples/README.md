@@ -3,7 +3,7 @@
 TypeScript examples showing how host applications keep rules and corrections consistent across turns.
 
 These examples follow the Python 0.7 behavior baseline and use only core APIs.
-Request-scoped integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
+Request-based integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
 
 ## 01_persistent_guardrails.ts
 
@@ -30,7 +30,7 @@ Includes single-item correction with `remove policy <item>`.
 
 ## 06_transcript_replay.ts
 
-Demonstrates transcript replay behavior with `compile_transcript(messages)` and replay onto current engine state via `engine.apply_transcript(...)`.
+Shows transcript replay with `compile_transcript(messages)` and replay onto current engine state with `engine.apply_transcript(...)`.
 
 ## 07_single_policy_correction.ts
 
@@ -39,5 +39,5 @@ Demonstrates explicit single-policy correction without `reset policies`:
 
 ## 08_controller_preview_diff.ts
 
-Demonstrates controller-layer auditability with `preview(engine, input)` and `state_diff(before, after)`.
+Shows controller-layer auditability with `preview(engine, input)` and `state_diff(before, after)`.
 Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.

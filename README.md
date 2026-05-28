@@ -6,7 +6,7 @@ Context Compiler helps applications keep explicit user instructions separate fro
 
 The model writes responses. The compiler stores premise and policy rules.
 
-This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.7 API behavior.
+This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.7 behavior.
 
 ## What it does
 
@@ -45,12 +45,12 @@ Directive examples:
   - checkpoint restore
   - experimental preprocessor behavior
   - public API behavior
-- Core public API for engine usage and transcript compilation.
+- Core public API for engine usage and transcript replay.
 - Checkpoint APIs for saving and restoring rules plus pending clarification state.
 - Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
-- Decision constants exported for host-side checks.
+- Decision constants for host-side checks.
 - Experimental preprocessor module exposed through a package subpath import.
-- Fixture parity aligned to the Python 0.7.3 fixture snapshot.
+- Fixture parity aligned with the Python 0.7.3 fixture snapshot.
 
 ## Not Included Yet
 
@@ -73,7 +73,7 @@ npm install @rlippmann/context-compiler
 ## Quick Start
 
 ```ts
-import { createEngine, get_clarify_prompt, is_clarify, is_update } from '@rlippmann/context-compiler';
+import { createEngine, get_clarify_prompt, is_clarify, is_passthrough, is_update } from '@rlippmann/context-compiler';
 
 const engine = createEngine();
 const decision = engine.step('set premise concise replies');
@@ -83,7 +83,7 @@ if (is_update(decision)) {
   console.log(engine.state);
 } else if (is_clarify(decision)) {
   console.log(get_clarify_prompt(decision));
-} else {
+} else if (is_passthrough(decision)) {
   // passthrough
 }
 ```
@@ -95,7 +95,7 @@ if (is_update(decision)) {
 - `engine.state` -> current stored premise/policy rules snapshot.
 - `engine.has_pending_clarification()` -> check whether confirmation-only input is currently required.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
-- `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> checkpoint persistence (`authoritative_state` + pending confirmation state) for safe resume.
+- `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> checkpoint persistence (`authoritative_state` + pending confirmation state) that safely resumes pending confirmations.
 - `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint wrapper persistence helpers.
 - `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
 - `engine.apply_transcript(messages)` -> replay user messages onto an existing engine instance.

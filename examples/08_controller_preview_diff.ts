@@ -2,8 +2,11 @@ import {
   DECISION_CLARIFY,
   DECISION_PASSTHROUGH,
   DECISION_UPDATE,
+  POLICY_PROHIBIT,
+  POLICY_USE,
   createEngine,
   getPolicyItems,
+  get_clarify_prompt,
   getPremiseValue,
   get_decision_state,
   is_clarify,
@@ -24,8 +27,8 @@ function summarizeState(state: EngineState): {
 } {
   return {
     premise: getPremiseValue(state),
-    usePolicies: getPolicyItems(state, 'use'),
-    prohibitPolicies: getPolicyItems(state, 'prohibit')
+    usePolicies: getPolicyItems(state, POLICY_USE),
+    prohibitPolicies: getPolicyItems(state, POLICY_PROHIBIT)
   };
 }
 
@@ -46,7 +49,7 @@ function summarizeDecision(decision: Decision): {
   if (is_clarify(decision)) {
     return {
       kind: DECISION_CLARIFY,
-      promptToUser: decision.prompt_to_user,
+      promptToUser: get_clarify_prompt(decision),
       decisionState: null
     };
   }
