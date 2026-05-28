@@ -40,12 +40,26 @@ jobs:
           git -C "${PY_FIXTURE_CHECKOUT}" checkout --detach FETCH_HEAD
           echo "Resolved fixture source: ${PY_FIXTURE_CHECKOUT}/tests/fixtures/conformance"
 
-      - name: Check fixture drift
+      - name: Check conformance fixture drift
         env:
           FIXTURES_SOURCE: /tmp/context-compiler-source/tests/fixtures/conformance
         run: |
           echo "Using FIXTURES_SOURCE=${FIXTURES_SOURCE}"
           npm run fixtures:check
+
+      - name: Check preprocessor fixture drift
+        env:
+          PREPROCESSOR_FIXTURES_SOURCE: /tmp/context-compiler-source/tests/fixtures/preprocessor
+        run: |
+          echo "Using PREPROCESSOR_FIXTURES_SOURCE=${PREPROCESSOR_FIXTURES_SOURCE}"
+          npm run fixtures:preprocessor:check
+
+      - name: Check structured fixture drift
+        env:
+          STRUCTURED_FIXTURES_SOURCE: /tmp/context-compiler-source/tests/fixtures/engine-regression/structured
+        run: |
+          echo "Using STRUCTURED_FIXTURES_SOURCE=${STRUCTURED_FIXTURES_SOURCE}"
+          npm run fixtures:structured:check
 
       - name: Build
         run: npm run build
