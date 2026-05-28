@@ -36,3 +36,8 @@ Demonstrates transcript replay behavior with `compile_transcript(messages)` and 
 
 Demonstrates explicit single-policy correction without `reset policies`:
 `prohibit peanuts` -> `remove policy peanuts` -> `use peanuts`.
+
+## 08_controller_preview_diff.ts
+
+Demonstrates controller-layer auditability with `preview(engine, input)` and `state_diff(before, after)`.
+Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.
