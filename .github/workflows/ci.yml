@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PY_FIXTURE_REF: 0e923284d4c1194a1f390fd75cd361cb48c8efd3
+      PY_FIXTURE_REF: 6ca2ad74136b46a4da3b67061ecfd835e0ccf0b8
       PY_FIXTURE_CHECKOUT: /tmp/context-compiler-source
 
     steps:
