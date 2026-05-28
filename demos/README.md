@@ -2,16 +2,16 @@
 
 These scripts show side-by-side LLM outcomes with and without stored compiler rules, aligned with the [Python reference demos](https://github.com/rlippmann/context-compiler/blob/main/demos/README.md).
 
-Scored demos compare three host flows:
+Scored demos compare three host-side flows:
 - baseline
-- compiler path (full transcript + injected stored rules/state)
-- compiler+compact (compacted transcript + injected stored rules/state)
+- compiler path (full transcript + injected stored rules and state)
+- compiler+compact (compacted transcript + injected stored rules and state)
 
 Demo 06 is informational (context/prompt compaction metrics), not scored.
 
 ## Result variability note
 
-LLM demo outcomes can vary across environments. In practice, PASS/FAIL patterns may differ based on:
+LLM demo outcomes can vary across environments. PASS/FAIL patterns may differ based on:
 - provider
 - client layer
 - model serving path
