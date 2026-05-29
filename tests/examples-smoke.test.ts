@@ -85,4 +85,14 @@ describe('examples smoke', () => {
     expect(run.stdout).toContain('example 07: single policy correction');
     expect(run.stdout).toContain('"finalPolicy": "use"');
   });
+
+  it('integration: vercel ai sdk structured output', () => {
+    const run = runExampleScript('integrations/vercel_ai_sdk_structured_output/index.js');
+    expect(run.status).toBe(0);
+    expect(run.stderr.trim()).toBe('');
+    expect(run.stdout).toContain('integration example: vercel ai sdk structured output (host-side schema selection)');
+    expect(run.stdout).toContain('"availableSchemaNames": [');
+    expect(run.stdout).toContain('"python_script"');
+    expect(run.stdout).toContain('"schemaName": "python_script"');
+  });
 });
