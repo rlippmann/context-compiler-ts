@@ -69,6 +69,7 @@ npm install @rlippmann/context-compiler
   - `clarify` blocks LLM calls
   - per-session compiler state via checkpoint export/import so sessions can resume safely
 - `examples/node-basic/` — minimal Node HTTP server integration
+- `examples/integrations/vercel_ai_sdk_structured_output/` — host-side schema selection for Vercel AI SDK structured output
 
 ## Quick Start
 

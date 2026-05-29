@@ -41,3 +41,7 @@ Demonstrates explicit single-policy correction without `reset policies`:
 
 Shows controller-layer auditability with `preview(engine, input)` and `state_diff(before, after)`.
 Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.
+
+## Integrations
+
+- [`examples/integrations/vercel_ai_sdk_structured_output/README.md`](/Users/rlippmann/Source/context-compiler-ts/examples/integrations/vercel_ai_sdk_structured_output/README.md)
