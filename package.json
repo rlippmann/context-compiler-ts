@@ -1,6 +1,6 @@
 {
   "name": "@rlippmann/context-compiler",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Store AI rules and corrections separately from chat history so they stay consistent across turns.",
   "keywords": [
     "llm",
@@ -39,6 +39,18 @@
   },
   "files": [
     "dist",
+    "examples/README.md",
+    "examples/integrations/nextjs-basic/README.md",
+    "examples/integrations/nextjs-basic/app",
+    "examples/integrations/nextjs-basic/lib",
+    "examples/integrations/nextjs-basic/next-env.d.ts",
+    "examples/integrations/nextjs-basic/package.json",
+    "examples/integrations/nextjs-basic/package-lock.json",
+    "examples/integrations/nextjs-basic/tsconfig.json",
+    "examples/integrations/node-basic/README.md",
+    "examples/integrations/node-basic/server.ts",
+    "examples/integrations/vercel_ai_sdk_structured_output/README.md",
+    "examples/integrations/vercel_ai_sdk_structured_output/index.ts",
     "LICENSE",
     "README.md"
   ],

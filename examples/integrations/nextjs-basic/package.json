@@ -10,7 +10,7 @@
     "test:integration": "node ../../scripts/test-nextjs-integration.js"
   },
   "dependencies": {
-    "@rlippmann/context-compiler": "file:../..",
+    "@rlippmann/context-compiler": "file:../../..",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
