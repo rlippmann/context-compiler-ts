@@ -12,7 +12,7 @@ npm install
 ```
 
 ```bash
-npx tsx examples/node-basic/server.ts
+npx tsx examples/integrations/node-basic/server.ts
 ```
 
 This example uses `exportCheckpointJson()` / `importCheckpointJson()` for per-session persistence.

@@ -44,4 +44,6 @@ Shows that preview does not mutate live engine state, then applies the same inpu
 
 ## Integrations
 
+- [`examples/integrations/nextjs-basic/README.md`](/Users/rlippmann/Source/context-compiler-ts/examples/integrations/nextjs-basic/README.md)
+- [`examples/integrations/node-basic/README.md`](/Users/rlippmann/Source/context-compiler-ts/examples/integrations/node-basic/README.md)
 - [`examples/integrations/vercel_ai_sdk_structured_output/README.md`](/Users/rlippmann/Source/context-compiler-ts/examples/integrations/vercel_ai_sdk_structured_output/README.md)

@@ -64,11 +64,11 @@ npm install @rlippmann/context-compiler
 
 ## Examples
 
-- `examples/nextjs-basic/` — minimal Next.js App Router integration
+- `examples/integrations/nextjs-basic/` — minimal Next.js App Router integration
   - request flow with compiler state where explicit instructions stay consistent across turns
   - `clarify` blocks LLM calls
   - per-session compiler state via checkpoint export/import so sessions can resume safely
-- `examples/node-basic/` — minimal Node HTTP server integration
+- `examples/integrations/node-basic/` — minimal Node HTTP server integration
 - `examples/integrations/vercel_ai_sdk_structured_output/` — host-side schema selection for Vercel AI SDK structured output
 
 ## Quick Start
