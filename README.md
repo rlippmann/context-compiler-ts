@@ -144,4 +144,28 @@ Experimental preprocessor APIs are available via package subpath:
 import { preprocessHeuristic, parsePreprocessorOutput, validatePreprocessorOutput } from '@rlippmann/context-compiler/experimental/preprocessor';
 ```
 
+### Experimental Preprocessor Quick Start
+
+```ts
+function stepWithOptionalPreprocessor(engine: ReturnType<typeof createEngine>, userInput: string) {
+  if (engine.hasPendingClarification()) {
+    return engine.step(userInput);
+  }
+
+  const heuristic = preprocessHeuristic(userInput);
+  let engineInput = userInput;
+
+  if (heuristic.classification === 'directive' && heuristic.output !== null) {
+    const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: userInput });
+    if (parsed !== null) {
+      engineInput = parsed;
+    }
+  }
+
+  return engine.step(engineInput);
+}
+```
+
+The preprocessor is a convenience layer. The engine remains the authoritative source of state changes.
+
 This module is intentionally experimental and separate from the deterministic core engine API.

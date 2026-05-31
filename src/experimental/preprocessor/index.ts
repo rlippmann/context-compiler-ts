@@ -18,6 +18,11 @@ export const PreprocessResult = {
   output: null
 } as const;
 
+type PreprocessorSourceOptions = {
+  source_input?: string;
+  sourceInput?: string;
+};
+
 const PROMPT_TOKEN_NULL_OR_VALUE = '<NULL_OR_VALUE>';
 const PROMPT_TOKEN_POLICY_SET = '<SET OF CURRENT POLICY ITEMS>';
 
@@ -303,11 +308,11 @@ function validateTextOutput(rawOutput: string): PreprocessResultType {
 
 export function validate_preprocessor_output(
   rawOutput: unknown,
-  opts?: { source_input?: string }
+  opts?: PreprocessorSourceOptions
 ): PreprocessResultType {
   const validated = typeof rawOutput === 'string' ? validateTextOutput(rawOutput) : validateStructuredOutput(rawOutput);
 
-  const sourceInput = opts?.source_input;
+  const sourceInput = opts?.sourceInput ?? opts?.source_input;
   if (
     sourceInput != null &&
     validated.classification === PREPROCESS_OUTCOME_DIRECTIVE &&
@@ -322,7 +327,7 @@ export function validate_preprocessor_output(
 
 export const validatePreprocessorOutput = validate_preprocessor_output;
 
-export function parse_preprocessor_output(rawOutput: unknown, opts?: { source_input?: string }): string | null {
+export function parse_preprocessor_output(rawOutput: unknown, opts?: PreprocessorSourceOptions): string | null {
   const validated = validate_preprocessor_output(rawOutput, opts);
   return validated.classification === PREPROCESS_OUTCOME_DIRECTIVE ? validated.output : null;
 }

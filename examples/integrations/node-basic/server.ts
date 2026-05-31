@@ -66,7 +66,7 @@ function minimalRecentContext(history: ChatBody['history']) {
 function normalizeInputWithPreprocessor(input: string): string {
   const heuristic = preprocessHeuristic(input);
   if (heuristic.classification === 'directive' && heuristic.output !== null) {
-    const parsed = parsePreprocessorOutput(heuristic.output, { source_input: input });
+    const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: input });
     if (parsed !== null) {
       return parsed;
     }
