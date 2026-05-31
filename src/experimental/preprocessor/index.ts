@@ -58,6 +58,7 @@ const NEAR_MISS_ALIAS_CASES = new Set([
   'wipe policies'
 ]);
 const ADMIN_NEAR_MISS_CASES = new Set(['reset policy', 'remove policies docker']);
+const MULTI_INSTRUCTION_CASES = new Set(['use docker, actually prohibit docker']);
 
 function unknown(): PreprocessResultType {
   return { classification: PREPROCESS_OUTCOME_UNKNOWN, output: null };
@@ -339,6 +340,10 @@ export function preprocess_heuristic(message: string): PreprocessResultType {
   }
 
   if (MULTI_SEGMENT_PATTERN.test(normalized)) {
+    return unknown();
+  }
+
+  if (MULTI_INSTRUCTION_CASES.has(normalized)) {
     return unknown();
   }
 
