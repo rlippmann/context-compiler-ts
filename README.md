@@ -50,7 +50,7 @@ Directive examples:
 - Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
 - Decision constants for host-side checks.
 - Experimental preprocessor module exposed through a package subpath import.
-- Fixture parity aligned with the Python 0.7.3 fixture snapshot.
+- Fixture parity synced from the Python source-of-truth fixture corpus.
 
 ## Not Included Yet
 
@@ -74,20 +74,37 @@ npm install @rlippmann/context-compiler
 ## Quick Start
 
 ```ts
-import { createEngine, getClarifyPrompt, isClarify, isPassthrough, isUpdate } from '@rlippmann/context-compiler';
+import {
+  createEngine,
+  getClarifyPrompt,
+  getDecisionState,
+  getPolicyItems,
+  getPremiseValue,
+  isClarify,
+  isPassthrough,
+  isUpdate
+} from '@rlippmann/context-compiler';
 
 const engine = createEngine();
 const decision = engine.step('set premise concise replies');
 
 if (isUpdate(decision)) {
-  // Use the updated stored rules from the engine.
-  console.log(engine.state);
+  const state = getDecisionState(decision);
+  if (state) {
+    console.log({
+      premise: getPremiseValue(state),
+      policies: getPolicyItems(state)
+    });
+  }
 } else if (isClarify(decision)) {
   console.log(getClarifyPrompt(decision));
 } else if (isPassthrough(decision)) {
   // passthrough
 }
 ```
+
+State snapshots are intentionally opaque. Prefer helpers such as
+`getPremiseValue(state)` and `getPolicyItems(state)` for value reads.
 
 ## Public API
 
@@ -108,14 +125,18 @@ if (isUpdate(decision)) {
 
 ## Experimental Preprocessor
 
-The optional preprocessor can recognize natural-language rule updates before they reach the engine.
+The preprocessor is an optional host-side layer that can recognize some
+natural-language rule updates before they reach the engine.
 
 For example:
 - "keep replies concise"
 - "don't suggest docker"
 - "forget that previous policy"
 
-Preprocessor output should always be parsed/validated before passing it to the engine.
+Safety guidance:
+- Always validate preprocessor output before applying a directive to the engine.
+- If `engine.hasPendingClarification()` is true, bypass preprocessing and pass raw input directly to `engine.step(...)`.
+- Boundary behavior is conservative and false-negative-preferred: abstain rather than risk unsafe mutation.
 
 Experimental preprocessor APIs are available via package subpath:
 
