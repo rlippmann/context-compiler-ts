@@ -320,10 +320,14 @@ export function validate_preprocessor_output(
   return validated;
 }
 
+export const validatePreprocessorOutput = validate_preprocessor_output;
+
 export function parse_preprocessor_output(rawOutput: unknown, opts?: { source_input?: string }): string | null {
   const validated = validate_preprocessor_output(rawOutput, opts);
   return validated.classification === PREPROCESS_OUTCOME_DIRECTIVE ? validated.output : null;
 }
+
+export const parsePreprocessorOutput = parse_preprocessor_output;
 
 export function preprocess_heuristic(message: string): PreprocessResultType {
   if (LIST_MARKER_PATTERN.test(message)) {
@@ -379,6 +383,8 @@ export function preprocess_heuristic(message: string): PreprocessResultType {
   return noDirective();
 }
 
+export const preprocessHeuristic = preprocess_heuristic;
+
 function stripLeadingHeaders(promptTemplate: string): string {
   const lines = promptTemplate.split(/\r?\n/);
   let start = 0;
@@ -408,6 +414,8 @@ export function render_prompt(promptTemplate: string, state: EngineState): strin
 
   return stripped.replaceAll(PROMPT_TOKEN_NULL_OR_VALUE, premiseValue).replaceAll(PROMPT_TOKEN_POLICY_SET, policiesValue);
 }
+
+export const renderPrompt = render_prompt;
 
 function normalizeItem(input: string): string {
   let out = input.toLowerCase();
