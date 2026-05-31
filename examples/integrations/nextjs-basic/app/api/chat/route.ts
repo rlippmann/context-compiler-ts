@@ -4,7 +4,7 @@ import {
   createEngine,
   getPolicyItems,
   getPremiseValue,
-  is_clarify,
+  isClarify,
   type EngineState
 } from '@rlippmann/context-compiler';
 import { loadSessionState, saveSessionState } from '../../../lib/context-sessions';
@@ -68,7 +68,7 @@ export async function POST(req: Request): Promise<Response> {
     const replayMessages = history.filter(
       (m): m is { role: 'user'; content: string } => m.role === 'user' && typeof m.content === 'string'
     );
-    const replay = engine.apply_transcript(replayMessages);
+    const replay = engine.applyTranscript(replayMessages);
     if (replay.kind === 'confirm') {
       saveSessionState(sessionId, engine.exportCheckpointJson());
       const payload: ChatResponse = {
@@ -83,7 +83,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const decision = engine.step(input);
 
-  if (is_clarify(decision)) {
+  if (isClarify(decision)) {
     saveSessionState(sessionId, engine.exportCheckpointJson());
     const payload: ChatResponse = {
       kind: DECISION_CLARIFY,

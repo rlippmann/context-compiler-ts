@@ -30,7 +30,7 @@ Includes single-item correction with `remove policy <item>`.
 
 ## 06_transcript_replay.ts
 
-Shows transcript replay with `compile_transcript(messages)` and replay onto current engine state with `engine.apply_transcript(...)`.
+Shows transcript replay with `compileTranscript(messages)` and replay onto current engine state with `engine.applyTranscript(...)`.
 
 ## 07_single_policy_correction.ts
 
@@ -39,7 +39,7 @@ Demonstrates explicit single-policy correction without `reset policies`:
 
 ## 08_controller_preview_diff.ts
 
-Shows controller-layer auditability with `preview(engine, input)` and `state_diff(before, after)`.
+Shows controller-layer auditability with `preview(engine, input)` and `stateDiff(before, after)`.
 Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.
 
 ## Integrations

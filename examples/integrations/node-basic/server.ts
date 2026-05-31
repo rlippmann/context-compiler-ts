@@ -5,12 +5,12 @@ import {
   createEngine,
   getPolicyItems,
   getPremiseValue,
-  is_clarify,
+  isClarify,
   type EngineState
 } from '@rlippmann/context-compiler';
 import {
-  parse_preprocessor_output,
-  preprocess_heuristic
+  parsePreprocessorOutput,
+  preprocessHeuristic
 } from '@rlippmann/context-compiler/experimental/preprocessor';
 
 type ChatBody = {
@@ -64,9 +64,9 @@ function minimalRecentContext(history: ChatBody['history']) {
 }
 
 function normalizeInputWithPreprocessor(input: string): string {
-  const heuristic = preprocess_heuristic(input);
+  const heuristic = preprocessHeuristic(input);
   if (heuristic.classification === 'directive' && heuristic.output !== null) {
-    const parsed = parse_preprocessor_output(heuristic.output, { source_input: input });
+    const parsed = parsePreprocessorOutput(heuristic.output, { source_input: input });
     if (parsed !== null) {
       return parsed;
     }
@@ -108,7 +108,7 @@ const server = http.createServer(async (req, res) => {
       const replayMessages = history.filter(
         (m): m is { role: 'user'; content: string } => m.role === 'user' && typeof m.content === 'string'
       );
-      const replay = engine.apply_transcript(replayMessages);
+      const replay = engine.applyTranscript(replayMessages);
       if (replay.kind === 'confirm') {
         saveCheckpoint(sessionId, engine.exportCheckpointJson());
         const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: replay.prompt_to_user };
@@ -120,7 +120,7 @@ const server = http.createServer(async (req, res) => {
 
     const preprocessedInput = normalizeInputWithPreprocessor(input);
     const decision = engine.step(preprocessedInput);
-    if (is_clarify(decision)) {
+    if (isClarify(decision)) {
       saveCheckpoint(sessionId, engine.exportCheckpointJson());
       const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: decision.prompt_to_user };
       sendJson(res, 200, payload);

@@ -88,6 +88,8 @@ export function state_diff(before: EngineState, after: EngineState): StructuralD
   };
 }
 
+export const stateDiff = state_diff;
+
 export function step(engine: Engine, user_input: string): StepResult {
   const decision = engine.step(user_input);
   return {

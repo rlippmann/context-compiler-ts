@@ -1,4 +1,4 @@
-import { compile_transcript, createEngine, getPolicyItems, type TranscriptResult } from '../src/index.js';
+import { compileTranscript, createEngine, getPolicyItems, type TranscriptResult } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -21,11 +21,11 @@ export function runExample06(): {
     { role: 'user', content: 'change premise to vegan curry' }
   ];
 
-  const freshReplay = compile_transcript(transcript);
+  const freshReplay = compileTranscript(transcript);
 
   const engine = createEngine();
   engine.step('prohibit shellfish');
-  const currentReplay: TranscriptResult = engine.apply_transcript(transcript);
+  const currentReplay: TranscriptResult = engine.applyTranscript(transcript);
 
   const freshPolicies =
     freshReplay.kind === 'state' ? getPolicyItems(freshReplay.state) : [];

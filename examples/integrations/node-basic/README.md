@@ -19,5 +19,5 @@ This example uses `exportCheckpointJson()` / `importCheckpointJson()` for per-se
 That preserves both saved compiler state and pending clarify/confirm state.
 
 It also demonstrates a minimal experimental preprocessor pass before `engine.step(...)`
-using `preprocess_heuristic(...)` plus `parse_preprocessor_output(...)` from
+using `preprocessHeuristic(...)` plus `parsePreprocessorOutput(...)` from
 `@rlippmann/context-compiler/experimental/preprocessor`.

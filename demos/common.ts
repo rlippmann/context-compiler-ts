@@ -4,9 +4,9 @@ import {
   createEngine,
   getPolicyItems,
   getPremiseValue,
-  get_clarify_prompt,
-  is_clarify,
-  is_update
+  getClarifyPrompt,
+  isClarify,
+  isUpdate
 } from '../src/index.js';
 import type { Decision, EngineState } from '../src/index.js';
 import type { Message } from './llm_client.js';
@@ -82,12 +82,12 @@ export function printDecision(title: string, decision: Decision, state: EngineSt
     return;
   }
   console.log(`Compiler decision (${title}):`);
-  if (is_update(decision)) {
+  if (isUpdate(decision)) {
     console.log('result: updated');
     printStateSummary(state);
-  } else if (is_clarify(decision)) {
+  } else if (isClarify(decision)) {
     console.log('result: clarify');
-    const clarifyPrompt = get_clarify_prompt(decision);
+    const clarifyPrompt = getClarifyPrompt(decision);
     if (clarifyPrompt) {
       printMultilinePrompt('clarify prompt', clarifyPrompt);
     }
@@ -237,12 +237,12 @@ export function compactUserTurns(userTurns: string[]): {
 
   for (const turn of userTurns) {
     const decision = engine.step(turn);
-    if (is_update(decision)) {
+    if (isUpdate(decision)) {
       continue;
     }
     compactedTurns.push(turn);
-    if (is_clarify(decision)) {
-      promptToUser = get_clarify_prompt(decision);
+    if (isClarify(decision)) {
+      promptToUser = getClarifyPrompt(decision);
       break;
     }
   }

@@ -11,7 +11,9 @@ export interface Engine {
   step(input: string): Decision;
   readonly state: EngineState;
   has_pending_clarification(): boolean;
+  hasPendingClarification(): boolean;
   apply_transcript(messages: unknown[]): TranscriptResult;
+  applyTranscript(messages: unknown[]): TranscriptResult;
   exportJson(): string;
   importJson(payload: string): void;
   exportCheckpoint(): EngineCheckpoint;
@@ -66,6 +68,10 @@ class EngineImpl implements Engine {
 
   has_pending_clarification(): boolean {
     return this._pendingReplacement !== null;
+  }
+
+  hasPendingClarification(): boolean {
+    return this.has_pending_clarification();
   }
 
   exportJson(): string {
@@ -189,6 +195,10 @@ class EngineImpl implements Engine {
       kind: 'state',
       state: this.state
     };
+  }
+
+  applyTranscript(messages: unknown[]): TranscriptResult {
+    return this.apply_transcript(messages);
   }
 
   private _replaceState(state: EngineState): void {
@@ -348,6 +358,8 @@ export function compile_transcript(messages: unknown[]): TranscriptResult {
   const engine = createEngine();
   return engine.apply_transcript(messages);
 }
+
+export const compileTranscript = compile_transcript;
 
 export function getPremiseValue(state: EngineState): string | null {
   return state.premise;
