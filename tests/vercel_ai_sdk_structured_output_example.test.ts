@@ -6,6 +6,20 @@ import {
   selectStructuredSchemasFromState
 } from '../examples/integrations/vercel_ai_sdk_structured_output/index.js';
 
+async function findMissingOptionalDeps(packages: string[]): Promise<string[]> {
+  const checks = await Promise.all(
+    packages.map(async (pkg) => {
+      try {
+        await import(pkg);
+        return null;
+      } catch {
+        return pkg;
+      }
+    })
+  );
+  return checks.filter((pkg): pkg is string => pkg !== null);
+}
+
 describe('vercel ai sdk structured output example', () => {
   it('selects python_script and excludes shell_command from compiler state', () => {
     const engine = createEngine();
@@ -32,6 +46,18 @@ describe('vercel ai sdk structured output example', () => {
   const RUN_SMOKE = process.env.CONTEXT_COMPILER_RUN_VERCEL_AI_SMOKE === '1';
 
   it.skipIf(!RUN_SMOKE)('optional smoke: can call Vercel AI SDK generateObject with selected schema', async () => {
+    const missingDeps = await findMissingOptionalDeps(['ai', '@ai-sdk/openai', 'zod']);
+    if (missingDeps.length > 0) {
+      throw new Error(
+        [
+          'Optional smoke dependencies are missing:',
+          `  ${missingDeps.join(', ')}`,
+          'Install them from repository root with:',
+          '  npm install --no-save ai @ai-sdk/openai zod'
+        ].join('\n')
+      );
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey || apiKey.trim() === '') {
       throw new Error('OPENAI_API_KEY is required when CONTEXT_COMPILER_RUN_VERCEL_AI_SMOKE=1.');

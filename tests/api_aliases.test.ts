@@ -27,4 +27,17 @@ describe('preprocessor API aliases', () => {
     expect(pre.preprocessHeuristic).toBe(pre.preprocess_heuristic);
     expect(pre.renderPrompt).toBe(pre.render_prompt);
   });
+
+  it('supports both source_input and sourceInput options with identical behavior', () => {
+    const rawOutput = 'use docker';
+    const sourceInput = 'can you use docker?';
+
+    const validatedSnake = pre.validatePreprocessorOutput(rawOutput, { source_input: sourceInput });
+    const validatedCamel = pre.validatePreprocessorOutput(rawOutput, { sourceInput });
+    expect(validatedCamel).toEqual(validatedSnake);
+
+    const parsedSnake = pre.parsePreprocessorOutput(rawOutput, { source_input: sourceInput });
+    const parsedCamel = pre.parsePreprocessorOutput(rawOutput, { sourceInput });
+    expect(parsedCamel).toEqual(parsedSnake);
+  });
 });

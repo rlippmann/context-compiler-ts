@@ -73,8 +73,18 @@ They assert:
 
 Optional smoke test (real model call) is env-gated:
 
+Required optional packages (from repository root):
+
 ```bash
-CONTEXT_COMPILER_RUN_VERCEL_AI_SMOKE=1 OPENAI_API_KEY=... npm test
+npm install --no-save ai @ai-sdk/openai zod
 ```
+
+Smoke command (from repository root):
+
+```bash
+CONTEXT_COMPILER_RUN_VERCEL_AI_SMOKE=1 OPENAI_API_KEY=... npm test -- --run tests/vercel_ai_sdk_structured_output_example.test.ts
+```
+
+`OPENAI_API_KEY` is required when `CONTEXT_COMPILER_RUN_VERCEL_AI_SMOKE=1`.
 
 When the smoke flag is off, deterministic tests still validate host wiring.
