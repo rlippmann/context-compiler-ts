@@ -6,13 +6,13 @@ import {
   POLICY_USE,
   createEngine,
   getPolicyItems,
-  get_clarify_prompt,
+  getClarifyPrompt,
   getPremiseValue,
-  get_decision_state,
-  is_clarify,
-  is_update,
+  getDecisionState,
+  isClarify,
+  isUpdate,
   preview,
-  state_diff,
+  stateDiff,
   step,
   type Decision,
   type EngineState
@@ -37,8 +37,8 @@ function summarizeDecision(decision: Decision): {
   promptToUser: string | null;
   decisionState: ReturnType<typeof summarizeState> | null;
 } {
-  if (is_update(decision)) {
-    const decisionState = get_decision_state(decision);
+  if (isUpdate(decision)) {
+    const decisionState = getDecisionState(decision);
     return {
       kind: DECISION_UPDATE,
       promptToUser: null,
@@ -46,10 +46,10 @@ function summarizeDecision(decision: Decision): {
     };
   }
 
-  if (is_clarify(decision)) {
+  if (isClarify(decision)) {
     return {
       kind: DECISION_CLARIFY,
-      promptToUser: get_clarify_prompt(decision),
+      promptToUser: getClarifyPrompt(decision),
       decisionState: null
     };
   }
@@ -80,7 +80,7 @@ export function runExample08(): {
   const previewResult = preview(engine, 'prohibit peanuts');
 
   const stateAfterPreview = engine.state;
-  const diffAfterPreview = state_diff(stateBeforePreview, stateAfterPreview);
+  const diffAfterPreview = stateDiff(stateBeforePreview, stateAfterPreview);
 
   const stepResult = step(engine, 'prohibit peanuts');
 

@@ -1,4 +1,4 @@
-import { compile_transcript, getPremiseValue } from '../src/index.js';
+import { compileTranscript, getPremiseValue } from '../src/index.js';
 import { compactUserTurns, isVerbose, printInfoReport } from './common.js';
 
 const DEMO_NAME = '06_context_compaction — superseded directives eliminated';
@@ -41,7 +41,7 @@ function buildTurns(turnCount: number): string[] {
 
 function compilePremise(turns: string[]): string {
   const messages: TranscriptMessage[] = turns.map((turn) => ({ role: 'user', content: turn }));
-  const result = compile_transcript(messages);
+  const result = compileTranscript(messages);
   if (result.kind !== 'state') {
     throw new Error('Unexpected clarification while compiling transcript');
   }

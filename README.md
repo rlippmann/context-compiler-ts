@@ -74,17 +74,17 @@ npm install @rlippmann/context-compiler
 ## Quick Start
 
 ```ts
-import { createEngine, get_clarify_prompt, is_clarify, is_passthrough, is_update } from '@rlippmann/context-compiler';
+import { createEngine, getClarifyPrompt, isClarify, isPassthrough, isUpdate } from '@rlippmann/context-compiler';
 
 const engine = createEngine();
 const decision = engine.step('set premise concise replies');
 
-if (is_update(decision)) {
+if (isUpdate(decision)) {
   // Use the updated stored rules from the engine.
   console.log(engine.state);
-} else if (is_clarify(decision)) {
-  console.log(get_clarify_prompt(decision));
-} else if (is_passthrough(decision)) {
+} else if (isClarify(decision)) {
+  console.log(getClarifyPrompt(decision));
+} else if (isPassthrough(decision)) {
   // passthrough
 }
 ```
@@ -94,16 +94,16 @@ if (is_update(decision)) {
 - `createEngine(init?)` -> create an engine instance.
 - `engine.step(input)` -> apply one user input and return a `Decision`.
 - `engine.state` -> current stored premise/policy rules snapshot.
-- `engine.has_pending_clarification()` -> check whether confirmation-only input is currently required.
+- `engine.hasPendingClarification()` -> check whether confirmation-only input is currently required.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
 - `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> checkpoint persistence (`authoritative_state` + pending confirmation state) that safely resumes pending confirmations.
 - `engine.exportCheckpointJson()` / `engine.importCheckpointJson(payload)` -> JSON checkpoint wrapper persistence helpers.
-- `compile_transcript(messages)` -> replay user messages and return `state` or `confirm`.
-- `engine.apply_transcript(messages)` -> replay user messages onto an existing engine instance.
+- `compileTranscript(messages)` -> replay user messages and return `state` or `confirm`.
+- `engine.applyTranscript(messages)` -> replay user messages onto an existing engine instance.
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
 - `step(engine, input)` -> controller step envelope (`output_version`, `mode`, `decision`, `state`).
 - `preview(engine, input)` -> dry-run step envelope with `state_before`, `state_after`, `diff`, and `would_mutate` (live engine state is restored).
-- `state_diff(before, after)` -> structural state diff used by preview.
+- `stateDiff(before, after)` -> structural state diff used by preview.
 - `DECISION_PASSTHROUGH` / `DECISION_UPDATE` / `DECISION_CLARIFY` -> decision kind constants.
 
 ## Experimental Preprocessor
@@ -120,11 +120,7 @@ Preprocessor output should always be parsed/validated before passing it to the e
 Experimental preprocessor APIs are available via package subpath:
 
 ```ts
-import {
-  preprocess_heuristic,
-  parse_preprocessor_output,
-  validate_preprocessor_output
-} from '@rlippmann/context-compiler/experimental/preprocessor';
+import { preprocessHeuristic, parsePreprocessorOutput, validatePreprocessorOutput } from '@rlippmann/context-compiler/experimental/preprocessor';
 ```
 
 This module is intentionally experimental and separate from the deterministic core engine API.
