@@ -146,7 +146,12 @@ Safety guidance:
 Experimental preprocessor APIs are available via package subpath:
 
 ```ts
-import { preprocessHeuristic, parsePreprocessorOutput, validatePreprocessorOutput } from '@rlippmann/context-compiler/experimental/preprocessor';
+import {
+  PREPROCESS_OUTCOME_DIRECTIVE,
+  parsePreprocessorOutput,
+  preprocessHeuristic,
+  validatePreprocessorOutput
+} from '@rlippmann/context-compiler/experimental/preprocessor';
 ```
 
 ### Experimental Preprocessor Quick Start
@@ -160,7 +165,7 @@ function stepWithOptionalPreprocessor(engine: ReturnType<typeof createEngine>, u
   const heuristic = preprocessHeuristic(userInput);
   let engineInput = userInput;
 
-  if (heuristic.classification === 'directive' && heuristic.output !== null) {
+  if (heuristic.classification === PREPROCESS_OUTCOME_DIRECTIVE && heuristic.output !== null) {
     const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: userInput });
     if (parsed !== null) {
       engineInput = parsed;

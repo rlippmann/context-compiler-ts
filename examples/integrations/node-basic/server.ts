@@ -9,6 +9,7 @@ import {
   type EngineState
 } from '@rlippmann/context-compiler';
 import {
+  PREPROCESS_OUTCOME_DIRECTIVE,
   parsePreprocessorOutput,
   preprocessHeuristic
 } from '@rlippmann/context-compiler/experimental/preprocessor';
@@ -65,7 +66,7 @@ function minimalRecentContext(history: ChatBody['history']) {
 
 function normalizeInputWithPreprocessor(input: string): string {
   const heuristic = preprocessHeuristic(input);
-  if (heuristic.classification === 'directive' && heuristic.output !== null) {
+  if (heuristic.classification === PREPROCESS_OUTCOME_DIRECTIVE && heuristic.output !== null) {
     const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: input });
     if (parsed !== null) {
       return parsed;

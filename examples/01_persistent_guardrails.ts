@@ -1,4 +1,4 @@
-import { createEngine, getPolicyItems } from '../src/index.js';
+import { POLICY_PROHIBIT, createEngine, getPolicyItems } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
@@ -15,7 +15,7 @@ export function runExample01(): {
   return {
     turn1Kind: decision1.kind,
     turn2Kind: decision2.kind,
-    prohibitedPolicies: getPolicyItems(engine.state, 'prohibit')
+    prohibitedPolicies: getPolicyItems(engine.state, POLICY_PROHIBIT)
   };
 }
 
