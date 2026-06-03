@@ -120,6 +120,9 @@ State snapshots are intentionally opaque. Prefer helpers such as
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
 - `step(engine, input)` -> controller step envelope (`output_version`, `mode`, `decision`, `state`).
 - `preview(engine, input)` -> dry-run step envelope with `state_before`, `state_after`, `diff`, and `would_mutate` (live engine state is restored).
+- `getStepDecision(stepResult)` / `getStepState(stepResult)` -> read helpers for controller step results.
+- `getPreviewDecision(previewResult)` / `getPreviewStateAfter(previewResult)` / `previewWouldMutate(previewResult)` -> read helpers for controller preview results.
+- `diffHasChanges(diff)` -> read helper for the structural diff `changed` flag.
 - `stateDiff(before, after)` -> structural state diff used by preview.
 - `DECISION_PASSTHROUGH` / `DECISION_UPDATE` / `DECISION_CLARIFY` -> decision kind constants.
 

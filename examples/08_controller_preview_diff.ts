@@ -5,13 +5,17 @@ import {
   POLICY_PROHIBIT,
   POLICY_USE,
   createEngine,
+  diffHasChanges,
   getPolicyItems,
   getClarifyPrompt,
+  getPreviewDecision,
   getPremiseValue,
+  getStepDecision,
   getDecisionState,
   isClarify,
   isUpdate,
   preview,
+  previewWouldMutate,
   stateDiff,
   step,
   type Decision,
@@ -83,16 +87,18 @@ export function runExample08(): {
   const diffAfterPreview = stateDiff(stateBeforePreview, stateAfterPreview);
 
   const stepResult = step(engine, 'prohibit peanuts');
+  const previewDecision = getPreviewDecision(previewResult);
+  const stepDecision = getStepDecision(stepResult);
 
   return {
     stateBeforePreview: summarizeState(stateBeforePreview),
     preview: {
-      wouldMutate: previewResult.would_mutate,
-      decision: summarizeDecision(previewResult.decision)
+      wouldMutate: previewWouldMutate(previewResult),
+      decision: summarizeDecision(previewDecision)
     },
-    stateChangedAfterPreview: diffAfterPreview.changed,
+    stateChangedAfterPreview: diffHasChanges(diffAfterPreview),
     apply: {
-      decision: summarizeDecision(stepResult.decision),
+      decision: summarizeDecision(stepDecision),
       stateAfterStep: summarizeState(stepResult.state)
     }
   };

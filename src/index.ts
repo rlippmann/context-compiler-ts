@@ -5,7 +5,25 @@ export {
   getPremiseValue,
   getPolicyItems
 } from './engine.js';
-export { OUTPUT_VERSION, preview, state_diff, stateDiff, step } from './controller.js';
+export {
+  OUTPUT_VERSION,
+  diff_has_changes,
+  diffHasChanges,
+  get_preview_decision,
+  get_preview_state_after,
+  get_step_decision,
+  get_step_state,
+  getPreviewDecision,
+  getPreviewStateAfter,
+  getStepDecision,
+  getStepState,
+  preview,
+  preview_would_mutate,
+  previewWouldMutate,
+  state_diff,
+  stateDiff,
+  step
+} from './controller.js';
 export type { Engine, EngineInit } from './engine.js';
 export type { PreviewResult, StepResult, StructuralDiff } from './controller.js';
 import type { Decision, EngineState } from './types.js';
