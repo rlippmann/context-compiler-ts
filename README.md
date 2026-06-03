@@ -22,7 +22,9 @@ are accepted.
 
 ## What problem it solves
 
-Prompt reinjection can preserve saved text, but it does not tell your app:
+Saved state can drive prompt rendering, schema selection, routing, tool
+availability, or other host behavior, but your app still needs rules for when
+that state is allowed to change:
 - when a replacement is valid
 - when a conflicting update should stop and ask for confirmation
 - when a change should be rejected instead of silently overwriting state
@@ -98,9 +100,9 @@ if (isUpdate(decision)) {
 State snapshots are intentionally opaque. Prefer helpers such as
 `getPremiseValue(state)` and `getPolicyItems(state)` for value reads.
 
-If the user later asks "how should I run the tests?", the host can send the
-saved state with that request so the model answers in the context of the saved
-premise instead of relying on transcript memory.
+If the user later asks "how should I run the tests?", the host can use the
+saved state however it needs, such as rendering it into a prompt, selecting a
+schema, or routing the request with the saved premise in mind.
 
 ## Why not just a dict?
 
