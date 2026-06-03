@@ -2,7 +2,7 @@
 
 Keep explicit user commitments consistent across turns.
 
-Context Compiler solves a common application problem: storing user rules is
+Context Compiler solves a common state-management problem: storing user rules is
 easy, but deciding when those rules are allowed to change is not.
 
 It gives your app deterministic rules for explicit state changes such as
@@ -40,8 +40,8 @@ Context Compiler lets a host application:
 
 Each user input produces a decision for the host:
 - `update` -> stored premise/policy rules changed
-- `passthrough` -> normal chat input
-- `clarify` -> do not mutate state or call the model yet; ask the user to confirm or clarify
+- `passthrough` -> input does not affect saved state
+- `clarify` -> do not mutate state; ask the user to confirm or clarify
 
 Directive examples:
 - `set premise current project uses uv`
