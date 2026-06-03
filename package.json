@@ -1,18 +1,16 @@
 {
   "name": "@rlippmann/context-compiler",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Store AI rules and corrections separately from chat history so they stay consistent across turns.",
   "keywords": [
     "llm",
-    "prompt",
-    "guardrails",
     "context",
     "state",
-    "agent",
-    "middleware",
+    "conversational-state",
+    "deterministic",
     "typescript",
-    "openai",
-    "ai"
+    "ai",
+    "prompt-management"
   ],
   "license": "Apache-2.0",
   "repository": {

@@ -1,60 +1,54 @@
 # @rlippmann/context-compiler
 
-Tell the AI your rules once and keep them consistent across turns.
+Keep explicit user commitments consistent across turns.
 
-Context Compiler helps applications keep explicit user instructions separate from the chat transcript. It stores rules and corrections as compiler state so hosts can apply them consistently on later model calls.
+Context Compiler solves a common state-management problem: storing user rules is
+easy, but deciding when those rules are allowed to change is not.
 
-The model writes responses. The compiler stores premise and policy rules.
+It gives your app deterministic rules for explicit state changes such as
+setting a premise, replacing a policy, blocking a conflicting update, or
+asking for clarification before anything changes.
+
+A dict stores state. Context Compiler makes state changes verifiable.
 
 This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.7 behavior.
 
-## What it does
+It is useful for hosts that need explicit conversational state to stay stable
+across turns: chat apps, tool-using assistants, schema-routing workflows, and
+other systems that need saved premise or policy state.
+
+The model writes responses. The compiler decides whether explicit state changes
+are accepted.
+
+## What problem it solves
+
+Saved state can drive prompt rendering, schema selection, routing, tool
+availability, or other host behavior, but your app still needs rules for when
+that state is allowed to change:
+- when a replacement is valid
+- when a conflicting update should stop and ask for confirmation
+- when a change should be rejected instead of silently overwriting state
+- how to restore both saved state and an in-progress clarification flow
+
+## How it solves it
 
 Context Compiler lets a host application:
-- store explicit rules such as `use sqlite` or `prohibit docker`
-- replace or remove earlier rules without asking the model to infer the correction
-- block ambiguous or conflicting rule updates before calling the model
-- save and restore rules between requests
+- prevent silent overwrites when a new update conflicts with what is already saved
+- require clarification before conflicting or confirmation-only changes are accepted
+- let the host preview a change before applying it and keep live state unchanged until it is accepted
+- restore both saved state and an in-progress clarification flow safely between requests
 
 Each user input produces a decision for the host:
 - `update` -> stored premise/policy rules changed
-- `clarify` -> ask the user for clarification; do not call the model
-- `passthrough` -> normal chat input
+- `passthrough` -> input does not affect saved state
+- `clarify` -> do not mutate state; ask the user to confirm or clarify
 
 Directive examples:
-- `set premise concise replies`
+- `set premise current project uses uv`
 - `use sqlite`
 - `prohibit docker`
 - `remove policy docker`
 - `clear premise`
-
-## Versioning
-
-- Python is the source of truth for semantics.
-- TypeScript package versions track Python compatibility by minor version.
-- TS `0.N.y` targets semantic compatibility with the Python `0.N.x` line.
-- Patch versions evolve independently by language/repo.
-
-## 0.7 Parity Scope
-
-- Core engine behavior aligned with Python 0.7 behavior.
-- Shared behavior test coverage for:
-  - single-turn rule updates
-  - transcript replay
-  - saving and restoring state
-  - checkpoint restore
-  - experimental preprocessor behavior
-  - public API behavior
-- Core public API for engine usage and transcript replay.
-- Checkpoint APIs for saving and restoring rules plus pending clarification state.
-- Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
-- Decision constants for host-side checks.
-- Experimental preprocessor module exposed through a package subpath import.
-- Fixture parity synced from the Python source-of-truth fixture corpus.
-
-## Not Included Yet
-
-- REPL port
 
 ## Installation
 
@@ -65,11 +59,11 @@ npm install @rlippmann/context-compiler
 ## Examples
 
 - `examples/integrations/nextjs-basic/` — minimal Next.js App Router integration
-  - request flow with compiler state where explicit instructions stay consistent across turns
+  - request flow where saved state stays consistent across turns
   - `clarify` blocks LLM calls
   - per-session compiler state via checkpoint export/import so sessions can resume safely
 - `examples/integrations/node-basic/` — minimal Node HTTP server integration
-- `examples/integrations/vercel_ai_sdk_structured_output/` — host-side schema selection for Vercel AI SDK structured output
+- `examples/integrations/vercel_ai_sdk_structured_output/` — host-side schema selection driven by saved compiler state
 
 ## Quick Start
 
@@ -86,7 +80,7 @@ import {
 } from '@rlippmann/context-compiler';
 
 const engine = createEngine();
-const decision = engine.step('set premise concise replies');
+const decision = engine.step('set premise current project uses uv');
 
 if (isUpdate(decision)) {
   const state = getDecisionState(decision);
@@ -99,18 +93,27 @@ if (isUpdate(decision)) {
 } else if (isClarify(decision)) {
   console.log(getClarifyPrompt(decision));
 } else if (isPassthrough(decision)) {
-  // passthrough
+  // Normal user input. Call the model without mutating saved state.
 }
 ```
 
 State snapshots are intentionally opaque. Prefer helpers such as
 `getPremiseValue(state)` and `getPolicyItems(state)` for value reads.
 
+If the user later asks "how should I run the tests?", the host can use the
+saved state however it needs, such as rendering it into a prompt, selecting a
+schema, or routing the request with the saved premise in mind.
+
+## Why not just a dict?
+
+A dict stores values. Context Compiler defines and verifies the rules for
+changing them.
+
 ## Public API
 
 - `createEngine(init?)` -> create an engine instance.
 - `engine.step(input)` -> apply one user input and return a `Decision`.
-- `engine.state` -> current stored premise/policy rules snapshot.
+- `engine.state` -> current saved premise/policy rules snapshot.
 - `engine.hasPendingClarification()` -> check whether confirmation-only input is currently required.
 - `engine.exportJson()` / `engine.importJson(payload)` -> state serialization utilities.
 - `engine.exportCheckpoint()` / `engine.importCheckpoint(payload)` -> checkpoint persistence (`authoritative_state` + pending confirmation state) that safely resumes pending confirmations.
@@ -128,6 +131,10 @@ State snapshots are intentionally opaque. Prefer helpers such as
 
 Prefer the controller helper accessors over direct controller result property reads in TypeScript examples and app code.
 
+For normal host code, prefer exported decision helpers such as `isUpdate`,
+`isClarify`, `isPassthrough`, `getClarifyPrompt`, and `getDecisionState`
+instead of branching on raw decision fields.
+
 ## Experimental Preprocessor
 
 The preprocessor is an optional host-side layer that can recognize some
@@ -142,6 +149,10 @@ Safety guidance:
 - Always validate preprocessor output before applying a directive to the engine.
 - If `engine.hasPendingClarification()` is true, bypass preprocessing and pass raw input directly to `engine.step(...)`.
 - Boundary behavior is conservative and false-negative-preferred: abstain rather than risk unsafe mutation.
+
+The preprocessor does not own state transitions. It only proposes compiler
+input. Use it when you want help acquiring directive-shaped input, not when you
+need a system to decide whether state is allowed to change.
 
 Experimental preprocessor APIs are available via package subpath:
 
@@ -176,6 +187,34 @@ function stepWithOptionalPreprocessor(engine: ReturnType<typeof createEngine>, u
 }
 ```
 
-The preprocessor is a convenience layer. The engine remains the authoritative source of state changes.
+The preprocessor is a convenience layer. The engine remains the source of truth for state changes.
 
 This module is intentionally experimental and separate from the deterministic core engine API.
+
+## Versioning
+
+- Python is the source of truth for semantics.
+- TypeScript package versions track Python compatibility by minor version.
+- TS `0.N.y` targets semantic compatibility with the Python `0.N.x` line.
+- Patch versions evolve independently by language/repo.
+
+## 0.7 Parity Scope
+
+- Core engine behavior aligned with Python 0.7 behavior.
+- Shared behavior test coverage for:
+  - single-turn rule updates
+  - transcript replay
+  - saving and restoring state
+  - checkpoint restore
+  - experimental preprocessor behavior
+  - public API behavior
+- Core public API for engine usage and transcript replay.
+- Checkpoint APIs for saving and restoring rules plus pending clarification state.
+- Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
+- Decision constants for host-side checks.
+- Experimental preprocessor module exposed through a package subpath import.
+- Fixture parity synced from the Python source-of-truth fixture corpus.
+
+## Not Included Yet
+
+- REPL port
