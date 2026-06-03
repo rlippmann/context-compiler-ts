@@ -19,6 +19,21 @@ function runExampleScript(file: string): { status: number | null; stdout: string
   };
 }
 
+function parseExampleOutput(stdout: string): { heading: string; payload: unknown } {
+  const trimmed = stdout.trim();
+  const firstNewline = trimmed.indexOf('\n');
+  if (firstNewline === -1) {
+    throw new Error(`Expected heading and JSON payload in output:\n${stdout}`);
+  }
+
+  const heading = trimmed.slice(0, firstNewline).trim();
+  const jsonText = trimmed.slice(firstNewline).trim();
+  return {
+    heading,
+    payload: JSON.parse(jsonText) as unknown
+  };
+}
+
 describe('examples smoke', () => {
   beforeAll(() => {
     const build = spawnSync('npm', ['run', 'build'], {
@@ -34,65 +49,123 @@ describe('examples smoke', () => {
     const run = runExampleScript('01_persistent_guardrails.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 01: persistent guardrails');
-    expect(run.stdout).toContain('"prohibitedPolicies"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 01: persistent guardrails');
+    expect(payload).toEqual({
+      turn1Kind: 'update',
+      turn2Kind: 'passthrough',
+      prohibitedPolicies: ['peanuts']
+    });
   });
 
   it('02 configuration and correction', () => {
     const run = runExampleScript('02_configuration_and_correction.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 02: configuration and correction');
-    expect(run.stdout).toContain('"finalPremise": "vegan curry"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 02: configuration and correction');
+    expect(payload).toEqual({
+      setKind: 'update',
+      changeKind: 'update',
+      finalPremise: 'vegan curry'
+    });
   });
 
   it('03 ambiguity with clarification', () => {
     const run = runExampleScript('03_ambiguity_with_clarification.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 03: ambiguity with clarification');
-    expect(run.stdout).toContain('"clarifyKind": "clarify"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 03: ambiguity with clarification');
+    expect(payload).toMatchObject({
+      clarifyKind: 'clarify',
+      llmCalled: false,
+      resetKind: 'update'
+    });
+    expect(typeof (payload as { clarifyPrompt?: unknown }).clarifyPrompt).toBe('string');
   });
 
   it('04 tool governance denylist', () => {
     const run = runExampleScript('04_tool_governance_denylist.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 04: tool governance denylist');
-    expect(run.stdout).toContain('"blockedTools"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 04: tool governance denylist');
+    expect(payload).toEqual({
+      decisionKind: 'update',
+      blockedTools: ['docker'],
+      allowedTools: ['kubectl']
+    });
   });
 
   it('05 llm integration pattern', () => {
     const run = runExampleScript('05_llm_integration_pattern.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 05: llm integration pattern');
-    expect(run.stdout).toContain('"actions"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 05: llm integration pattern');
+    expect(payload).toEqual({
+      actions: [
+        'call_llm_without_state',
+        'call_llm_with_state',
+        'call_llm_with_state',
+        'call_llm_with_state',
+        'call_llm_with_state',
+        'call_llm_with_state'
+      ],
+      finalState: { premise: null, policies: {}, version: 2 }
+    });
   });
 
   it('06 transcript replay', () => {
     const run = runExampleScript('06_transcript_replay.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 06: transcript replay');
-    expect(run.stdout).toContain('"freshReplayKind": "state"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 06: transcript replay');
+    expect(payload).toEqual({
+      freshReplayKind: 'state',
+      currentReplayKind: 'state',
+      freshPolicies: ['peanuts'],
+      currentPolicies: ['peanuts', 'shellfish']
+    });
   });
 
   it('07 single policy correction', () => {
     const run = runExampleScript('07_single_policy_correction.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('example 07: single policy correction');
-    expect(run.stdout).toContain('"finalPolicy": "use"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('example 07: single policy correction');
+    expect(payload).toEqual({
+      stepKinds: ['update', 'update', 'update'],
+      finalPolicy: 'use'
+    });
   });
 
   it('integration: vercel ai sdk structured output', () => {
     const run = runExampleScript('integrations/vercel_ai_sdk_structured_output/index.js');
     expect(run.status).toBe(0);
     expect(run.stderr.trim()).toBe('');
-    expect(run.stdout).toContain('integration example: vercel ai sdk structured output (host-side schema selection)');
-    expect(run.stdout).toContain('"availableSchemaNames": [');
-    expect(run.stdout).toContain('"python_script"');
-    expect(run.stdout).toContain('"schemaName": "python_script"');
+    const { heading, payload } = parseExampleOutput(run.stdout);
+
+    expect(heading).toBe('integration example: vercel ai sdk structured output (host-side schema selection)');
+    expect(payload).toMatchObject({
+      availableSchemaNames: ['python_script'],
+      request: {
+        schemaName: 'python_script',
+        schema: {
+          name: 'python_script',
+          fields: ['code']
+        }
+      }
+    });
   });
 });
