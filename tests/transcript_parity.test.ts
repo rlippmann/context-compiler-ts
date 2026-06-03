@@ -58,4 +58,43 @@ describe('transcript parity', () => {
       prompt_to_user: first.prompt_to_user
     });
   });
+
+  it('returns unchanged state for passthrough-only transcript replay', () => {
+    const engine = createEngine({ state: { premise: 'Keep short', policies: { docker: 'prohibit' }, version: 2 } });
+    const before = engine.state;
+
+    const result = engine.apply_transcript([
+      { role: 'assistant', content: 'thanks' },
+      { role: 'user', content: 'hello there' },
+      { role: 'user', content: 'what do you think?' }
+    ]);
+
+    expect(result).toEqual({
+      kind: 'state',
+      state: before
+    });
+    expect(engine.state).toEqual(before);
+  });
+
+  it('stops before mutating later transcript messages after clarify', () => {
+    const engine = createEngine();
+
+    const result = engine.apply_transcript([
+      { role: 'user', content: 'use docker' },
+      { role: 'user', content: 'prohibit kubectl' },
+      { role: 'user', content: 'use kubectl instead of docker' },
+      { role: 'user', content: 'set premise should not apply' },
+      { role: 'user', content: 'yes' }
+    ]);
+
+    expect(result).toEqual({
+      kind: 'confirm',
+      prompt_to_user: '"kubectl" is currently prohibited. Did you mean to remove "docker" and use "kubectl" instead?'
+    });
+    expect(engine.state).toEqual({
+      premise: null,
+      policies: { docker: 'use', kubectl: 'prohibit' },
+      version: 2
+    });
+  });
 });
