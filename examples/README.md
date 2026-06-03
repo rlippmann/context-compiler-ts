@@ -41,6 +41,7 @@ Demonstrates explicit single-policy correction without `reset policies`:
 
 Shows controller-layer auditability with `preview(engine, input)` and `stateDiff(before, after)`.
 Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.
+Uses the controller helper accessors such as `getPreviewDecision`, `getPreviewStateAfter`, `previewWouldMutate`, `getStepDecision`, and `getStepState`.
 
 ## Integrations
 

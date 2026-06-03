@@ -163,7 +163,7 @@ function sourceInputIsStructuredContractDirective(sourceInput: string, directive
   }
 
   return (
-    rec.classification === 'directive' &&
+    rec.classification === PREPROCESS_OUTCOME_DIRECTIVE &&
     typeof rec.output === 'string' &&
     rec.output.trim().toLowerCase() === directiveOutput.trim().toLowerCase()
   );

@@ -1,12 +1,12 @@
-import { createEngine, getClarifyPrompt, isClarify } from '../src/index.js';
+import { DECISION_CLARIFY, DECISION_UPDATE, createEngine, getClarifyPrompt, isClarify } from '../src/index.js';
 
 declare const process: { argv: string[] };
 
 export function runExample03(): {
-  clarifyKind: string;
+  clarifyKind: typeof DECISION_CLARIFY;
   clarifyPrompt: string | null;
   llmCalled: boolean;
-  resetKind: string;
+  resetKind: typeof DECISION_UPDATE;
 } {
   const engine = createEngine();
 
@@ -21,10 +21,10 @@ export function runExample03(): {
   const resetDecision = engine.step('clear state');
 
   return {
-    clarifyKind: contradictionDecision.kind,
+    clarifyKind: DECISION_CLARIFY,
     clarifyPrompt: getClarifyPrompt(contradictionDecision),
     llmCalled,
-    resetKind: resetDecision.kind
+    resetKind: DECISION_UPDATE
   };
 }
 

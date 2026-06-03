@@ -90,6 +90,12 @@ export function state_diff(before: EngineState, after: EngineState): StructuralD
 
 export const stateDiff = state_diff;
 
+export function diff_has_changes(diff: StructuralDiff): boolean {
+  return diff.changed;
+}
+
+export const diffHasChanges = diff_has_changes;
+
 export function step(engine: Engine, user_input: string): StepResult {
   const decision = engine.step(user_input);
   return {
@@ -99,6 +105,18 @@ export function step(engine: Engine, user_input: string): StepResult {
     state: engine.state
   };
 }
+
+export function get_step_decision(stepResult: StepResult): Decision {
+  return stepResult.decision;
+}
+
+export const getStepDecision = get_step_decision;
+
+export function get_step_state(stepResult: StepResult): EngineState {
+  return stepResult.state;
+}
+
+export const getStepState = get_step_state;
 
 export function preview(engine: Engine, user_input: string): PreviewResult {
   const checkpoint = engine.exportCheckpoint();
@@ -124,3 +142,21 @@ export function preview(engine: Engine, user_input: string): PreviewResult {
     would_mutate: diff.changed
   };
 }
+
+export function get_preview_decision(previewResult: PreviewResult): Decision {
+  return previewResult.decision;
+}
+
+export const getPreviewDecision = get_preview_decision;
+
+export function get_preview_state_after(previewResult: PreviewResult): EngineState {
+  return previewResult.state_after;
+}
+
+export const getPreviewStateAfter = get_preview_state_after;
+
+export function preview_would_mutate(previewResult: PreviewResult): boolean {
+  return previewResult.would_mutate;
+}
+
+export const previewWouldMutate = preview_would_mutate;

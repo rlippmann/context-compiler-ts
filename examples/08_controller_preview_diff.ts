@@ -5,13 +5,19 @@ import {
   POLICY_PROHIBIT,
   POLICY_USE,
   createEngine,
+  diffHasChanges,
   getPolicyItems,
   getClarifyPrompt,
+  getPreviewDecision,
+  getPreviewStateAfter,
   getPremiseValue,
+  getStepDecision,
+  getStepState,
   getDecisionState,
   isClarify,
   isUpdate,
   preview,
+  previewWouldMutate,
   stateDiff,
   step,
   type Decision,
@@ -79,21 +85,24 @@ export function runExample08(): {
 
   const previewResult = preview(engine, 'prohibit peanuts');
 
-  const stateAfterPreview = engine.state;
+  const stateAfterPreview = getPreviewStateAfter(previewResult);
   const diffAfterPreview = stateDiff(stateBeforePreview, stateAfterPreview);
 
   const stepResult = step(engine, 'prohibit peanuts');
+  const previewDecision = getPreviewDecision(previewResult);
+  const stepDecision = getStepDecision(stepResult);
+  const stepState = getStepState(stepResult);
 
   return {
     stateBeforePreview: summarizeState(stateBeforePreview),
     preview: {
-      wouldMutate: previewResult.would_mutate,
-      decision: summarizeDecision(previewResult.decision)
+      wouldMutate: previewWouldMutate(previewResult),
+      decision: summarizeDecision(previewDecision)
     },
-    stateChangedAfterPreview: diffAfterPreview.changed,
+    stateChangedAfterPreview: diffHasChanges(diffAfterPreview),
     apply: {
-      decision: summarizeDecision(stepResult.decision),
-      stateAfterStep: summarizeState(stepResult.state)
+      decision: summarizeDecision(stepDecision),
+      stateAfterStep: summarizeState(stepState)
     }
   };
 }

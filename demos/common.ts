@@ -40,7 +40,7 @@ export type InfoReport = {
 let lastReport: DemoReport | null = null;
 let lastInfoReport: InfoReport | null = null;
 
-function policyValuesText(state: EngineState, value: 'use' | 'prohibit'): string {
+function policyValuesText(state: EngineState, value: typeof POLICY_USE | typeof POLICY_PROHIBIT): string {
   const items = getPolicyItems(state, value);
   return items.length > 0 ? items.join(', ') : '(none)';
 }

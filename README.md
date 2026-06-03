@@ -120,8 +120,13 @@ State snapshots are intentionally opaque. Prefer helpers such as
 - `getPremiseValue(state)` / `getPolicyItems(state, value?)` -> read helpers for state.
 - `step(engine, input)` -> controller step envelope (`output_version`, `mode`, `decision`, `state`).
 - `preview(engine, input)` -> dry-run step envelope with `state_before`, `state_after`, `diff`, and `would_mutate` (live engine state is restored).
+- `getStepDecision(stepResult)` / `getStepState(stepResult)` -> read helpers for controller step results.
+- `getPreviewDecision(previewResult)` / `getPreviewStateAfter(previewResult)` / `previewWouldMutate(previewResult)` -> read helpers for controller preview results.
+- `diffHasChanges(diff)` -> read helper for the structural diff `changed` flag.
 - `stateDiff(before, after)` -> structural state diff used by preview.
 - `DECISION_PASSTHROUGH` / `DECISION_UPDATE` / `DECISION_CLARIFY` -> decision kind constants.
+
+Prefer the controller helper accessors over direct controller result property reads in TypeScript examples and app code.
 
 ## Experimental Preprocessor
 
@@ -141,7 +146,12 @@ Safety guidance:
 Experimental preprocessor APIs are available via package subpath:
 
 ```ts
-import { preprocessHeuristic, parsePreprocessorOutput, validatePreprocessorOutput } from '@rlippmann/context-compiler/experimental/preprocessor';
+import {
+  PREPROCESS_OUTCOME_DIRECTIVE,
+  parsePreprocessorOutput,
+  preprocessHeuristic,
+  validatePreprocessorOutput
+} from '@rlippmann/context-compiler/experimental/preprocessor';
 ```
 
 ### Experimental Preprocessor Quick Start
@@ -155,7 +165,7 @@ function stepWithOptionalPreprocessor(engine: ReturnType<typeof createEngine>, u
   const heuristic = preprocessHeuristic(userInput);
   let engineInput = userInput;
 
-  if (heuristic.classification === 'directive' && heuristic.output !== null) {
+  if (heuristic.classification === PREPROCESS_OUTCOME_DIRECTIVE && heuristic.output !== null) {
     const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: userInput });
     if (parsed !== null) {
       engineInput = parsed;

@@ -1,4 +1,4 @@
-import { createEngine, getPolicyItems } from '../src/index.js';
+import { POLICY_PROHIBIT, createEngine, getPolicyItems } from '../src/index.js';
 import {
   buildBaselineMessages,
   buildMediatedMessagesFromTranscript,
@@ -68,7 +68,7 @@ export async function main(): Promise<void> {
   const baselineOutput = await completeMessages(baselineMessages);
   printModelOutput('Baseline', baselineOutput);
 
-  const prohibited = getPolicyItems(engine.state, 'prohibit');
+  const prohibited = getPolicyItems(engine.state, POLICY_PROHIBIT);
   const candidateTools = ['docker', 'kubectl'];
   const filteredTools = candidateTools.filter((tool) => !prohibited.includes(tool));
   if (isVerbose()) {
