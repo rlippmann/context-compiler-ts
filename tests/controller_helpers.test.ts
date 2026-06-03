@@ -28,6 +28,47 @@ describe('controller helper accessors', () => {
     expect(cc.diffHasChanges(diff)).toBe(diff.changed);
   });
 
+  it('reports mixed removed and changed policies in stateDiff', () => {
+    const diff = cc.stateDiff(
+      { premise: null, policies: { docker: 'use', pytest: 'prohibit' }, version: 2 },
+      { premise: null, policies: { docker: 'prohibit' }, version: 2 }
+    );
+
+    expect(diff).toEqual({
+      changed: true,
+      premise: { before: null, after: null, changed: false },
+      policies: {
+        added: {},
+        removed: { pytest: 'prohibit' },
+        changed: { docker: { before: 'use', after: 'prohibit' } }
+      }
+    });
+  });
+
+  it('preserves live pending state across preview confirmation flows', () => {
+    const yesEngine = cc.createEngine();
+    const firstYes = yesEngine.step('use kubectl instead of docker');
+    const yesPreview = cc.preview(yesEngine, 'yes');
+
+    expect(firstYes.kind).toBe('clarify');
+    expect(yesPreview.decision.kind).toBe('update');
+    expect(yesPreview.state_after).toEqual({ premise: null, policies: { kubectl: 'use' }, version: 2 });
+    expect(yesPreview.would_mutate).toBe(true);
+    expect(yesEngine.has_pending_clarification()).toBe(true);
+    expect(yesEngine.state).toEqual({ premise: null, policies: {}, version: 2 });
+
+    const noEngine = cc.createEngine({ state: { premise: null, policies: { docker: 'use' }, version: 2 } });
+    const firstNo = noEngine.step('use kubectl instead of podman');
+    const noPreview = cc.preview(noEngine, 'no');
+
+    expect(firstNo.kind).toBe('clarify');
+    expect(noPreview.decision.kind).toBe('update');
+    expect(noPreview.state_after).toEqual({ premise: null, policies: { docker: 'use' }, version: 2 });
+    expect(noPreview.would_mutate).toBe(false);
+    expect(noEngine.has_pending_clarification()).toBe(true);
+    expect(noEngine.state).toEqual({ premise: null, policies: { docker: 'use' }, version: 2 });
+  });
+
   it('keeps snake_case helper aliases behaviorally identical', () => {
     const engine = cc.createEngine();
     const stepResult = cc.step(engine, 'set premise concise replies');
