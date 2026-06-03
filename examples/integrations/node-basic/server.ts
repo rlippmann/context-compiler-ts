@@ -3,6 +3,7 @@ import {
   DECISION_CLARIFY,
   POLICY_USE,
   createEngine,
+  getClarifyPrompt,
   getPolicyItems,
   getPremiseValue,
   isClarify,
@@ -123,7 +124,7 @@ const server = http.createServer(async (req, res) => {
     const decision = engine.step(preprocessedInput);
     if (isClarify(decision)) {
       saveCheckpoint(sessionId, engine.exportCheckpointJson());
-      const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: decision.prompt_to_user };
+      const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: getClarifyPrompt(decision) };
       sendJson(res, 200, payload);
       return;
     }

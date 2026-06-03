@@ -2,6 +2,7 @@ import {
   DECISION_CLARIFY,
   POLICY_USE,
   createEngine,
+  getClarifyPrompt,
   getPolicyItems,
   getPremiseValue,
   isClarify,
@@ -87,7 +88,7 @@ export async function POST(req: Request): Promise<Response> {
     saveSessionState(sessionId, engine.exportCheckpointJson());
     const payload: ChatResponse = {
       kind: DECISION_CLARIFY,
-      prompt_to_user: decision.prompt_to_user
+      prompt_to_user: getClarifyPrompt(decision)
     };
     return Response.json(payload);
   }
