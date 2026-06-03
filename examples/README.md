@@ -17,7 +17,7 @@ Demonstrates explicit premise lifecycle in 0.5:
 ## 03_ambiguity_with_clarification.ts
 
 Shows contradiction clarify behavior before state mutation.
-Shows host-side clarify handling and blocks LLM calls on clarify.
+Shows host-side clarify handling and blocks the normal request path until the user confirms.
 
 ## 04_tool_governance_denylist.ts
 
