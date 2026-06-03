@@ -126,6 +126,8 @@ State snapshots are intentionally opaque. Prefer helpers such as
 - `stateDiff(before, after)` -> structural state diff used by preview.
 - `DECISION_PASSTHROUGH` / `DECISION_UPDATE` / `DECISION_CLARIFY` -> decision kind constants.
 
+Prefer the controller helper accessors over direct controller result property reads in TypeScript examples and app code.
+
 ## Experimental Preprocessor
 
 The preprocessor is an optional host-side layer that can recognize some

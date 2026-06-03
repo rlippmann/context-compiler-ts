@@ -9,8 +9,10 @@ import {
   getPolicyItems,
   getClarifyPrompt,
   getPreviewDecision,
+  getPreviewStateAfter,
   getPremiseValue,
   getStepDecision,
+  getStepState,
   getDecisionState,
   isClarify,
   isUpdate,
@@ -83,12 +85,13 @@ export function runExample08(): {
 
   const previewResult = preview(engine, 'prohibit peanuts');
 
-  const stateAfterPreview = engine.state;
+  const stateAfterPreview = getPreviewStateAfter(previewResult);
   const diffAfterPreview = stateDiff(stateBeforePreview, stateAfterPreview);
 
   const stepResult = step(engine, 'prohibit peanuts');
   const previewDecision = getPreviewDecision(previewResult);
   const stepDecision = getStepDecision(stepResult);
+  const stepState = getStepState(stepResult);
 
   return {
     stateBeforePreview: summarizeState(stateBeforePreview),
@@ -99,7 +102,7 @@ export function runExample08(): {
     stateChangedAfterPreview: diffHasChanges(diffAfterPreview),
     apply: {
       decision: summarizeDecision(stepDecision),
-      stateAfterStep: summarizeState(stepResult.state)
+      stateAfterStep: summarizeState(stepState)
     }
   };
 }
