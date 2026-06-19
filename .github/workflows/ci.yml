@@ -47,13 +47,6 @@ jobs:
           echo "Using FIXTURES_SOURCE=${FIXTURES_SOURCE}"
           npm run fixtures:check
 
-      - name: Check preprocessor fixture drift
-        env:
-          PREPROCESSOR_FIXTURES_SOURCE: /tmp/context-compiler-source/tests/fixtures/preprocessor
-        run: |
-          echo "Using PREPROCESSOR_FIXTURES_SOURCE=${PREPROCESSOR_FIXTURES_SOURCE}"
-          npm run fixtures:preprocessor:check
-
       - name: Check structured fixture drift
         env:
           STRUCTURED_FIXTURES_SOURCE: /tmp/context-compiler-source/tests/fixtures/engine-regression/structured
@@ -66,11 +59,3 @@ jobs:
 
       - name: Test
         run: npm test
-
-      - name: Install Next.js example
-        working-directory: examples/integrations/nextjs-basic
-        run: npm ci
-
-      - name: Build Next.js example
-        working-directory: examples/integrations/nextjs-basic
-        run: npm run build

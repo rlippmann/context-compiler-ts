@@ -43,8 +43,9 @@ Shows controller-layer auditability with `preview(engine, input)` and `stateDiff
 Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.
 Uses the controller helper accessors such as `getPreviewDecision`, `getPreviewStateAfter`, `previewWouldMutate`, `getStepDecision`, and `getStepState`.
 
-## Integrations
+## Integration examples
 
-- [Next.js integration](integrations/nextjs-basic/README.md)
-- [Node integration](integrations/node-basic/README.md)
-- [Vercel AI SDK structured output](integrations/vercel_ai_sdk_structured_output/README.md)
+Runnable starter apps and integration examples now live in
+`context-compiler-example-integrations`.
+
+This repository keeps only small core examples and authority-layer examples.

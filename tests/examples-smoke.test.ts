@@ -149,23 +149,4 @@ describe('examples smoke', () => {
       finalPolicy: 'use'
     });
   });
-
-  it('integration: vercel ai sdk structured output', () => {
-    const run = runExampleScript('integrations/vercel_ai_sdk_structured_output/index.js');
-    expect(run.status).toBe(0);
-    expect(run.stderr.trim()).toBe('');
-    const { heading, payload } = parseExampleOutput(run.stdout);
-
-    expect(heading).toBe('integration example: vercel ai sdk structured output (host-side schema selection)');
-    expect(payload).toMatchObject({
-      availableSchemaNames: ['python_script'],
-      request: {
-        schemaName: 'python_script',
-        schema: {
-          name: 'python_script',
-          fields: ['code']
-        }
-      }
-    });
-  });
 });

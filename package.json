@@ -29,26 +29,11 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./experimental/preprocessor": {
-      "types": "./dist/src/experimental/preprocessor/index.d.ts",
-      "import": "./dist/src/experimental/preprocessor/index.js"
     }
   },
   "files": [
     "dist",
     "examples/README.md",
-    "examples/integrations/nextjs-basic/README.md",
-    "examples/integrations/nextjs-basic/app",
-    "examples/integrations/nextjs-basic/lib",
-    "examples/integrations/nextjs-basic/next-env.d.ts",
-    "examples/integrations/nextjs-basic/package.json",
-    "examples/integrations/nextjs-basic/package-lock.json",
-    "examples/integrations/nextjs-basic/tsconfig.json",
-    "examples/integrations/node-basic/README.md",
-    "examples/integrations/node-basic/server.ts",
-    "examples/integrations/vercel_ai_sdk_structured_output/README.md",
-    "examples/integrations/vercel_ai_sdk_structured_output/index.ts",
     "LICENSE",
     "README.md"
   ],
@@ -58,8 +43,6 @@
     "fixtures:check": "bash scripts/fixtures-check.sh",
     "fixtures:structured:sync": "bash scripts/structured-fixtures-sync.sh",
     "fixtures:structured:check": "bash scripts/structured-fixtures-check.sh",
-    "fixtures:preprocessor:sync": "bash scripts/preprocessor-fixtures-sync.sh",
-    "fixtures:preprocessor:check": "bash scripts/preprocessor-fixtures-check.sh",
     "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest"
