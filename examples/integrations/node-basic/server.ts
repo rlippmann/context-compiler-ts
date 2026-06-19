@@ -9,11 +9,6 @@ import {
   isClarify,
   type EngineState
 } from '@rlippmann/context-compiler';
-import {
-  PREPROCESS_OUTCOME_DIRECTIVE,
-  parsePreprocessorOutput,
-  preprocessHeuristic
-} from '@rlippmann/context-compiler/experimental/preprocessor';
 
 type ChatBody = {
   sessionId: string;
@@ -65,17 +60,6 @@ function minimalRecentContext(history: ChatBody['history']) {
     .map((m) => ({ role: m.role, content: m.content }));
 }
 
-function normalizeInputWithPreprocessor(input: string): string {
-  const heuristic = preprocessHeuristic(input);
-  if (heuristic.classification === PREPROCESS_OUTCOME_DIRECTIVE && heuristic.output !== null) {
-    const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: input });
-    if (parsed !== null) {
-      return parsed;
-    }
-  }
-  return input;
-}
-
 async function parseJson(req: http.IncomingMessage): Promise<any> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(Buffer.from(chunk));
@@ -120,8 +104,7 @@ const server = http.createServer(async (req, res) => {
       saveCheckpoint(sessionId, engine.exportCheckpointJson());
     }
 
-    const preprocessedInput = normalizeInputWithPreprocessor(input);
-    const decision = engine.step(preprocessedInput);
+    const decision = engine.step(input);
     if (isClarify(decision)) {
       saveCheckpoint(sessionId, engine.exportCheckpointJson());
       const payload: ChatResponse = { kind: DECISION_CLARIFY, prompt_to_user: getClarifyPrompt(decision) };

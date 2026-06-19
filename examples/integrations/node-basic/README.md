@@ -18,6 +18,5 @@ npx tsx examples/integrations/node-basic/server.ts
 This example uses `exportCheckpointJson()` / `importCheckpointJson()` for per-session persistence.
 That preserves both saved compiler state and pending clarify/confirm state.
 
-It also demonstrates a minimal experimental preprocessor pass before `engine.step(...)`
-using `preprocessHeuristic(...)` plus `parsePreprocessorOutput(...)` from
-`@rlippmann/context-compiler/experimental/preprocessor`.
+Directive-drafter and starter-app examples now live in
+`context-compiler-example-integrations`.

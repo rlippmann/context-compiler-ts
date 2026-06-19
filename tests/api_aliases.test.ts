@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
-import * as pre from '../src/experimental/preprocessor/index.js';
 
 describe('root API aliases', () => {
   it('keeps snake_case exports and adds camelCase aliases', () => {
@@ -23,27 +22,5 @@ describe('root API aliases', () => {
     const engine = cc.createEngine();
     expect(engine.hasPendingClarification()).toBe(engine.has_pending_clarification());
     expect(engine.applyTranscript([])).toEqual(engine.apply_transcript([]));
-  });
-});
-
-describe('preprocessor API aliases', () => {
-  it('adds camelCase aliases for snake_case preprocessor exports', () => {
-    expect(pre.validatePreprocessorOutput).toBe(pre.validate_preprocessor_output);
-    expect(pre.parsePreprocessorOutput).toBe(pre.parse_preprocessor_output);
-    expect(pre.preprocessHeuristic).toBe(pre.preprocess_heuristic);
-    expect(pre.renderPrompt).toBe(pre.render_prompt);
-  });
-
-  it('supports both source_input and sourceInput options with identical behavior', () => {
-    const rawOutput = 'use docker';
-    const sourceInput = 'can you use docker?';
-
-    const validatedSnake = pre.validatePreprocessorOutput(rawOutput, { source_input: sourceInput });
-    const validatedCamel = pre.validatePreprocessorOutput(rawOutput, { sourceInput });
-    expect(validatedCamel).toEqual(validatedSnake);
-
-    const parsedSnake = pre.parsePreprocessorOutput(rawOutput, { source_input: sourceInput });
-    const parsedCamel = pre.parsePreprocessorOutput(rawOutput, { sourceInput });
-    expect(parsedCamel).toEqual(parsedSnake);
   });
 });

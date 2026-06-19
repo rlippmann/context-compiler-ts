@@ -135,61 +135,12 @@ For normal host code, prefer exported decision helpers such as `isUpdate`,
 `isClarify`, `isPassthrough`, `getClarifyPrompt`, and `getDecisionState`
 instead of branching on raw decision fields.
 
-## Experimental Preprocessor
+## Directive Drafting
 
-The preprocessor is an optional host-side layer that can recognize some
-natural-language rule updates before they reach the engine.
+Directive drafting now lives in
+`@rlippmann/context-compiler-directive-drafter`.
 
-For example:
-- "keep replies concise"
-- "don't suggest docker"
-- "forget that previous policy"
-
-Safety guidance:
-- Always validate preprocessor output before applying a directive to the engine.
-- If `engine.hasPendingClarification()` is true, bypass preprocessing and pass raw input directly to `engine.step(...)`.
-- Boundary behavior is conservative and false-negative-preferred: abstain rather than risk unsafe mutation.
-
-The preprocessor does not own state transitions. It only proposes compiler
-input. Use it when you want help acquiring directive-shaped input, not when you
-need a system to decide whether state is allowed to change.
-
-Experimental preprocessor APIs are available via package subpath:
-
-```ts
-import {
-  PREPROCESS_OUTCOME_DIRECTIVE,
-  parsePreprocessorOutput,
-  preprocessHeuristic,
-  validatePreprocessorOutput
-} from '@rlippmann/context-compiler/experimental/preprocessor';
-```
-
-### Experimental Preprocessor Quick Start
-
-```ts
-function stepWithOptionalPreprocessor(engine: ReturnType<typeof createEngine>, userInput: string) {
-  if (engine.hasPendingClarification()) {
-    return engine.step(userInput);
-  }
-
-  const heuristic = preprocessHeuristic(userInput);
-  let engineInput = userInput;
-
-  if (heuristic.classification === PREPROCESS_OUTCOME_DIRECTIVE && heuristic.output !== null) {
-    const parsed = parsePreprocessorOutput(heuristic.output, { sourceInput: userInput });
-    if (parsed !== null) {
-      engineInput = parsed;
-    }
-  }
-
-  return engine.step(engineInput);
-}
-```
-
-The preprocessor is a convenience layer. The engine remains the source of truth for state changes.
-
-This module is intentionally experimental and separate from the deterministic core engine API.
+Context Compiler remains the authority layer and applies validated directives.
 
 ## Versioning
 
@@ -206,13 +157,11 @@ This module is intentionally experimental and separate from the deterministic co
   - transcript replay
   - saving and restoring state
   - checkpoint restore
-  - experimental preprocessor behavior
   - public API behavior
 - Core public API for engine usage and transcript replay.
 - Checkpoint APIs for saving and restoring rules plus pending clarification state.
 - Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
 - Decision constants for host-side checks.
-- Experimental preprocessor module exposed through a package subpath import.
 - Fixture parity synced from the Python source-of-truth fixture corpus.
 
 ## Not Included Yet

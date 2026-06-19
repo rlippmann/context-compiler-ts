@@ -45,10 +45,3 @@ export interface TranscriptMessage {
 
 export type Transcript = TranscriptMessage[];
 export type ApplyResult = TranscriptResult;
-
-export type PreprocessOutcome = 'directive' | 'no_directive' | 'unknown';
-
-export interface PreprocessResult {
-  classification: PreprocessOutcome;
-  output: string | null;
-}

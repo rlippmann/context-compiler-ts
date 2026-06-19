@@ -29,10 +29,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./experimental/preprocessor": {
-      "types": "./dist/src/experimental/preprocessor/index.d.ts",
-      "import": "./dist/src/experimental/preprocessor/index.js"
     }
   },
   "files": [
@@ -58,8 +54,6 @@
     "fixtures:check": "bash scripts/fixtures-check.sh",
     "fixtures:structured:sync": "bash scripts/structured-fixtures-sync.sh",
     "fixtures:structured:check": "bash scripts/structured-fixtures-check.sh",
-    "fixtures:preprocessor:sync": "bash scripts/preprocessor-fixtures-sync.sh",
-    "fixtures:preprocessor:check": "bash scripts/preprocessor-fixtures-check.sh",
     "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest"

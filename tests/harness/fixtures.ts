@@ -84,19 +84,6 @@ export interface CheckpointFixtureCase {
   };
 }
 
-export interface PreprocessorFixtureCase {
-  name: string;
-  input?: string;
-  kind?: 'validator' | 'parse';
-  raw_output?: unknown;
-  source_input?: string;
-  expected?: {
-    classification: string;
-    output: string | null;
-  };
-  expected_parsed?: string | null;
-}
-
 export interface ControllerFixtureCase {
   id: string;
   kind: 'controller';
@@ -115,13 +102,6 @@ export interface ControllerFixtureCase {
   };
 }
 
-export interface PreprocessorApiContractFixture {
-  id: string;
-  kind: 'api-contract';
-  module: string;
-  required_exports: string[];
-}
-
 export interface NamedFixture<T> {
   name: string;
   path: string;
@@ -129,7 +109,6 @@ export interface NamedFixture<T> {
 }
 
 const FIXTURE_ROOT = resolve(process.cwd(), 'tests', 'fixtures', 'conformance');
-const PREPROCESSOR_FIXTURE_ROOT = resolve(process.cwd(), 'tests', 'fixtures', 'preprocessor');
 
 async function listJsonFilesRecursive(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -185,31 +164,6 @@ export async function loadCheckpointFixtures(): Promise<NamedFixture<CheckpointF
 
 export async function loadControllerFixtures(): Promise<NamedFixture<ControllerFixtureCase>[]> {
   return loadFixtureFiles<ControllerFixtureCase>('controller');
-}
-
-export async function loadPreprocessorFixtures(): Promise<NamedFixture<PreprocessorFixtureCase>[]> {
-  const files = await listJsonFilesRecursive(PREPROCESSOR_FIXTURE_ROOT);
-  const filtered = files
-    .filter((path) => !basename(path).startsWith('public-api-'))
-    .sort((a, b) => a.localeCompare(b));
-  const loaded = await Promise.all(
-    filtered.map(async (path) => {
-      const raw = await readFile(path, 'utf8');
-      const payload = JSON.parse(raw) as PreprocessorFixtureCase;
-      return {
-        name: basename(path, '.json'),
-        path,
-        payload
-      };
-    })
-  );
-  return loaded;
-}
-
-export async function loadPreprocessorApiContractFixture(): Promise<PreprocessorApiContractFixture> {
-  const path = join(PREPROCESSOR_FIXTURE_ROOT, 'public-api-v1.json');
-  const raw = await readFile(path, 'utf8');
-  return JSON.parse(raw) as PreprocessorApiContractFixture;
 }
 
 export { FIXTURE_ROOT };
