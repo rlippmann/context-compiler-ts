@@ -2,59 +2,149 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
-import type { ApplyResult, Transcript, TranscriptMessage } from '../src/index.js';
+import type {
+  ApplyResult,
+  CheckpointPendingReplacement,
+  Decision,
+  EngineCheckpoint,
+  EngineCheckpointPending,
+  EngineInit,
+  EngineState,
+  PreviewResult,
+  StepResult,
+  StructuralDiff,
+  Transcript,
+  TranscriptConfirmResult,
+  TranscriptMessage,
+  TranscriptResult,
+  TranscriptStateResult
+} from '../src/index.js';
 
-// Compile-time API parity checks for type exports in the Python contract fixture.
+// Compile-time smoke checks for intentional TS-only type exports that are not part
+// of the canonical Python runtime export set.
 const _typeCheckMessage: TranscriptMessage = { role: 'user', content: 'hello' };
 const _typeCheckTranscript: Transcript = [_typeCheckMessage];
 const _typeCheckApplyResult: ApplyResult = cc.compile_transcript(_typeCheckTranscript);
-void _typeCheckApplyResult;
+const _typeCheckDecision: Decision = { kind: 'passthrough', state: null, prompt_to_user: null };
+const _typeCheckPreviewResult: PreviewResult | null = null;
+const _typeCheckStepResult: StepResult | null = null;
+const _typeCheckStructuralDiff: StructuralDiff | null = null;
+const _typeCheckState: EngineState = { premise: null, policies: {}, version: 2 };
+const _typeCheckCheckpoint: EngineCheckpoint = {
+  checkpoint_version: 1,
+  authoritative_state: _typeCheckState,
+  pending: null
+};
+const _typeCheckCheckpointPending: EngineCheckpointPending | null = null;
+const _typeCheckPendingReplacement: CheckpointPendingReplacement | null = null;
+const _typeCheckEngineInit: EngineInit = { state: _typeCheckState };
+const _typeCheckTranscriptResult: TranscriptResult = _typeCheckApplyResult;
+const _typeCheckTranscriptStateResult: TranscriptStateResult | null = null;
+const _typeCheckTranscriptConfirmResult: TranscriptConfirmResult | null = null;
+void _typeCheckDecision;
+void _typeCheckPreviewResult;
+void _typeCheckStepResult;
+void _typeCheckStructuralDiff;
+void _typeCheckCheckpoint;
+void _typeCheckCheckpointPending;
+void _typeCheckPendingReplacement;
+void _typeCheckEngineInit;
+void _typeCheckTranscriptResult;
+void _typeCheckTranscriptStateResult;
+void _typeCheckTranscriptConfirmResult;
+
+type ParamSpec = {
+  name: string;
+  kind: string;
+  has_default: boolean;
+};
+
+type SignatureSpec = {
+  params: ParamSpec[];
+};
+
+type ReturnShape =
+  | { kind: 'engine_instance' }
+  | {
+      type: 'boolean' | 'string' | 'number' | 'object';
+      const?: unknown;
+      required_keys?: string[];
+      properties?: Record<string, ReturnShape>;
+    };
+
+type ShapeProbe = {
+  kwargs: Record<string, unknown>;
+  return_shape: ReturnShape;
+};
+
+type ExportMemberSpec = {
+  kind: 'type' | 'type_alias' | 'constant' | 'class' | 'callable';
+  value?: unknown;
+  signature?: SignatureSpec;
+  shape_probes?: ShapeProbe[];
+};
+
+type EngineMemberSpec = {
+  kind: 'method' | 'property';
+  signature?: SignatureSpec;
+};
 
 type ApiContractFixture = {
-  required_exports: string[];
+  forbidden_exports: string[];
+  exports: {
+    mode: 'exact';
+    names: string[];
+    members: Record<string, ExportMemberSpec>;
+  };
   engine: {
-    required_members: string[];
+    type: string;
+    public_members: {
+      mode: 'exact';
+      members: Record<string, EngineMemberSpec>;
+    };
   };
 };
 
-const PYTHON_TO_TS_EXPORT_MAP: Record<string, string> = {
-  create_engine: 'createEngine',
-  compile_transcript: 'compile_transcript',
-  get_premise_value: 'getPremiseValue',
-  get_policy_items: 'getPolicyItems',
-  is_update: 'is_update',
-  is_clarify: 'is_clarify',
-  is_passthrough: 'is_passthrough',
-  get_clarify_prompt: 'get_clarify_prompt',
-  get_decision_state: 'get_decision_state',
-  get_step_decision: 'get_step_decision',
-  get_step_state: 'get_step_state',
-  get_preview_decision: 'get_preview_decision',
-  get_preview_state_after: 'get_preview_state_after',
-  preview_would_mutate: 'preview_would_mutate',
-  diff_has_changes: 'diff_has_changes',
-  DECISION_PASSTHROUGH: 'DECISION_PASSTHROUGH',
-  DECISION_UPDATE: 'DECISION_UPDATE',
-  DECISION_CLARIFY: 'DECISION_CLARIFY',
-  POLICY_USE: 'POLICY_USE',
-  POLICY_PROHIBIT: 'POLICY_PROHIBIT',
-  TranscriptMessage: '__type_only__',
-  Transcript: '__type_only__',
-  ApplyResult: '__type_only__'
+const TS_ALIAS_ALLOWLIST: Record<string, string> = {
+  compileTranscript: 'compile_transcript',
+  createEngine: 'create_engine',
+  diffHasChanges: 'diff_has_changes',
+  getClarifyPrompt: 'get_clarify_prompt',
+  getDecisionState: 'get_decision_state',
+  getPolicyItems: 'get_policy_items',
+  getPremiseValue: 'get_premise_value',
+  getPreviewDecision: 'get_preview_decision',
+  getPreviewStateAfter: 'get_preview_state_after',
+  getStepDecision: 'get_step_decision',
+  getStepState: 'get_step_state',
+  isClarify: 'is_clarify',
+  isPassthrough: 'is_passthrough',
+  isUpdate: 'is_update',
+  previewWouldMutate: 'preview_would_mutate',
+  stateDiff: 'state_diff'
 };
 
-const PYTHON_TO_TS_ENGINE_MEMBER_MAP: Record<string, string> = {
-  step: 'step',
-  state: 'state',
-  export_json: 'exportJson',
-  import_json: 'importJson',
-  apply_transcript: 'apply_transcript',
-  export_checkpoint: 'exportCheckpoint',
-  import_checkpoint: 'importCheckpoint',
-  export_checkpoint_json: 'exportCheckpointJson',
-  import_checkpoint_json: 'importCheckpointJson',
-  has_pending_clarification: 'has_pending_clarification'
+const TS_ENGINE_ALIAS_ALLOWLIST: Record<string, string> = {
+  applyTranscript: 'apply_transcript',
+  exportCheckpoint: 'export_checkpoint',
+  exportCheckpointJson: 'export_checkpoint_json',
+  exportJson: 'export_json',
+  hasPendingClarification: 'has_pending_clarification',
+  importCheckpoint: 'import_checkpoint',
+  importCheckpointJson: 'import_checkpoint_json',
+  importJson: 'import_json'
 };
+
+const TS_ONLY_TYPE_EXPORTS = [
+  'CheckpointPendingReplacement',
+  'EngineCheckpoint',
+  'EngineCheckpointPending',
+  'EngineInit',
+  'EngineState',
+  'TranscriptConfirmResult',
+  'TranscriptResult',
+  'TranscriptStateResult'
+] as const;
 
 function loadApiContractFixture(): ApiContractFixture {
   const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-api-v1.json');
@@ -62,26 +152,262 @@ function loadApiContractFixture(): ApiContractFixture {
   return JSON.parse(raw) as ApiContractFixture;
 }
 
-describe('public API parity contract (conformance fixture)', () => {
-  it('exposes required top-level exports with intentional TS mappings', () => {
-    const fixture = loadApiContractFixture();
-    for (const pyName of fixture.required_exports) {
-      const tsName = PYTHON_TO_TS_EXPORT_MAP[pyName];
-      expect(tsName, `No TS mapping for Python export '${pyName}'`).toBeDefined();
-      if (tsName === '__type_only__') {
-        continue;
+function getCanonicalRuntimeExportNames(fixture: ApiContractFixture): string[] {
+  return fixture.exports.names.filter((name) => {
+    const member = fixture.exports.members[name];
+    return member.kind === 'callable' || member.kind === 'constant' || member.kind === 'class';
+  });
+}
+
+function getRuntimeExportNames(): string[] {
+  return Object.keys(cc).sort();
+}
+
+function getEngineRuntimePublicMembers(engine: object): string[] {
+  const prototype = Object.getPrototypeOf(engine) as Record<string, unknown>;
+  return Object.getOwnPropertyNames(prototype)
+    .filter((name) => name !== 'constructor')
+    .filter((name) => !name.startsWith('_'))
+    .sort();
+}
+
+function getEngineDescriptor(engine: object, name: string): PropertyDescriptor | undefined {
+  const prototype = Object.getPrototypeOf(engine);
+  return Object.getOwnPropertyDescriptor(prototype, name);
+}
+
+function expectPortableCallableArity(fn: (...args: unknown[]) => unknown, signature: SignatureSpec, label: string): void {
+  const requiredCount = signature.params.filter((param) => !param.has_default).length;
+  const totalCount = signature.params.length;
+  expect(
+    fn.length,
+    `${label}: callable arity ${fn.length} should be between required=${requiredCount} and total=${totalCount}`
+  ).toBeGreaterThanOrEqual(requiredCount);
+  expect(
+    fn.length,
+    `${label}: callable arity ${fn.length} should be between required=${requiredCount} and total=${totalCount}`
+  ).toBeLessThanOrEqual(totalCount);
+}
+
+function materializeProbeValue(value: unknown): unknown {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const maybeFixture = value as { fixture?: unknown };
+    if (maybeFixture.fixture === 'empty_engine') {
+      return cc.createEngine();
+    }
+    const out: Record<string, unknown> = {};
+    for (const [key, nested] of Object.entries(value)) {
+      out[key] = materializeProbeValue(nested);
+    }
+    return out;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => materializeProbeValue(item));
+  }
+  return value;
+}
+
+function expectShape(value: unknown, shape: ReturnShape, label: string): void {
+  if ('kind' in shape) {
+    if (shape.kind === 'engine_instance') {
+      expect(value, `${label}: expected engine instance`).toBeTruthy();
+      expect(typeof value).toBe('object');
+      expect(value).not.toBeNull();
+      if (value && typeof value === 'object') {
+        expect('step' in value, `${label}: engine instance should expose step`).toBe(true);
+        expect('has_pending_clarification' in value, `${label}: engine instance should expose has_pending_clarification`).toBe(
+          true
+        );
       }
-      expect(Object.prototype.hasOwnProperty.call(cc, tsName), `Missing TS export '${tsName}'`).toBe(true);
+    }
+    return;
+  }
+
+  if (shape.type === 'boolean' || shape.type === 'string' || shape.type === 'number') {
+    expect(typeof value, `${label}: wrong primitive type`).toBe(shape.type);
+    if ('const' in shape) {
+      expect(value, `${label}: wrong primitive value`).toBe(shape.const);
+    }
+    return;
+  }
+
+  expect(typeof value, `${label}: expected object`).toBe('object');
+  expect(value, `${label}: expected non-null object`).not.toBeNull();
+  if (value === null || typeof value !== 'object') {
+    return;
+  }
+
+  for (const key of shape.required_keys ?? []) {
+    expect(key in value, `${label}: missing required key '${key}'`).toBe(true);
+  }
+
+  for (const [key, propertyShape] of Object.entries(shape.properties ?? {})) {
+    expectShape((value as Record<string, unknown>)[key], propertyShape, `${label}.${key}`);
+  }
+
+  if ('const' in shape) {
+    expect(value, `${label}: wrong object value`).toEqual(shape.const);
+  }
+}
+
+describe('public API parity contract (conformance fixture)', () => {
+  it('syncs the stricter canonical Python fixture schema', () => {
+    const fixture = loadApiContractFixture();
+    expect(fixture.exports.mode).toBe('exact');
+    expect(fixture.engine.public_members.mode).toBe('exact');
+    expect(fixture.forbidden_exports.length).toBeGreaterThan(0);
+  });
+
+  it('allows only canonical runtime exports plus approved TS aliases', () => {
+    const fixture = loadApiContractFixture();
+    const canonicalRuntimeExports = getCanonicalRuntimeExportNames(fixture);
+    const allowedRuntimeExports = [...canonicalRuntimeExports, ...Object.keys(TS_ALIAS_ALLOWLIST)].sort();
+    expect(getRuntimeExportNames()).toEqual(allowedRuntimeExports);
+  });
+
+  it('exposes every canonical runtime export from the Python fixture', () => {
+    const fixture = loadApiContractFixture();
+    for (const exportName of getCanonicalRuntimeExportNames(fixture)) {
+      expect(Object.prototype.hasOwnProperty.call(cc, exportName), `Missing canonical export '${exportName}'`).toBe(true);
     }
   });
 
-  it('exposes required engine instance members with intentional TS mappings', () => {
+  it('does not expose forbidden runtime exports', () => {
+    const fixture = loadApiContractFixture();
+    for (const exportName of fixture.forbidden_exports) {
+      expect(Object.prototype.hasOwnProperty.call(cc, exportName), `Forbidden export '${exportName}' should not exist`).toBe(false);
+    }
+  });
+
+  it('asserts approved TS aliases are identity bindings to canonical exports', () => {
+    for (const [aliasName, canonicalName] of Object.entries(TS_ALIAS_ALLOWLIST)) {
+      expect(Object.prototype.hasOwnProperty.call(cc, aliasName), `Missing approved TS alias '${aliasName}'`).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(cc, canonicalName), `Missing canonical export '${canonicalName}' for alias '${aliasName}'`).toBe(
+        true
+      );
+      expect(cc[aliasName as keyof typeof cc]).toBe(cc[canonicalName as keyof typeof cc]);
+    }
+  });
+
+  it('enforces portable runtime export kinds and constant values', () => {
+    const fixture = loadApiContractFixture();
+    for (const exportName of getCanonicalRuntimeExportNames(fixture)) {
+      const member = fixture.exports.members[exportName];
+      expect(member, `Missing member schema for export '${exportName}'`).toBeDefined();
+      expect(Object.prototype.hasOwnProperty.call(cc, exportName), `Missing canonical export '${exportName}'`).toBe(true);
+      if (!Object.prototype.hasOwnProperty.call(cc, exportName)) {
+        continue;
+      }
+
+      const value = cc[exportName as keyof typeof cc];
+      if (member.kind === 'constant') {
+        expect(typeof value, `Export '${exportName}' should be a constant`).toBe('string');
+        expect(value, `Export '${exportName}' has the wrong constant value`).toBe(member.value);
+      } else if (member.kind === 'callable') {
+        expect(typeof value, `Export '${exportName}' should be callable`).toBe('function');
+      } else if (member.kind === 'class') {
+        expect(typeof value, `Export '${exportName}' should be a class constructor`).toBe('function');
+        expect('prototype' in (value as object), `Export '${exportName}' should expose a prototype`).toBe(true);
+      }
+    }
+  });
+
+  it('enforces portable callable signatures for canonical runtime exports', () => {
+    const fixture = loadApiContractFixture();
+    for (const exportName of getCanonicalRuntimeExportNames(fixture)) {
+      const member = fixture.exports.members[exportName];
+      if (member.kind !== 'callable' && member.kind !== 'class') {
+        continue;
+      }
+      expect(Object.prototype.hasOwnProperty.call(cc, exportName), `Missing canonical export '${exportName}'`).toBe(true);
+      if (!Object.prototype.hasOwnProperty.call(cc, exportName) || !member.signature) {
+        continue;
+      }
+      const value = cc[exportName as keyof typeof cc];
+      expect(typeof value).toBe('function');
+      expectPortableCallableArity(value as (...args: unknown[]) => unknown, member.signature, `Export '${exportName}'`);
+    }
+  });
+
+  it('runs lightweight canonical API-shape probes where portable', () => {
+    const fixture = loadApiContractFixture();
+    for (const exportName of getCanonicalRuntimeExportNames(fixture)) {
+      const member = fixture.exports.members[exportName];
+      if (member.kind !== 'callable' || !member.shape_probes || !Object.prototype.hasOwnProperty.call(cc, exportName)) {
+        continue;
+      }
+      const fn = cc[exportName as keyof typeof cc];
+      expect(typeof fn, `Export '${exportName}' should be callable`).toBe('function');
+      for (const [index, probe] of member.shape_probes.entries()) {
+        const args = (member.signature?.params ?? []).map((param) => materializeProbeValue(probe.kwargs[param.name]));
+        const result = (fn as (...callArgs: unknown[]) => unknown)(...args);
+        expectShape(result, probe.return_shape, `${exportName} probe ${index}`);
+      }
+    }
+  });
+
+  it('allows only exact canonical engine public members plus approved TS aliases', () => {
     const fixture = loadApiContractFixture();
     const engine = cc.createEngine();
-    for (const pyName of fixture.engine.required_members) {
-      const tsName = PYTHON_TO_TS_ENGINE_MEMBER_MAP[pyName];
-      expect(tsName, `No TS mapping for Python engine member '${pyName}'`).toBeDefined();
-      expect(tsName in engine, `Missing engine member '${tsName}'`).toBe(true);
+    const canonicalMembers = Object.keys(fixture.engine.public_members.members);
+    const allowedMembers = [...canonicalMembers, ...Object.keys(TS_ENGINE_ALIAS_ALLOWLIST)].sort();
+    expect(getEngineRuntimePublicMembers(engine)).toEqual(allowedMembers);
+  });
+
+  it('exposes every canonical engine public member from the Python fixture', () => {
+    const fixture = loadApiContractFixture();
+    const engine = cc.createEngine();
+    for (const memberName of Object.keys(fixture.engine.public_members.members)) {
+      expect(memberName in engine, `Missing canonical engine member '${memberName}'`).toBe(true);
     }
+  });
+
+  it('asserts approved TS engine aliases are identity bindings to canonical members', () => {
+    const engine = cc.createEngine();
+    for (const [aliasName, canonicalName] of Object.entries(TS_ENGINE_ALIAS_ALLOWLIST)) {
+      expect(aliasName in engine, `Missing approved TS engine alias '${aliasName}'`).toBe(true);
+      expect(canonicalName in engine, `Missing canonical engine member '${canonicalName}' for alias '${aliasName}'`).toBe(true);
+      expect((engine as Record<string, unknown>)[aliasName]).toBe((engine as Record<string, unknown>)[canonicalName]);
+    }
+  });
+
+  it('enforces portable engine member kinds and signatures', () => {
+    const fixture = loadApiContractFixture();
+    const engine = cc.createEngine();
+    for (const [memberName, memberSpec] of Object.entries(fixture.engine.public_members.members)) {
+      expect(memberName in engine, `Missing canonical engine member '${memberName}'`).toBe(true);
+      if (!(memberName in engine)) {
+        continue;
+      }
+
+      const descriptor = getEngineDescriptor(engine, memberName);
+      expect(descriptor, `Missing engine descriptor for '${memberName}'`).toBeDefined();
+      if (!descriptor) {
+        continue;
+      }
+
+      if (memberSpec.kind === 'property') {
+        expect(typeof descriptor.get, `Engine member '${memberName}' should be a getter property`).toBe('function');
+        continue;
+      }
+
+      expect(typeof descriptor.value, `Engine member '${memberName}' should be a method`).toBe('function');
+      if (typeof descriptor.value === 'function' && memberSpec.signature) {
+        expectPortableCallableArity(descriptor.value as (...args: unknown[]) => unknown, memberSpec.signature, `Engine member '${memberName}'`);
+      }
+    }
+  });
+
+  it('documents intentional TS-only type exports outside the canonical Python fixture', () => {
+    expect(TS_ONLY_TYPE_EXPORTS).toEqual([
+      'CheckpointPendingReplacement',
+      'EngineCheckpoint',
+      'EngineCheckpointPending',
+      'EngineInit',
+      'EngineState',
+      'TranscriptConfirmResult',
+      'TranscriptResult',
+      'TranscriptStateResult'
+    ]);
   });
 });
