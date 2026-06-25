@@ -12,11 +12,11 @@ This directory contains multiple fixture suites with different contracts.
 
 ## API contract fixture
 
-[`conformance/api/public-api-v1.json`](conformance/api/public-api-v1.json) defines a small public API presence contract for the Python 0.7.x surface that ports must expose.
+[`conformance/api/public-api-v1.json`](conformance/api/public-api-v1.json) defines a small portable core API presence contract for the current Python 0.8 surface that ports must expose.
 
 Ports may sync this artifact with conformance fixtures.
 
-Ports should check equivalent public exports and methods using language-appropriate names where casing differs.
+Ports should check equivalent public exports and methods using language-appropriate names where casing differs, while preserving the current alias-compatible API contract.
 
 Behavioral semantics remain covered by conformance and structured fixtures.
 
@@ -47,7 +47,7 @@ Replay messages using `compile_transcript(messages)`.
 Results are normalized to:
 
 * `{ "state": ... }`
-* `{ "clarify": { "prompt_to_user": ... } }`
+* `{ "confirm": { "prompt_to_user": ... } }`
 
 ## Prompt matching
 
@@ -94,7 +94,7 @@ portable fixture contract.
 
 [`engine-regression/structured/`](engine-regression/structured/)
 
-These fixtures capture deterministic per-turn engine behavior, including checkpoint snapshots, and are exercised by [`tests/test_structured_regression.py`](../test_structured_regression.py).
+These fixtures capture deterministic per-turn engine behavior, including checkpoint snapshots, and are exercised by the TypeScript structured regression test in [`structured-regression-fixtures.test.ts`](../structured-regression-fixtures.test.ts).
 
 They validate:
 
@@ -108,6 +108,13 @@ Directive-drafter conformance is maintained in the separate
 `context-compiler-directive-drafter` repositories and is not part of the core
 engine fixture contract here.
 
-## Test runner
+## Test runners
 
-See [`tests/test_fixtures.py`](../test_fixtures.py) for execution details.
+See the TypeScript fixture runners in this repository for execution details:
+
+* [`step-fixtures.test.ts`](../step-fixtures.test.ts)
+* [`transcript-fixtures.test.ts`](../transcript-fixtures.test.ts)
+* [`state-json-fixtures.test.ts`](../state-json-fixtures.test.ts)
+* [`checkpoint-fixtures.test.ts`](../checkpoint-fixtures.test.ts)
+* [`controller-fixtures.test.ts`](../controller-fixtures.test.ts)
+* [`structured-regression-fixtures.test.ts`](../structured-regression-fixtures.test.ts)

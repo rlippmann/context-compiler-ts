@@ -11,7 +11,7 @@ asking for clarification before anything changes.
 
 A dict stores state. Context Compiler makes state changes verifiable.
 
-This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.7 behavior.
+This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.8 behavior and contract.
 
 It is useful for hosts that need explicit conversational state to stay stable
 across turns: chat apps, tool-using assistants, schema-routing workflows, and
@@ -145,16 +145,16 @@ Context Compiler remains the authority layer and applies validated directives.
 - TS `0.N.y` targets semantic compatibility with the Python `0.N.x` line.
 - Patch versions evolve independently by language/repo.
 
-## 0.7 Parity Scope
+## 0.8 Parity Scope
 
-- Core engine behavior aligned with Python 0.7 behavior.
+- Core engine behavior aligned with the Python 0.8 behavior and contract.
 - Shared behavior test coverage for:
   - single-turn rule updates
   - transcript replay
   - saving and restoring state
   - checkpoint restore
   - public API behavior
-- Core public API for engine usage and transcript replay.
+- Core public API for engine usage, transcript replay, and the current alias-compatible TypeScript surface.
 - Checkpoint APIs for saving and restoring rules plus pending clarification state.
 - Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
 - Decision constants for host-side checks.
