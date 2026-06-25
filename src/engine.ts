@@ -54,8 +54,9 @@ export class Engine implements EngineCompat {
   private _pendingReplacement: PendingReplacement | null;
   private _pendingPrompt: string | null;
 
-  constructor(state?: EngineState) {
-    this._state = state ? loadStateObject(state) : initialState();
+  constructor(state?: EngineState | EngineInit) {
+    const normalizedState = normalizeEngineInit(state);
+    this._state = normalizedState ? loadStateObject(normalizedState) : initialState();
     this._pendingReplacement = null;
     this._pendingPrompt = null;
   }
