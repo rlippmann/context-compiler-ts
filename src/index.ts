@@ -1,12 +1,15 @@
 export {
+  Engine,
+  create_engine,
   createEngine,
   compile_transcript,
   compileTranscript,
+  get_premise_value,
+  get_policy_items,
   getPremiseValue,
   getPolicyItems
 } from './engine.js';
 export {
-  OUTPUT_VERSION,
   diff_has_changes,
   diffHasChanges,
   get_preview_decision,
@@ -24,7 +27,7 @@ export {
   stateDiff,
   step
 } from './controller.js';
-export type { Engine, EngineInit } from './engine.js';
+export type { EngineInit } from './engine.js';
 export type { PreviewResult, StepResult, StructuralDiff } from './controller.js';
 import type { Decision, EngineState } from './types.js';
 export const DECISION_PASSTHROUGH = 'passthrough' as const;
@@ -65,10 +68,12 @@ export const getDecisionState = get_decision_state;
 
 export type {
   ApplyResult,
+  EngineCheckpoint as Checkpoint,
   CheckpointPendingReplacement,
   Decision,
   EngineCheckpointPending,
   EngineCheckpoint,
+  EngineState as State,
   EngineState,
   Transcript,
   TranscriptMessage,

@@ -7,23 +7,21 @@ import type {
   TranscriptResult
 } from './types.js';
 
-export interface Engine {
+export interface EngineInit {
+  state?: EngineState;
+}
+
+export interface EngineCompat {
   step(input: string): Decision;
   readonly state: EngineState;
   has_pending_clarification(): boolean;
-  hasPendingClarification(): boolean;
   apply_transcript(messages: unknown[]): TranscriptResult;
-  applyTranscript(messages: unknown[]): TranscriptResult;
-  exportJson(): string;
-  importJson(payload: string): void;
-  exportCheckpoint(): EngineCheckpoint;
-  importCheckpoint(checkpoint: EngineCheckpoint): void;
-  exportCheckpointJson(): string;
-  importCheckpointJson(payload: string): void;
-}
-
-export interface EngineInit {
-  state?: EngineState;
+  export_json(): string;
+  import_json(payload: string): void;
+  export_checkpoint(): EngineCheckpoint;
+  import_checkpoint(payload: EngineCheckpoint): void;
+  export_checkpoint_json(): string;
+  import_checkpoint_json(payload: string): void;
 }
 
 const PASSTHROUGH: Decision = {
@@ -51,13 +49,13 @@ type PendingReplacement = CheckpointPendingReplacement;
 const AFFIRMATIVE_CONFIRMATIONS = new Set(['yes', 'yes please', 'yep', 'yeah', 'sure', 'ok', 'okay']);
 const NEGATIVE_CONFIRMATIONS = new Set(['no', 'nope', 'no thanks']);
 
-class EngineImpl implements Engine {
+export class Engine implements EngineCompat {
   private _state: EngineState;
   private _pendingReplacement: PendingReplacement | null;
   private _pendingPrompt: string | null;
 
-  constructor(init?: EngineInit) {
-    this._state = init?.state ? loadStateObject(init.state) : initialState();
+  constructor(state?: EngineState) {
+    this._state = state ? loadStateObject(state) : initialState();
     this._pendingReplacement = null;
     this._pendingPrompt = null;
   }
@@ -70,20 +68,16 @@ class EngineImpl implements Engine {
     return this._pendingReplacement !== null;
   }
 
-  hasPendingClarification(): boolean {
-    return this.has_pending_clarification();
-  }
-
-  exportJson(): string {
+  export_json(): string {
     return stringifyCanonicalJson(sortKeysDeep(this._state));
   }
 
-  importJson(payload: string): void {
-    this._replaceState(loadStateJson(payload));
+  import_json(payload: string): void {
+    this.#replaceState(loadStateJson(payload));
   }
 
-  exportCheckpoint(): EngineCheckpoint {
-    const authoritativeState = loadStateJson(this.exportJson());
+  export_checkpoint(): EngineCheckpoint {
+    const authoritativeState = loadStateJson(this.export_json());
     let pending: EngineCheckpointPending | null = null;
 
     if (this._pendingReplacement !== null) {
@@ -102,27 +96,27 @@ class EngineImpl implements Engine {
     });
   }
 
-  importCheckpoint(checkpoint: EngineCheckpoint): void {
-    this._replaceCheckpoint(loadCheckpointObject(checkpoint));
+  import_checkpoint(payload: EngineCheckpoint): void {
+    this.#replaceCheckpoint(loadCheckpointObject(payload));
   }
 
-  exportCheckpointJson(): string {
-    return stringifyCanonicalJson(sortKeysDeep(this.exportCheckpoint()));
+  export_checkpoint_json(): string {
+    return stringifyCanonicalJson(sortKeysDeep(this.export_checkpoint()));
   }
 
-  importCheckpointJson(payload: string): void {
+  import_checkpoint_json(payload: string): void {
     let raw: unknown;
     try {
       raw = JSON.parse(payload);
     } catch {
       throw new Error('Invalid JSON payload.');
     }
-    this._replaceCheckpoint(loadCheckpointObject(raw));
+    this.#replaceCheckpoint(loadCheckpointObject(raw));
   }
 
   step(input: string): Decision {
     if (this._pendingReplacement !== null) {
-      return this.resolveOrRepromptPending(input);
+      return this.#resolveOrRepromptPending(input);
     }
 
     const action = parseDirective(input);
@@ -130,7 +124,7 @@ class EngineImpl implements Engine {
       return { ...PASSTHROUGH };
     }
 
-    const clarifyDecision = this.preMutationClarify(action);
+    const clarifyDecision = this.#preMutationClarify(action);
     if (clarifyDecision !== null) {
       return clarifyDecision;
     }
@@ -159,7 +153,7 @@ class EngineImpl implements Engine {
     }
 
     if (action.kind === 'replace_use') {
-      this.applyReplacementExplicit(action.new_item, action.old_item);
+      this.#applyReplacementExplicit(action.new_item, action.old_item);
       return updateDecision(this._state);
     }
 
@@ -197,17 +191,13 @@ class EngineImpl implements Engine {
     };
   }
 
-  applyTranscript(messages: unknown[]): TranscriptResult {
-    return this.apply_transcript(messages);
-  }
-
-  private _replaceState(state: EngineState): void {
+  #replaceState(state: EngineState): void {
     this._state = state;
     this._pendingReplacement = null;
     this._pendingPrompt = null;
   }
 
-  private _replaceCheckpoint(checkpoint: EngineCheckpoint): void {
+  #replaceCheckpoint(checkpoint: EngineCheckpoint): void {
     this._state = checkpoint.authoritative_state;
 
     const pending = checkpoint.pending ?? null;
@@ -221,7 +211,7 @@ class EngineImpl implements Engine {
     this._pendingPrompt = pending.prompt_to_user;
   }
 
-  private resolveOrRepromptPending(userInput: string): Decision {
+  #resolveOrRepromptPending(userInput: string): Decision {
     const normalized = normalizeConfirmation(userInput);
     if (AFFIRMATIVE_CONFIRMATIONS.has(normalized)) {
       const pending = this._pendingReplacement as PendingReplacement;
@@ -231,7 +221,7 @@ class EngineImpl implements Engine {
         const newKey = normalizeItem(pending.new_item);
         this._state.policies[newKey] = 'use';
       } else {
-        this.applyReplacementExplicit(pending.new_item, pending.old_item);
+        this.#applyReplacementExplicit(pending.new_item, pending.old_item);
       }
       return updateDecision(this._state);
     }
@@ -245,7 +235,7 @@ class EngineImpl implements Engine {
     return clarify(this._pendingPrompt as string);
   }
 
-  private applyReplacementExplicit(newItem: string, oldItem: string): void {
+  #applyReplacementExplicit(newItem: string, oldItem: string): void {
     const newKey = normalizeItem(newItem);
     const oldKey = normalizeItem(oldItem);
     if (newKey === oldKey) {
@@ -255,7 +245,7 @@ class EngineImpl implements Engine {
     this._state.policies[newKey] = 'use';
   }
 
-  private preMutationClarify(action: Action): Decision | null {
+  #preMutationClarify(action: Action): Decision | null {
     if (action.kind === 'set_premise' || action.kind === 'change_premise') {
       if (sanitizePremiseValue(action.value) === '') {
         if (action.kind === 'set_premise') {
@@ -350,22 +340,90 @@ class EngineImpl implements Engine {
   }
 }
 
-export function createEngine(init?: EngineInit): Engine {
-  return new EngineImpl(init);
+export interface Engine {
+  hasPendingClarification(): boolean;
+  applyTranscript(messages: unknown[]): TranscriptResult;
+  exportJson(): string;
+  importJson(payload: string): void;
+  exportCheckpoint(): EngineCheckpoint;
+  importCheckpoint(payload: EngineCheckpoint): void;
+  exportCheckpointJson(): string;
+  importCheckpointJson(payload: string): void;
 }
 
+Object.defineProperties(Engine.prototype, {
+  applyTranscript: {
+    value: Engine.prototype.apply_transcript,
+    writable: true,
+    configurable: true
+  },
+  exportCheckpoint: {
+    value: Engine.prototype.export_checkpoint,
+    writable: true,
+    configurable: true
+  },
+  exportCheckpointJson: {
+    value: Engine.prototype.export_checkpoint_json,
+    writable: true,
+    configurable: true
+  },
+  exportJson: {
+    value: Engine.prototype.export_json,
+    writable: true,
+    configurable: true
+  },
+  hasPendingClarification: {
+    value: Engine.prototype.has_pending_clarification,
+    writable: true,
+    configurable: true
+  },
+  importCheckpoint: {
+    value: Engine.prototype.import_checkpoint,
+    writable: true,
+    configurable: true
+  },
+  importCheckpointJson: {
+    value: Engine.prototype.import_checkpoint_json,
+    writable: true,
+    configurable: true
+  },
+  importJson: {
+    value: Engine.prototype.import_json,
+    writable: true,
+    configurable: true
+  }
+});
+
+function normalizeEngineInit(stateOrInit?: EngineState | EngineInit): EngineState | undefined {
+  if (stateOrInit === undefined) {
+    return undefined;
+  }
+  if ('state' in stateOrInit && Object.keys(stateOrInit).length <= 1) {
+    return stateOrInit.state;
+  }
+  return stateOrInit as EngineState;
+}
+
+export function create_engine(state?: EngineState | EngineInit): Engine {
+  return new Engine(normalizeEngineInit(state));
+}
+
+export const createEngine = create_engine;
+
 export function compile_transcript(messages: unknown[]): TranscriptResult {
-  const engine = createEngine();
+  const engine = create_engine();
   return engine.apply_transcript(messages);
 }
 
 export const compileTranscript = compile_transcript;
 
-export function getPremiseValue(state: EngineState): string | null {
+export function get_premise_value(state: EngineState): string | null {
   return state.premise;
 }
 
-export function getPolicyItems(state: EngineState, value?: 'use' | 'prohibit' | null): string[] {
+export const getPremiseValue = get_premise_value;
+
+export function get_policy_items(state: EngineState, value?: 'use' | 'prohibit' | null): string[] {
   if (value == null) {
     return Object.keys(state.policies).sort(compareStringsByCodepoint);
   }
@@ -374,6 +432,8 @@ export function getPolicyItems(state: EngineState, value?: 'use' | 'prohibit' | 
     .map(([item]) => item)
     .sort(compareStringsByCodepoint);
 }
+
+export const getPolicyItems = get_policy_items;
 
 function initialState(): EngineState {
   return {
