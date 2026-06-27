@@ -2,8 +2,12 @@
 
 TypeScript examples showing how host applications keep rules and corrections consistent across turns.
 
-These examples follow the Python 0.7 behavior baseline and use only core APIs.
+These examples are repository artifacts and are not installed from the published npm package.
+
+These examples follow the Python 0.8 behavior baseline and use only core APIs.
 Request-based integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
+Directive drafting lives in the separate `@rlippmann/context-compiler-directive-drafter` package.
+The TypeScript core package does not include a REPL.
 
 ## 01_persistent_guardrails.ts
 
@@ -11,7 +15,7 @@ Demonstrates how a prohibition persists as stored policy state across later turn
 
 ## 02_configuration_and_correction.ts
 
-Demonstrates explicit premise lifecycle in 0.5:
+Demonstrates explicit premise lifecycle with the current premise directives:
 `set premise ...` followed by `change premise to ...`.
 
 ## 03_ambiguity_with_clarification.ts

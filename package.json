@@ -1,16 +1,16 @@
 {
   "name": "@rlippmann/context-compiler",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "description": "Store AI rules and corrections separately from chat history so they stay consistent across turns.",
   "keywords": [
     "llm",
-    "context",
-    "state",
-    "conversational-state",
+    "conversational-ai",
+    "conversation-state",
+    "state-management",
+    "state-machine",
     "deterministic",
-    "typescript",
-    "ai",
-    "prompt-management"
+    "ai-infrastructure",
+    "typescript"
   ],
   "license": "Apache-2.0",
   "repository": {
@@ -32,8 +32,9 @@
     }
   },
   "files": [
-    "dist",
-    "examples/README.md",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/src",
     "LICENSE",
     "README.md"
   ],

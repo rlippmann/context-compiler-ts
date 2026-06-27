@@ -111,12 +111,28 @@ When fixtures need to be updated:
 
 3. Commit only the resulting changes.
 
+For full synchronization workflows:
+
+- Conformance fixtures use `FIXTURES_SOURCE`.
+- Structured regression fixtures use `STRUCTURED_FIXTURES_SOURCE`.
+- `npm run fixtures:sync:all` and `npm run fixtures:check:all` require both environment variables.
+
 ### Verification
 
 After syncing:
 
 npm test
 FIXTURES_SOURCE=<same python fixtures path> npm run fixtures:check
+
+For full verification workflows:
+
+STRUCTURED_FIXTURES_SOURCE=<python repo>/tests/fixtures/engine-regression/structured npm run fixtures:structured:check
+
+or run:
+
+FIXTURES_SOURCE=<python repo>/tests/fixtures/conformance \
+STRUCTURED_FIXTURES_SOURCE=<python repo>/tests/fixtures/engine-regression/structured \
+npm run fixtures:check:all
 
 ### Constraints
 
