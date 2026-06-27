@@ -61,6 +61,9 @@ npm install @rlippmann/context-compiler
 - `examples/` — small core API examples focused on authority-layer behavior
 - `context-compiler-example-integrations` — starter apps and integration examples
 
+The npm package publishes the core runtime only. Examples and demos live in
+this repository and are not included in the published package.
+
 ## Quick Start
 
 ```ts

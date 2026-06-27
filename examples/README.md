@@ -2,6 +2,8 @@
 
 TypeScript examples showing how host applications keep rules and corrections consistent across turns.
 
+These examples are repository artifacts and are not installed from the published npm package.
+
 These examples follow the Python 0.8 behavior baseline and use only core APIs.
 Request-based integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
 Directive drafting lives in the separate `@rlippmann/context-compiler-directive-drafter` package.

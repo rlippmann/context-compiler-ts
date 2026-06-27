@@ -32,8 +32,9 @@
     }
   },
   "files": [
-    "dist",
-    "examples/README.md",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/src",
     "LICENSE",
     "README.md"
   ],
