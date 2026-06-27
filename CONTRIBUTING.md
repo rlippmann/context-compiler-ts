@@ -101,7 +101,22 @@ Commands:
 - `STRUCTURED_FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/engine-regression/structured npm run fixtures:structured:check` to detect structured regression fixture drift
 - When updating `PY_FIXTURE_REF`, run both conformance and structured fixture sync/check commands.
 
-Each check command requires its matching `*_SOURCE` variable.
+Environment variables:
+
+- `FIXTURES_SOURCE` must point to the Python repository's `tests/fixtures/conformance` directory.
+- `STRUCTURED_FIXTURES_SOURCE` must point to the Python repository's `tests/fixtures/engine-regression/structured` directory.
+
+Example:
+
+```bash
+export FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/conformance
+export STRUCTURED_FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/engine-regression/structured
+
+npm run fixtures:sync:all
+npm run fixtures:check:all
+```
+
+Each check or sync command requires its corresponding `*_SOURCE` variable.
 
 ## Pull Requests
 
