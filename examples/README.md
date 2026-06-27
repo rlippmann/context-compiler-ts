@@ -4,6 +4,8 @@ TypeScript examples showing how host applications keep rules and corrections con
 
 These examples follow the Python 0.8 behavior baseline and use only core APIs.
 Request-based integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
+Directive drafting lives in the separate `@rlippmann/context-compiler-directive-drafter` package.
+The TypeScript core package does not include a REPL.
 
 ## 01_persistent_guardrails.ts
 

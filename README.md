@@ -147,18 +147,7 @@ Context Compiler remains the authority layer and applies validated directives.
 
 ## 0.8 Parity Scope
 
-- Core engine behavior aligned with the Python 0.8 behavior and contract.
-- Shared behavior test coverage for:
-  - single-turn rule updates
-  - transcript replay
-  - saving and restoring state
-  - checkpoint restore
-  - public API behavior
-- Core public API for engine usage, transcript replay, and the current alias-compatible TypeScript surface.
-- Checkpoint APIs for saving and restoring rules plus pending clarification state.
-- Controller APIs for step envelopes, preview/dry-run, and structural state diffs.
-- Decision constants for host-side checks.
-- Fixture parity synced from the Python source-of-truth fixture corpus.
+The TypeScript implementation targets semantic compatibility with the Python 0.8 release, including engine behavior, checkpoint persistence, transcript replay, controller APIs, and shared fixture-based verification.
 
 ## Not Included Yet
 
