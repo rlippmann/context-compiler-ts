@@ -49,7 +49,7 @@ Uses the controller helper accessors such as `getPreviewDecision`, `getPreviewSt
 
 ## Integration examples
 
-Runnable starter apps and integration examples now live in
-`context-compiler-example-integrations`.
+Runnable application-layer examples, enforcement-point examples, and host integration examples now live in
+[`context-compiler-example-integrations`](https://github.com/rlippmann/context-compiler-example-integrations).
 
 This repository keeps only small core examples and authority-layer examples.
