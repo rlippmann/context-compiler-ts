@@ -4,7 +4,9 @@ TypeScript examples showing how host applications keep rules and corrections con
 
 These examples are repository artifacts and are not installed from the published npm package.
 
+These examples teach the Context Compiler authority layer and core APIs, including directive grammar, `Decision` handling, engine lifecycle, state access, checkpoints, transcript replay, controller APIs, and authority-layer usage patterns.
 These examples follow the Python 0.8 behavior baseline and use only core APIs.
+They focus on the core engine and intentionally avoid framework-specific integrations.
 Request-based integrations can persist compiler state with checkpoint APIs so rules and corrections stay consistent across turns.
 Directive drafting lives in the separate `@rlippmann/context-compiler-directive-drafter` package.
 The TypeScript core package does not include a REPL.
@@ -52,4 +54,4 @@ Uses the controller helper accessors such as `getPreviewDecision`, `getPreviewSt
 Runnable application-layer examples, enforcement-point examples, and host integration examples now live in
 [`context-compiler-example-integrations`](https://github.com/rlippmann/context-compiler-example-integrations).
 
-This repository keeps only small core examples and authority-layer examples.
+This repository keeps only small core examples and authority-layer examples for the core engine.
