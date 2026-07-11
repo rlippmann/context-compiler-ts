@@ -1,6 +1,6 @@
 {
   "name": "@rlippmann/context-compiler",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Store AI rules and corrections separately from chat history so they stay consistent across turns.",
   "keywords": [
     "llm",
