@@ -104,18 +104,20 @@ Conformance fixtures are sourced from the Python repository and define the canon
 
 When fixtures need to be updated:
 
-1. Obtain the Python source of truth (pinned commit or tag).
-2. Run the sync script with an explicit source:
+1. Read the authoritative Python source commit from `tests/fixtures/.source-commit`.
+2. Obtain a `rlippmann/context-compiler` checkout at that exact commit.
+3. Run the sync script with an explicit source:
 
    FIXTURES_SOURCE=<python repo>/tests/fixtures/conformance npm run fixtures:sync
 
-3. Commit only the resulting changes.
+4. Commit only the resulting changes.
 
 For full synchronization workflows:
 
 - Conformance fixtures use `FIXTURES_SOURCE`.
 - Structured regression fixtures use `STRUCTURED_FIXTURES_SOURCE`.
 - `npm run fixtures:sync:all` and `npm run fixtures:check:all` require both environment variables.
+- Both fixture families must come from the same `rlippmann/context-compiler` checkout commit recorded in `tests/fixtures/.source-commit`.
 
 ### Verification
 
@@ -137,6 +139,8 @@ npm run fixtures:check:all
 ### Constraints
 
 - FIXTURES_SOURCE must be explicitly provided; no implicit local fallback is allowed.
+- `tests/fixtures/.source-commit` must contain the exact Python commit SHA for both synchronized fixture families.
+- Local sync/check commands must use a Python checkout at that exact commit; unverifiable source directories must be rejected.
 - Do not copy/paste or manually edit fixture contents, even for single-file fixes.
 - If a fixture appears incorrect, fix it in the Python repo first, then re-sync.
 - Manual fixture JSON edits should be rejected in review.

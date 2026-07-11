@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+source "$(dirname "$0")/fixtures-provenance.sh"
+
 if [[ -z "${STRUCTURED_FIXTURES_SOURCE:-}" ]]; then
   echo "[fixtures:structured:check] STRUCTURED_FIXTURES_SOURCE is required." >&2
   echo "[fixtures:structured:check] Example: STRUCTURED_FIXTURES_SOURCE=/path/to/context-compiler/tests/fixtures/engine-regression/structured npm run fixtures:structured:check" >&2
@@ -12,10 +14,7 @@ TARGET_DIR="tests/fixtures/engine-regression/structured"
 
 echo "[fixtures:structured:check] Using source fixture directory: $SOURCE_DIR"
 
-if [[ ! -d "$SOURCE_DIR" ]]; then
-  echo "[fixtures:structured:check] Source fixture directory not found: $SOURCE_DIR" >&2
-  exit 1
-fi
+cc_verify_source_dir_matches_expected_commit "fixtures:structured:check" "$SOURCE_DIR"
 
 if [[ ! -d "$TARGET_DIR" ]]; then
   echo "[fixtures:structured:check] Target fixture directory not found: $TARGET_DIR" >&2

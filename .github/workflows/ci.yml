@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      PY_FIXTURE_REF: be904768e96115ca2327bf58df13be8710bce8cc
       PY_FIXTURE_CHECKOUT: /tmp/context-compiler-source
 
     steps:
@@ -30,8 +29,10 @@ jobs:
         run: npm ci
 
       - name: Checkout Python fixture source
-        # Pin to an explicit Python commit SHA for deterministic fixture drift checks.
         run: |
+          echo "Using fixture provenance file: tests/fixtures/.source-commit"
+          source scripts/fixtures-provenance.sh
+          PY_FIXTURE_REF="$(cc_load_expected_fixture_source_commit)"
           echo "Python fixture ref: ${PY_FIXTURE_REF}"
           echo "Python checkout path: ${PY_FIXTURE_CHECKOUT}"
           git init "${PY_FIXTURE_CHECKOUT}"
