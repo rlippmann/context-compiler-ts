@@ -3,7 +3,6 @@ import * as cc from '../src/index.js';
 
 describe('root API aliases', () => {
   it('keeps snake_case exports and adds camelCase aliases', () => {
-    expect(cc.compileTranscript).toBe(cc.compile_transcript);
     expect(cc.isUpdate).toBe(cc.is_update);
     expect(cc.isClarify).toBe(cc.is_clarify);
     expect(cc.isPassthrough).toBe(cc.is_passthrough);
@@ -21,6 +20,5 @@ describe('root API aliases', () => {
   it('exposes camelCase engine method aliases without changing behavior', () => {
     const engine = cc.createEngine();
     expect(engine.hasPendingClarification()).toBe(engine.has_pending_clarification());
-    expect(engine.applyTranscript([])).toEqual(engine.apply_transcript([]));
   });
 });

@@ -220,4 +220,84 @@ describe('engine hardening parity', () => {
     expect(getPolicyItems(engine.state, 'use')).toEqual(['alpha', 'docker']);
     expect(getPolicyItems(engine.state, 'prohibit')).toEqual(['pytest']);
   });
+
+  it('rejects compound directives with the canonical clarify prompt and no mutation', () => {
+    const engine = createEngine({ state: { premise: 'baseline', policies: { docker: 'use' }, version: 2 } });
+    const before = engine.state;
+
+    const decision = engine.step('clear state then set premise project');
+
+    expect(decision).toEqual({
+      kind: 'clarify',
+      state: null,
+      prompt_to_user: 'Multiple directives are not supported in one input.\nSubmit each directive separately.'
+    });
+    expect(engine.state).toEqual(before);
+    expect(engine.has_pending_clarification()).toBe(false);
+  });
+
+  it('preserves valid single replacement syntax', () => {
+    const engine = createEngine({ state: { premise: null, policies: { docker: 'use' }, version: 2 } });
+
+    const decision = engine.step('use podman instead of docker');
+
+    expect(decision.kind).toBe('update');
+    expect(engine.state).toEqual({
+      premise: null,
+      policies: { podman: 'use' },
+      version: 2
+    });
+  });
+
+  it('treats quoted leading directive text as passthrough', () => {
+    const engine = createEngine();
+
+    const decision = engine.step('"use docker and prohibit peanuts"');
+
+    expect(decision).toEqual({
+      kind: 'passthrough',
+      state: null,
+      prompt_to_user: null
+    });
+    expect(engine.state).toEqual({ premise: null, policies: {}, version: 2 });
+  });
+
+  it('does not treat quoted payloads as protected from compound scanning', () => {
+    const engine = createEngine();
+
+    const decision = engine.step('use "docker and prohibit peanuts"');
+
+    expect(decision).toEqual({
+      kind: 'clarify',
+      state: null,
+      prompt_to_user: 'Multiple directives are not supported in one input.\nSubmit each directive separately.'
+    });
+    expect(engine.state).toEqual({ premise: null, policies: {}, version: 2 });
+  });
+
+  it('checks compound directives only after pending-confirmation precedence', () => {
+    const engine = createEngine({ state: { premise: null, policies: { docker: 'use', kubectl: 'prohibit' }, version: 2 } });
+    const pending = engine.step('use kubectl instead of docker');
+
+    const decision = engine.step('use docker and prohibit peanuts');
+
+    expect(pending.kind).toBe('clarify');
+    expect(decision).toEqual({
+      kind: 'clarify',
+      state: null,
+      prompt_to_user: pending.prompt_to_user
+    });
+    expect(engine.has_pending_clarification()).toBe(true);
+  });
+
+  it('requires token boundaries for second canonical directive detection', () => {
+    const engine = createEngine();
+
+    const passthrough = engine.step('abuse docker');
+    const single = engine.step('use dockerandprohibit peanuts');
+
+    expect(passthrough.kind).toBe('passthrough');
+    expect(single.kind).toBe('update');
+    expect(engine.state).toEqual({ premise: null, policies: { 'dockerandprohibit peanuts': 'use' }, version: 2 });
+  });
 });

@@ -1,11 +1,9 @@
-import { compileTranscript, getPremiseValue } from '../src/index.js';
+import { createEngine, getPremiseValue } from '../src/index.js';
 import { compactUserTurns, isVerbose, printInfoReport } from './common.js';
 
 const DEMO_NAME = '06_context_compaction — superseded directives eliminated';
 const FINAL_PREMISE = 'chickpea curry';
 const SCALING_TURNS = [5, 20, 50] as const;
-
-type TranscriptMessage = { role: 'user'; content: string };
 
 function buildBaselinePrompt(transcriptTurns: string[]): string {
   const transcriptLines = transcriptTurns.map((turn) => `User: ${turn}`).join('\n');
@@ -40,12 +38,14 @@ function buildTurns(turnCount: number): string[] {
 }
 
 function compilePremise(turns: string[]): string {
-  const messages: TranscriptMessage[] = turns.map((turn) => ({ role: 'user', content: turn }));
-  const result = compileTranscript(messages);
-  if (result.kind !== 'state') {
-    throw new Error('Unexpected clarification while compiling transcript');
+  const engine = createEngine();
+  for (const turn of turns) {
+    const decision = engine.step(turn);
+    if (decision.kind === 'clarify') {
+      throw new Error('Unexpected clarification while compiling premise');
+    }
   }
-  const compiledPremise = getPremiseValue(result.state);
+  const compiledPremise = getPremiseValue(engine.state);
   if (compiledPremise === null) {
     throw new Error('Compiled premise missing');
   }

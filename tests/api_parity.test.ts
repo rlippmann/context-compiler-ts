@@ -3,7 +3,6 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
 import type {
-  ApplyResult,
   CheckpointPendingReplacement,
   Decision,
   EngineCheckpoint,
@@ -12,19 +11,11 @@ import type {
   EngineState,
   PreviewResult,
   StepResult,
-  StructuralDiff,
-  Transcript,
-  TranscriptConfirmResult,
-  TranscriptMessage,
-  TranscriptResult,
-  TranscriptStateResult
+  StructuralDiff
 } from '../src/index.js';
 
 // Compile-time smoke checks for intentional TS-only type exports that are not part
 // of the canonical Python runtime export set.
-const _typeCheckMessage: TranscriptMessage = { role: 'user', content: 'hello' };
-const _typeCheckTranscript: Transcript = [_typeCheckMessage];
-const _typeCheckApplyResult: ApplyResult = cc.compile_transcript(_typeCheckTranscript);
 const _typeCheckDecision: Decision = { kind: 'passthrough', state: null, prompt_to_user: null };
 const _typeCheckPreviewResult: PreviewResult | null = null;
 const _typeCheckStepResult: StepResult | null = null;
@@ -38,9 +29,6 @@ const _typeCheckCheckpoint: EngineCheckpoint = {
 const _typeCheckCheckpointPending: EngineCheckpointPending | null = null;
 const _typeCheckPendingReplacement: CheckpointPendingReplacement | null = null;
 const _typeCheckEngineInit: EngineInit = { state: _typeCheckState };
-const _typeCheckTranscriptResult: TranscriptResult = _typeCheckApplyResult;
-const _typeCheckTranscriptStateResult: TranscriptStateResult | null = null;
-const _typeCheckTranscriptConfirmResult: TranscriptConfirmResult | null = null;
 void _typeCheckDecision;
 void _typeCheckPreviewResult;
 void _typeCheckStepResult;
@@ -49,9 +37,6 @@ void _typeCheckCheckpoint;
 void _typeCheckCheckpointPending;
 void _typeCheckPendingReplacement;
 void _typeCheckEngineInit;
-void _typeCheckTranscriptResult;
-void _typeCheckTranscriptStateResult;
-void _typeCheckTranscriptConfirmResult;
 
 type ParamSpec = {
   name: string;
@@ -106,7 +91,6 @@ type ApiContractFixture = {
 };
 
 const TS_ALIAS_ALLOWLIST: Record<string, string> = {
-  compileTranscript: 'compile_transcript',
   createEngine: 'create_engine',
   diffHasChanges: 'diff_has_changes',
   getClarifyPrompt: 'get_clarify_prompt',
@@ -125,7 +109,6 @@ const TS_ALIAS_ALLOWLIST: Record<string, string> = {
 };
 
 const TS_ENGINE_ALIAS_ALLOWLIST: Record<string, string> = {
-  applyTranscript: 'apply_transcript',
   exportCheckpoint: 'export_checkpoint',
   exportCheckpointJson: 'export_checkpoint_json',
   exportJson: 'export_json',
@@ -140,10 +123,7 @@ const TS_ONLY_TYPE_EXPORTS = [
   'EngineCheckpoint',
   'EngineCheckpointPending',
   'EngineInit',
-  'EngineState',
-  'TranscriptConfirmResult',
-  'TranscriptResult',
-  'TranscriptStateResult'
+  'EngineState'
 ] as const;
 
 function loadApiContractFixture(): ApiContractFixture {
@@ -404,10 +384,7 @@ describe('public API parity contract (conformance fixture)', () => {
       'EngineCheckpoint',
       'EngineCheckpointPending',
       'EngineInit',
-      'EngineState',
-      'TranscriptConfirmResult',
-      'TranscriptResult',
-      'TranscriptStateResult'
+      'EngineState'
     ]);
   });
 });
