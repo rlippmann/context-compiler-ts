@@ -49,7 +49,7 @@
     "prepack": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint:md": "npx --yes markdownlint-cli2"
+    "lint:md": "npx --yes markdownlint-cli2@0.23.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
