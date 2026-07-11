@@ -12,6 +12,7 @@ Demo 06 is informational (context/prompt compaction metrics), not scored.
 ## Result variability note
 
 LLM demo outcomes can vary across environments. PASS/FAIL patterns may differ based on:
+
 - provider
 - client layer
 - model serving path
