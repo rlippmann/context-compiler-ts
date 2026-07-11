@@ -19,6 +19,7 @@ The fixture corpus and directive grammar specification are authoritative.
 For README, demo, integration, and package-listing docs, explain user-visible behavior before architecture.
 
 Prefer plain, concrete wording when accurate. Examples:
+
 - "rules and corrections that stick"
 - "saved compiler state"
 - "stored premise and policy rules"
@@ -28,6 +29,7 @@ Prefer plain, concrete wording when accurate. Examples:
 Avoid describing features only in architectural terms when a behavior-first explanation is possible.
 
 Specification and contract documents are different:
+
 - Preserve precise terminology
 - Preserve unambiguous behavioral guarantees
 - Do not weaken formal semantics for readability

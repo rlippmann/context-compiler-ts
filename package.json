@@ -48,7 +48,8 @@
     "fixtures:check:all": "npm run fixtures:check && npm run fixtures:structured:check",
     "prepack": "npm run build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint:md": "npx --yes markdownlint-cli2"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

@@ -9,6 +9,20 @@ on:
       - main
 
 jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Markdown lint
+        run: npm run lint:md
+
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15

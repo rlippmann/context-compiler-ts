@@ -25,6 +25,7 @@ are accepted.
 Saved state can drive prompt rendering, schema selection, routing, tool
 availability, or other host behavior, but your app still needs rules for when
 that state is allowed to change:
+
 - when a replacement is valid
 - when a conflicting update should stop and ask for confirmation
 - when a change should be rejected instead of silently overwriting state
@@ -33,17 +34,20 @@ that state is allowed to change:
 ## How it solves it
 
 Context Compiler lets a host application:
+
 - prevent silent overwrites when a new update conflicts with what is already saved
 - require clarification before conflicting or confirmation-only changes are accepted
 - let the host preview a change before applying it and keep live state unchanged until it is accepted
 - restore both saved state and an in-progress clarification flow safely between requests
 
 Each user input produces a decision for the host:
+
 - `update` -> stored premise/policy rules changed
 - `passthrough` -> input does not affect saved state
 - `clarify` -> do not mutate state; ask the user to confirm or clarify
 
 Directive examples:
+
 - `set premise current project uses uv`
 - `use sqlite`
 - `prohibit docker`
