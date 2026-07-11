@@ -148,7 +148,7 @@ Context Compiler remains the authority layer and applies validated directives.
 
 ## 0.8 Parity Scope
 
-The TypeScript implementation targets semantic compatibility with the Python 0.8 release, including engine behavior, checkpoint persistence, transcript replay, controller APIs, and shared fixture-based verification.
+The TypeScript implementation targets semantic compatibility with the Python 0.8 release, including engine behavior, checkpoint persistence, controller APIs, and shared fixture-based verification.
 
 ## Not Included Yet
 
