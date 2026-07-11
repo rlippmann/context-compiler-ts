@@ -44,7 +44,6 @@ All changes must preserve:
 
 - Exact `Decision.kind` behavior
 - Exact state transitions
-- Transcript replay behavior
 - Fixture-defined prompt behavior:
   - Exact match when fixture specifies a string
   - Non-empty string when fixture uses `null`
@@ -121,22 +120,20 @@ For full synchronization workflows:
 
 ### Verification
 
-After syncing:
+After syncing, run:
 
+```bash
 npm test
-FIXTURES_SOURCE=<same python fixtures path> npm run fixtures:check
-
-For full verification workflows:
-
-STRUCTURED_FIXTURES_SOURCE=<python repo>/tests/fixtures/engine-regression/structured npm run fixtures:structured:check
-
-or run:
+npm run build
 
 FIXTURES_SOURCE=<python repo>/tests/fixtures/conformance \
 STRUCTURED_FIXTURES_SOURCE=<python repo>/tests/fixtures/engine-regression/structured \
 npm run fixtures:check:all
+```
 
-### Constraints
+Both source paths must belong to the same Python checkout at the commit recorded in `tests/fixtures/.source-commit`.
+
+### Fixture synchronization constraints
 
 - FIXTURES_SOURCE must be explicitly provided; no implicit local fallback is allowed.
 - `tests/fixtures/.source-commit` must contain the exact Python commit SHA for both synchronized fixture families.
@@ -157,7 +154,7 @@ User-facing behavior includes:
 - Engine decision outcomes (`kind`, `prompt_to_user`, and returned `state`)
 - Checkpoint export/import and continuation behavior
 - Clarify/confirmation flows (`yes` / `no`)
-- Transcript replay behavior and compaction-related behavior
+- Compaction-related behavior
 - Integration behavior (examples, demo runner, and integration scripts)
 - Integration error-path normalization
 
@@ -241,5 +238,5 @@ Examples:
 
 - `fix: correct replacement clarify ordering`
 - `fix: enforce pending clarification gating`
-- `test: normalize transcript output shape`
+- `test: sync Python conformance fixtures`
 - `chore: add TypeScript scaffold`
