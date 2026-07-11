@@ -11,39 +11,39 @@ Request-based integrations can persist compiler state with checkpoint APIs so ru
 Directive drafting lives in the separate `@rlippmann/context-compiler-directive-drafter` package.
 The TypeScript core package does not include a REPL.
 
-## 01_persistent_guardrails.ts
+## [Persistent guardrails](01_persistent_guardrails.ts)
 
 Demonstrates how a prohibition persists as stored policy state across later turns.
 
-## 02_configuration_and_correction.ts
+## [Configuration and correction](02_configuration_and_correction.ts)
 
 Demonstrates explicit premise lifecycle with the current premise directives:
 `set premise ...` followed by `change premise to ...`.
 
-## 03_ambiguity_with_clarification.ts
+## [Ambiguity with clarification](03_ambiguity_with_clarification.ts)
 
 Shows contradiction clarify behavior before state mutation.
 Shows host-side clarify handling and blocks the normal request path until the user confirms.
 
-## 04_tool_governance_denylist.ts
+## [Tool governance denylist](04_tool_governance_denylist.ts)
 
 Demonstrates policy-based tool governance using prohibition directives.
 
-## 05_llm_integration_pattern.ts
+## [LLM integration pattern](05_llm_integration_pattern.ts)
 
 Demonstrates end-to-end host control flow around `Decision.kind` outcomes.
 Includes single-item correction with `remove policy <item>`.
 
-## 06_transcript_replay.ts
+## [Step sequence and checkpoint](06_step_sequence_and_checkpoint.ts)
 
-Shows transcript replay with `compileTranscript(messages)` and replay onto current engine state with `engine.applyTranscript(...)`.
+Shows explicit directive sequencing through `engine.step(...)`, followed by checkpoint export and restore into a fresh engine.
 
-## 07_single_policy_correction.ts
+## [Single policy correction](07_single_policy_correction.ts)
 
 Demonstrates explicit single-policy correction without `reset policies`:
 `prohibit peanuts` -> `remove policy peanuts` -> `use peanuts`.
 
-## 08_controller_preview_diff.ts
+## [Controller preview and diff](08_controller_preview_diff.ts)
 
 Shows controller-layer auditability with `preview(engine, input)` and `stateDiff(before, after)`.
 Shows that preview does not mutate live engine state, then applies the same input with `step(engine, input)`.
