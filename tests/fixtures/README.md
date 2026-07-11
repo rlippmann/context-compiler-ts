@@ -2,6 +2,8 @@
 
 This directory contains multiple fixture suites with different contracts.
 
+These fixtures are synchronized from `rlippmann/context-compiler` at the commit recorded in `tests/fixtures/.source-commit`.
+
 ## Fixture types
 
 * [`conformance/`](conformance/) — core engine cross-language conformance contract.
@@ -9,6 +11,7 @@ This directory contains multiple fixture suites with different contracts.
 * [`engine-regression/structured/`](engine-regression/structured/) — deterministic per-turn engine regression fixtures (including checkpoint snapshots).
 
 `conformance/` and `engine-regression/structured/` both cover engine behavior at different layers.
+Both synchronized fixture families must come from the same Python checkout revision recorded in `tests/fixtures/.source-commit`.
 
 ## API contract fixture
 
@@ -89,6 +92,10 @@ These fixtures keep a minimal, language-neutral contract matrix for controller A
 Fixtures reflect current Python behavior and tests.
 Property/fuzz invariants remain Python-local tests and are not part of the
 portable fixture contract.
+
+Local sync and drift checks must use a `rlippmann/context-compiler` checkout at the commit recorded in `tests/fixtures/.source-commit`.
+CI reads the same file before checking fixture drift.
+Files under synchronized fixture directories must not be edited manually; update the Python source, update `tests/fixtures/.source-commit` if needed, then re-sync both fixture families together.
 
 ## Engine regression fixtures
 
