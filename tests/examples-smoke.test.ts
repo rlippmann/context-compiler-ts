@@ -122,21 +122,6 @@ describe('examples smoke', () => {
     });
   });
 
-  it('06 transcript replay', () => {
-    const run = runExampleScript('06_transcript_replay.js');
-    expect(run.status).toBe(0);
-    expect(run.stderr.trim()).toBe('');
-    const { heading, payload } = parseExampleOutput(run.stdout);
-
-    expect(heading).toBe('example 06: transcript replay');
-    expect(payload).toEqual({
-      freshReplayKind: 'state',
-      currentReplayKind: 'state',
-      freshPolicies: ['peanuts'],
-      currentPolicies: ['peanuts', 'shellfish']
-    });
-  });
-
   it('07 single policy correction', () => {
     const run = runExampleScript('07_single_policy_correction.js');
     expect(run.status).toBe(0);

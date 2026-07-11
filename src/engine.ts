@@ -3,8 +3,7 @@ import type {
   Decision,
   EngineCheckpoint,
   EngineCheckpointPending,
-  EngineState,
-  TranscriptResult
+  EngineState
 } from './types.js';
 
 export interface EngineInit {
@@ -15,7 +14,6 @@ export interface EngineCompat {
   step(input: string): Decision;
   readonly state: EngineState;
   has_pending_clarification(): boolean;
-  apply_transcript(messages: unknown[]): TranscriptResult;
   export_json(): string;
   import_json(payload: string): void;
   export_checkpoint(): EngineCheckpoint;
@@ -42,12 +40,41 @@ type Action =
   | { kind: 'prohibit_item'; item: string }
   | { kind: 'remove_policy_item'; item: string }
   | { kind: 'replace_use'; new_item: string; old_item: string }
-  | { kind: 'replace_use_incomplete' };
+  | { kind: 'replace_use_incomplete' }
+  | { kind: 'compound_directive' };
 
 type PendingReplacement = CheckpointPendingReplacement;
 
+type DirectiveKind =
+  | 'clear_premise'
+  | 'reset_policies'
+  | 'clear_state'
+  | 'remove_policy_item'
+  | 'set_premise'
+  | 'change_premise'
+  | 'use_item'
+  | 'prohibit_item';
+
+type DirectiveDefinition = {
+  kind: DirectiveKind;
+  exact?: string;
+  prefix?: string;
+};
+
+const DIRECTIVE_DEFINITIONS: readonly DirectiveDefinition[] = [
+  { kind: 'clear_premise', exact: 'clear premise' },
+  { kind: 'reset_policies', exact: 'reset policies' },
+  { kind: 'clear_state', exact: 'clear state' },
+  { kind: 'remove_policy_item', exact: 'remove policy', prefix: 'remove policy ' },
+  { kind: 'set_premise', exact: 'set premise', prefix: 'set premise ' },
+  { kind: 'change_premise', exact: 'change premise to', prefix: 'change premise to ' },
+  { kind: 'use_item', exact: 'use', prefix: 'use ' },
+  { kind: 'prohibit_item', exact: 'prohibit', prefix: 'prohibit ' }
+] as const;
+
 const AFFIRMATIVE_CONFIRMATIONS = new Set(['yes', 'yes please', 'yep', 'yeah', 'sure', 'ok', 'okay']);
 const NEGATIVE_CONFIRMATIONS = new Set(['no', 'nope', 'no thanks']);
+const MULTIPLE_DIRECTIVES_PROMPT = 'Multiple directives are not supported in one input.\nSubmit each directive separately.';
 
 export class Engine implements EngineCompat {
   private _state: EngineState;
@@ -176,22 +203,6 @@ export class Engine implements EngineCompat {
     return { ...PASSTHROUGH };
   }
 
-  apply_transcript(messages: unknown[]): TranscriptResult {
-    for (const content of iterUserContents(messages)) {
-      const decision = this.step(content);
-      if (decision.kind === 'clarify') {
-        return {
-          kind: 'confirm',
-          prompt_to_user: decision.prompt_to_user as string
-        };
-      }
-    }
-    return {
-      kind: 'state',
-      state: this.state
-    };
-  }
-
   #replaceState(state: EngineState): void {
     this._state = state;
     this._pendingReplacement = null;
@@ -303,6 +314,10 @@ export class Engine implements EngineCompat {
       );
     }
 
+    if (action.kind === 'compound_directive') {
+      return clarify(MULTIPLE_DIRECTIVES_PROMPT);
+    }
+
     if (action.kind === 'replace_use') {
       const newKey = normalizeItem(action.new_item);
       const oldKey = normalizeItem(action.old_item);
@@ -343,7 +358,6 @@ export class Engine implements EngineCompat {
 
 export interface Engine {
   hasPendingClarification(): boolean;
-  applyTranscript(messages: unknown[]): TranscriptResult;
   exportJson(): string;
   importJson(payload: string): void;
   exportCheckpoint(): EngineCheckpoint;
@@ -353,11 +367,6 @@ export interface Engine {
 }
 
 Object.defineProperties(Engine.prototype, {
-  applyTranscript: {
-    value: Engine.prototype.apply_transcript,
-    writable: true,
-    configurable: true
-  },
   exportCheckpoint: {
     value: Engine.prototype.export_checkpoint,
     writable: true,
@@ -410,13 +419,6 @@ export function create_engine(state?: EngineState | EngineInit): Engine {
 }
 
 export const createEngine = create_engine;
-
-export function compile_transcript(messages: unknown[]): TranscriptResult {
-  const engine = create_engine();
-  return engine.apply_transcript(messages);
-}
-
-export const compileTranscript = compile_transcript;
 
 export function get_premise_value(state: EngineState): string | null {
   return state.premise;
@@ -637,22 +639,37 @@ function loadStateObject(raw: unknown): EngineState {
 }
 
 function parseDirective(userInput: string): Action | null {
-  if (userInput === 'clear premise') {
+  const clearPremise = directiveExact('clear_premise');
+  if (userInput === clearPremise) {
     return { kind: 'clear_premise' };
   }
-  if (userInput === 'reset policies') {
-    return { kind: 'reset_policies' };
-  }
-  if (userInput === 'clear state') {
-    return { kind: 'clear_state' };
+  if (userInput.startsWith(`${clearPremise} `) && detectCompoundDirective(userInput, clearPremise.length + 1)) {
+    return { kind: 'compound_directive' };
   }
 
-  if (userInput === 'remove policy') {
+  const resetPolicies = directiveExact('reset_policies');
+  if (userInput === resetPolicies) {
+    return { kind: 'reset_policies' };
+  }
+  if (userInput.startsWith(`${resetPolicies} `) && detectCompoundDirective(userInput, resetPolicies.length + 1)) {
+    return { kind: 'compound_directive' };
+  }
+
+  const clearState = directiveExact('clear_state');
+  if (userInput === clearState) {
+    return { kind: 'clear_state' };
+  }
+  if (userInput.startsWith(`${clearState} `) && detectCompoundDirective(userInput, clearState.length + 1)) {
+    return { kind: 'compound_directive' };
+  }
+
+  if (userInput === directiveExact('remove_policy_item')) {
     return { kind: 'remove_policy_item', item: '' };
   }
-  const removePolicyPrefix = 'remove policy ';
+  const removePolicyPrefix = directivePrefix('remove_policy_item');
   if (userInput.startsWith(removePolicyPrefix)) {
-    return { kind: 'remove_policy_item', item: userInput.slice(removePolicyPrefix.length) };
+    const action = { kind: 'remove_policy_item', item: userInput.slice(removePolicyPrefix.length) } as const;
+    return detectCompoundDirective(userInput, removePolicyPrefix.length) ? { kind: 'compound_directive' } : action;
   }
 
   const setToPrefix = 'set premise to ';
@@ -666,8 +683,8 @@ function parseDirective(userInput: string): Action | null {
   const changeMissingToPrefix = 'change premise ';
   if (
     userInput.startsWith(changeMissingToPrefix) &&
-    !userInput.startsWith('change premise to ') &&
-    userInput !== 'change premise to'
+    !userInput.startsWith(directivePrefix('change_premise')) &&
+    userInput !== directiveExact('change_premise')
   ) {
     const value = userInput.slice(changeMissingToPrefix.length).trim();
     if (value !== '') {
@@ -675,28 +692,30 @@ function parseDirective(userInput: string): Action | null {
     }
   }
 
-  const setBase = 'set premise';
+  const setBase = directiveExact('set_premise');
   if (userInput === setBase) {
     return { kind: 'set_premise', value: '' };
   }
-  const setPrefix = `${setBase} `;
+  const setPrefix = directivePrefix('set_premise');
   if (userInput.startsWith(setPrefix)) {
-    return { kind: 'set_premise', value: userInput.slice(setPrefix.length) };
+    const action = { kind: 'set_premise', value: userInput.slice(setPrefix.length) } as const;
+    return detectCompoundDirective(userInput, setPrefix.length) ? { kind: 'compound_directive' } : action;
   }
 
-  const changeBase = 'change premise to';
+  const changeBase = directiveExact('change_premise');
   if (userInput === changeBase) {
     return { kind: 'change_premise', value: '' };
   }
-  const changePrefix = `${changeBase} `;
+  const changePrefix = directivePrefix('change_premise');
   if (userInput.startsWith(changePrefix)) {
-    return { kind: 'change_premise', value: userInput.slice(changePrefix.length) };
+    const action = { kind: 'change_premise', value: userInput.slice(changePrefix.length) } as const;
+    return detectCompoundDirective(userInput, changePrefix.length) ? { kind: 'compound_directive' } : action;
   }
 
-  if (userInput === 'use') {
+  if (userInput === directiveExact('use_item')) {
     return { kind: 'use_item', item: '' };
   }
-  const usePrefix = 'use ';
+  const usePrefix = directivePrefix('use_item');
   if (userInput.startsWith(usePrefix)) {
     const payload = userInput.slice(usePrefix.length);
     const insteadOf = ' instead of ';
@@ -715,18 +734,73 @@ function parseDirective(userInput: string): Action | null {
     if (payload.startsWith('instead of ') || payload.endsWith(' instead of')) {
       return { kind: 'replace_use_incomplete' };
     }
-    return { kind: 'use_item', item: payload };
+    return detectCompoundDirective(userInput, usePrefix.length) ? { kind: 'compound_directive' } : { kind: 'use_item', item: payload };
   }
 
-  if (userInput === 'prohibit') {
+  if (userInput === directiveExact('prohibit_item')) {
     return { kind: 'prohibit_item', item: '' };
   }
-  const prohibitPrefix = 'prohibit ';
+  const prohibitPrefix = directivePrefix('prohibit_item');
   if (userInput.startsWith(prohibitPrefix)) {
-    return { kind: 'prohibit_item', item: userInput.slice(prohibitPrefix.length) };
+    const action = { kind: 'prohibit_item', item: userInput.slice(prohibitPrefix.length) } as const;
+    return detectCompoundDirective(userInput, prohibitPrefix.length) ? { kind: 'compound_directive' } : action;
   }
 
   return null;
+}
+
+function directiveExact(kind: DirectiveKind): string {
+  const definition = DIRECTIVE_DEFINITIONS.find((entry) => entry.kind === kind);
+  if (!definition?.exact) {
+    throw new Error(`Missing exact directive definition for ${kind}`);
+  }
+  return definition.exact;
+}
+
+function directivePrefix(kind: DirectiveKind): string {
+  const definition = DIRECTIVE_DEFINITIONS.find((entry) => entry.kind === kind);
+  if (!definition?.prefix) {
+    throw new Error(`Missing prefix directive definition for ${kind}`);
+  }
+  return definition.prefix;
+}
+
+function detectCompoundDirective(userInput: string, searchStart: number): boolean {
+  for (let index = searchStart; index < userInput.length; index += 1) {
+    if (!isDirectiveBoundary(userInput, index)) {
+      continue;
+    }
+    if (matchesDirectiveStart(userInput, index)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function matchesDirectiveStart(userInput: string, startIndex: number): boolean {
+  for (const definition of DIRECTIVE_DEFINITIONS) {
+    if (definition.exact && userInput.startsWith(definition.exact, startIndex)) {
+      const endIndex = startIndex + definition.exact.length;
+      if (endIndex === userInput.length || userInput[endIndex] === ' ') {
+        return true;
+      }
+    }
+    if (definition.prefix && userInput.startsWith(definition.prefix, startIndex)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isDirectiveBoundary(userInput: string, startIndex: number): boolean {
+  if (startIndex <= 0) {
+    return true;
+  }
+  return !isAsciiLetter(userInput[startIndex - 1]);
+}
+
+function isAsciiLetter(char: string): boolean {
+  return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
 }
 
 function sanitizePremiseValue(value: string): string {
@@ -781,21 +855,6 @@ function updateDecision(state: EngineState): Decision {
   };
 }
 
-function iterUserContents(messages: unknown[]): string[] {
-  const userContents: string[] = [];
-  for (const message of messages) {
-    if (message === null || typeof message !== 'object' || Array.isArray(message)) {
-      continue;
-    }
-    const role = (message as Record<string, unknown>).role;
-    const content = (message as Record<string, unknown>).content;
-    if (role === 'user' && typeof content === 'string') {
-      userContents.push(content);
-    }
-  }
-  return userContents;
-}
-
 function sortKeysDeep(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((v) => sortKeysDeep(v));
@@ -842,4 +901,4 @@ function stringifyCanonicalJson(value: unknown): string {
   );
 }
 
-export type { Decision, EngineState, TranscriptResult };
+export type { Decision, EngineState };

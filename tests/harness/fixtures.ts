@@ -19,21 +19,6 @@ export interface StepFixtureCase {
   };
 }
 
-export interface TranscriptFixtureCase {
-  id: string;
-  kind: 'transcript';
-  messages: unknown[];
-  expected:
-    | {
-        clarify: {
-          prompt_to_user: string;
-        };
-      }
-    | {
-        state: Record<string, JsonValue>;
-      };
-}
-
 export interface StateJsonFixtureCase {
   id: string;
   kind: 'state_json';
@@ -148,10 +133,6 @@ async function loadFixtureFiles<T>(subdir: string): Promise<NamedFixture<T>[]> {
 
 export async function loadStepFixtures(): Promise<NamedFixture<StepFixtureCase>[]> {
   return loadFixtureFiles<StepFixtureCase>('step');
-}
-
-export async function loadTranscriptFixtures(): Promise<NamedFixture<TranscriptFixtureCase>[]> {
-  return loadFixtureFiles<TranscriptFixtureCase>('transcript');
 }
 
 export async function loadStateJsonFixtures(): Promise<NamedFixture<StateJsonFixtureCase>[]> {

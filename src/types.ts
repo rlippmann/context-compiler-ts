@@ -25,23 +25,3 @@ export interface Decision {
   state: EngineState | null;
   prompt_to_user: string | null;
 }
-
-export interface TranscriptStateResult {
-  kind: 'state';
-  state: EngineState;
-}
-
-export interface TranscriptConfirmResult {
-  kind: 'confirm';
-  prompt_to_user: string;
-}
-
-export type TranscriptResult = TranscriptStateResult | TranscriptConfirmResult;
-
-export interface TranscriptMessage {
-  role: string;
-  content: unknown;
-}
-
-export type Transcript = TranscriptMessage[];
-export type ApplyResult = TranscriptResult;

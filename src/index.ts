@@ -2,8 +2,6 @@ export {
   Engine,
   create_engine,
   createEngine,
-  compile_transcript,
-  compileTranscript,
   get_premise_value,
   get_policy_items,
   getPremiseValue,
@@ -67,17 +65,11 @@ export function get_decision_state(decision: Decision): EngineState | null {
 export const getDecisionState = get_decision_state;
 
 export type {
-  ApplyResult,
   EngineCheckpoint as Checkpoint,
   CheckpointPendingReplacement,
   Decision,
   EngineCheckpointPending,
   EngineCheckpoint,
   EngineState as State,
-  EngineState,
-  Transcript,
-  TranscriptMessage,
-  TranscriptResult,
-  TranscriptStateResult,
-  TranscriptConfirmResult
+  EngineState
 } from './types.js';
