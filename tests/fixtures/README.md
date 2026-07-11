@@ -106,4 +106,3 @@ See the TypeScript fixture runners in this repository for execution details:
 * [`checkpoint-fixtures.test.ts`](../checkpoint-fixtures.test.ts)
 * [`controller-fixtures.test.ts`](../controller-fixtures.test.ts)
 * [`structured-regression-fixtures.test.ts`](../structured-regression-fixtures.test.ts)
-

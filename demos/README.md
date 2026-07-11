@@ -3,6 +3,7 @@
 These scripts show side-by-side LLM outcomes with and without stored compiler rules, aligned with the [Python reference demos](https://github.com/rlippmann/context-compiler/blob/main/demos/README.md).
 
 Scored demos compare three host-side flows:
+
 - baseline
 - compiler path (full transcript + injected stored rules and state)
 - compiler+compact (compacted transcript + injected stored rules and state)
@@ -32,6 +33,7 @@ LLM demo outcomes can vary across environments. PASS/FAIL patterns may differ ba
 ## Requirements
 
 Environment variables:
+
 - `OPENAI_API_KEY` (required)
 - `MODEL` (required)
 - `OPENAI_BASE_URL` (optional; set for OpenAI-compatible local/hosted endpoints)

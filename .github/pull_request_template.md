@@ -13,5 +13,6 @@
 ## Notes
 
 Validation details:
+
 - `npm test`: <!-- passed / not run -->
 - If not run, why: <!-- short reason -->
