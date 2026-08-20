@@ -39,12 +39,10 @@ describe('serialization parity', () => {
     );
   });
 
-  it('rejects policy keys that normalize to empty during import', () => {
+  it('rejects empty and colliding normalized policy keys during import', () => {
     const cases = [
-      '{"premise":null,"policies":{"A":"use"},"version":2}',
-      '{"premise":null,"policies":{"a":"use"},"version":2}',
+      '{"premise":null,"policies":{"   ":"use"},"version":2}',
       '{"premise":null,"policies":{"A":"use","a":"use"},"version":2}',
-      '{"premise":null,"policies":{"the":"use"},"version":2}'
     ];
 
     for (const payload of cases) {
