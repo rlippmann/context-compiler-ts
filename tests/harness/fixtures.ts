@@ -10,11 +10,7 @@ export interface StepFixtureCase {
   prelude?: string[];
   input: string;
   expected: {
-    decision: {
-      kind: string;
-      prompt_to_user: string | null;
-      state: Record<string, JsonValue> | null;
-    };
+    decision: Record<string, JsonValue>;
     state: Record<string, JsonValue>;
   };
 }

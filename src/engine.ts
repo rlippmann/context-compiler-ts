@@ -1,17 +1,22 @@
 import type {
   CheckpointPendingReplacement,
-  Decision,
+  Decision as LegacyDecision,
   EngineCheckpoint,
   EngineCheckpointPending,
   EngineState
 } from './types.js';
-import type { CanonicalDirective } from './grammar.js';
+import { CanonicalDirective, DirectiveKind as GrammarDirectiveKind } from './grammar.js';
+import {
+  SemanticErrorDecision,
+  SemanticFailure,
+  UpdateDecision
+} from './decision.js';
 
 export interface EngineInit {
   state?: EngineState;
 }
 
-const PASSTHROUGH: Decision = {
+const PASSTHROUGH: LegacyDecision = {
   kind: 'passthrough',
   state: null,
   prompt_to_user: null
@@ -142,11 +147,141 @@ export class Engine {
     this.#replaceCheckpoint(loadCheckpointObject(raw));
   }
 
-  apply_directive(directive: CanonicalDirective): Decision {
-    return this.step(directive.text);
+  apply_directive(directive: CanonicalDirective): import('./decision.js').Decision {
+    const previous = cloneState(this._state);
+    const failure = this.#semanticFailure(directive);
+    if (failure !== null) {
+      this._state = previous;
+      return failure;
+    }
+
+    this.#applyCanonicalDirective(directive);
+    return new UpdateDecision(!statesEqual(previous, this._state));
   }
 
-  step(input: string): Decision {
+  #semanticFailure(directive: CanonicalDirective): SemanticErrorDecision | null {
+    if (directive.kind === GrammarDirectiveKind.SET_PREMISE && this._state.premise !== null) {
+      return new SemanticErrorDecision({
+        failure: SemanticFailure.PREMISE_ALREADY_SET,
+        directive,
+        repairs: [this.#repair(GrammarDirectiveKind.CHANGE_PREMISE, { value: directive.operands.value })]
+      });
+    }
+
+    if (directive.kind === GrammarDirectiveKind.CHANGE_PREMISE && this._state.premise === null) {
+      return new SemanticErrorDecision({
+        failure: SemanticFailure.PREMISE_NOT_SET,
+        directive,
+        repairs: [this.#repair(GrammarDirectiveKind.SET_PREMISE, { value: directive.operands.value })]
+      });
+    }
+
+    if (directive.kind === GrammarDirectiveKind.USE_ITEM) {
+      const itemKey = normalizeItem(directive.operands.item);
+      if (this._state.policies[itemKey] === POLICY_PROHIBIT) {
+        return new SemanticErrorDecision({
+          failure: SemanticFailure.ITEM_PROHIBITED,
+          directive,
+          repairs: [
+            this.#repair(GrammarDirectiveKind.REMOVE_POLICY, { item: directive.operands.item }),
+            this.#repair(GrammarDirectiveKind.USE_ITEM, { item: directive.operands.item })
+          ]
+        });
+      }
+    }
+
+    if (directive.kind === GrammarDirectiveKind.PROHIBIT_ITEM) {
+      const itemKey = normalizeItem(directive.operands.item);
+      if (this._state.policies[itemKey] === POLICY_USE) {
+        return new SemanticErrorDecision({
+          failure: SemanticFailure.ITEM_ALREADY_IN_USE,
+          directive,
+          repairs: [
+            this.#repair(GrammarDirectiveKind.REMOVE_POLICY, { item: directive.operands.item }),
+            this.#repair(GrammarDirectiveKind.PROHIBIT_ITEM, { item: directive.operands.item })
+          ]
+        });
+      }
+    }
+
+    if (directive.kind === GrammarDirectiveKind.REPLACE_USE) {
+      const newItem = directive.operands.new_item;
+      const oldItem = directive.operands.old_item;
+      const newKey = normalizeItem(newItem);
+      const oldKey = normalizeItem(oldItem);
+      if (newKey === oldKey) return null;
+
+      if (this._state.policies[oldKey] === POLICY_PROHIBIT) {
+        return new SemanticErrorDecision({
+          failure: SemanticFailure.REPLACEMENT_SOURCE_PROHIBITED,
+          directive
+        });
+      }
+      if (this._state.policies[newKey] === POLICY_PROHIBIT) {
+        return new SemanticErrorDecision({
+          failure: SemanticFailure.REPLACEMENT_TARGET_PROHIBITED,
+          directive,
+          repairs: [
+            this.#repair(GrammarDirectiveKind.REMOVE_POLICY, { item: newItem }),
+            directive
+          ]
+        });
+      }
+      if (this._state.policies[oldKey] !== POLICY_USE) {
+        return new SemanticErrorDecision({
+          failure: SemanticFailure.REPLACEMENT_SOURCE_MISSING,
+          directive
+        });
+      }
+    }
+
+    return null;
+  }
+
+  #repair(kind: string, operands: Record<string, string>): CanonicalDirective {
+    return new CanonicalDirective({ kind, operands });
+  }
+
+  #applyCanonicalDirective(directive: CanonicalDirective): void {
+    if (directive.kind === GrammarDirectiveKind.SET_PREMISE || directive.kind === GrammarDirectiveKind.CHANGE_PREMISE) {
+      this._state.premise = sanitizePremiseValue(directive.operands.value);
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.USE_ITEM) {
+      this._state.policies[normalizeItem(directive.operands.item)] = POLICY_USE;
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.PROHIBIT_ITEM) {
+      this._state.policies[normalizeItem(directive.operands.item)] = POLICY_PROHIBIT;
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.REMOVE_POLICY) {
+      delete this._state.policies[normalizeItem(directive.operands.item)];
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.REPLACE_USE) {
+      const oldKey = normalizeItem(directive.operands.old_item);
+      const newKey = normalizeItem(directive.operands.new_item);
+      if (oldKey !== newKey) {
+        delete this._state.policies[oldKey];
+        this._state.policies[newKey] = POLICY_USE;
+      }
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.CLEAR_PREMISE) {
+      this._state.premise = null;
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.RESET_POLICIES) {
+      this._state.policies = {};
+      return;
+    }
+    if (directive.kind === GrammarDirectiveKind.CLEAR_STATE) {
+      this._state = initialState();
+    }
+  }
+
+  step(input: string): LegacyDecision {
     if (this._pendingReplacement !== null) {
       return this.#resolveOrRepromptPending(input);
     }
@@ -227,7 +362,7 @@ export class Engine {
     this._pendingPrompt = pending.prompt_to_user;
   }
 
-  #resolveOrRepromptPending(userInput: string): Decision {
+  #resolveOrRepromptPending(userInput: string): LegacyDecision {
     const normalized = normalizeConfirmation(userInput);
     if (AFFIRMATIVE_CONFIRMATIONS.has(normalized)) {
       const pending = this._pendingReplacement as PendingReplacement;
@@ -261,7 +396,7 @@ export class Engine {
     this._state.policies[newKey] = 'use';
   }
 
-  #preMutationClarify(action: Action): Decision | null {
+  #preMutationClarify(action: Action): LegacyDecision | null {
     if (action.kind === 'set_premise' || action.kind === 'change_premise') {
       if (sanitizePremiseValue(action.value) === '') {
         if (action.kind === 'set_premise') {
@@ -405,6 +540,14 @@ function cloneState(state: EngineState): EngineState {
     policies: { ...state.policies },
     version: 2
   };
+}
+
+function statesEqual(left: EngineState, right: EngineState): boolean {
+  if (left.premise !== right.premise) return false;
+  const leftKeys = Object.keys(left.policies);
+  const rightKeys = Object.keys(right.policies);
+  if (leftKeys.length !== rightKeys.length) return false;
+  return leftKeys.every((key) => left.policies[key] === right.policies[key]);
 }
 
 function loadStateJson(payload: string): EngineState {
@@ -792,7 +935,7 @@ function diagnosticPolicyContainsHints(policies: Record<string, 'use' | 'prohibi
   return matches.map((key) => `"${key}"`).join(', ');
 }
 
-function clarify(prompt: string): Decision {
+function clarify(prompt: string): LegacyDecision {
   return {
     kind: 'clarify',
     state: null,
@@ -800,7 +943,7 @@ function clarify(prompt: string): Decision {
   };
 }
 
-function updateDecision(state: EngineState): Decision {
+function updateDecision(state: EngineState): LegacyDecision {
   return {
     kind: 'update',
     state: cloneState(state),
@@ -854,4 +997,4 @@ function stringifyCanonicalJson(value: unknown): string {
   );
 }
 
-export type { Decision, EngineState };
+export type { LegacyDecision as Decision, EngineState };

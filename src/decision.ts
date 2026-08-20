@@ -27,6 +27,7 @@ export class NoDirectiveDecision {
 export class UpdateDecision {
   readonly kind = DECISION_UPDATE;
   readonly changed: boolean;
+  readonly message = null;
 
   constructor(changed: boolean) {
     this.changed = changed;
