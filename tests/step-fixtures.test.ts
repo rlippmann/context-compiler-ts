@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '../src/engine.js';
+import { create_engine } from '../src/engine.js';
 import { loadStepFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadStepFixtures();
@@ -16,10 +16,10 @@ function assertOptionalPendingFlag(expectedObj: unknown, engine: object, fixture
   expect(typeof expectedPending, `${fixtureName}: has_pending_clarification must be boolean`).toBe('boolean');
 
   const maybeEngine = engine as Record<string, unknown>;
-  expect(typeof maybeEngine.has_pending_clarification, `${fixtureName}: missing has_pending_clarification()`).toBe(
+  expect(typeof maybeEngine._has_pending_clarification, `${fixtureName}: missing pending-state probe`).toBe(
     'function'
   );
-  const actualPending = (maybeEngine.has_pending_clarification as () => unknown)();
+  const actualPending = (maybeEngine._has_pending_clarification as () => unknown)();
   expect(actualPending).toBe(expectedPending);
 }
 
@@ -28,7 +28,7 @@ describe('step fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('step');
 
-      const engine = createEngine({ state: fixture.payload.initial_state });
+      const engine = create_engine({ state: fixture.payload.initial_state });
 
       const prelude = fixture.payload.prelude ?? [];
       for (const priorInput of prelude) {
@@ -56,10 +56,10 @@ describe('step fixtures (conformance)', () => {
       }
 
       if (decision.kind === 'update') {
-        expect(decision.state).toEqual(engine.state);
+        expect(decision.state).toEqual(engine._state_snapshot());
       }
 
-      expect(engine.state).toEqual(expected.state);
+      expect(engine._state_snapshot()).toEqual(expected.state);
       assertOptionalPendingFlag(expected, engine, fixture.name);
     });
   }

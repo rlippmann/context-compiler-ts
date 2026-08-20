@@ -2,28 +2,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
-import type {
-  Decision,
-  EngineInit,
-  EngineState,
-  PreviewResult,
-  StepResult,
-  StructuralDiff
-} from '../src/index.js';
+import { CanonicalDirective } from '../src/grammar.js';
+import type { Decision } from '../src/index.js';
 
 // Compile-time smoke checks for intentional TS-only type exports that are not part
 // of the canonical Python runtime export set.
-const _typeCheckDecision: Decision = { kind: 'passthrough', state: null, prompt_to_user: null };
-const _typeCheckPreviewResult: PreviewResult | null = null;
-const _typeCheckStepResult: StepResult | null = null;
-const _typeCheckStructuralDiff: StructuralDiff | null = null;
-const _typeCheckState: EngineState = { premise: null, policies: {}, version: 2 };
-const _typeCheckEngineInit: EngineInit = { state: _typeCheckState };
+const _typeCheckDecision: Decision = new cc.NoDirectiveDecision();
 void _typeCheckDecision;
-void _typeCheckPreviewResult;
-void _typeCheckStepResult;
-void _typeCheckStructuralDiff;
-void _typeCheckEngineInit;
 
 type ParamSpec = {
   name: string;
@@ -54,6 +39,7 @@ type ExportMemberSpec = {
   value?: unknown;
   signature?: SignatureSpec;
   shape_probes?: ShapeProbe[];
+  construction_probes?: Array<Record<string, unknown>>;
 };
 
 type EngineMemberSpec = {
@@ -76,31 +62,6 @@ type ApiContractFixture = {
     };
   };
 };
-
-const TS_ALIAS_ALLOWLIST: Record<string, string> = {
-  createEngine: 'create_engine',
-  diffHasChanges: 'diff_has_changes',
-  getClarifyPrompt: 'get_clarify_prompt',
-  getDecisionState: 'get_decision_state',
-  getPolicyItems: 'get_policy_items',
-  getPremiseValue: 'get_premise_value',
-  getPreviewDecision: 'get_preview_decision',
-  getPreviewStateAfter: 'get_preview_state_after',
-  getStepDecision: 'get_step_decision',
-  getStepState: 'get_step_state',
-  isClarify: 'is_clarify',
-  isPassthrough: 'is_passthrough',
-  isUpdate: 'is_update',
-  previewWouldMutate: 'preview_would_mutate',
-  stateDiff: 'state_diff'
-};
-
-const TS_ENGINE_ALIAS_ALLOWLIST: Record<string, string> = {
-  exportJson: 'export_json',
-  importJson: 'import_json'
-};
-
-const TS_ONLY_TYPE_EXPORTS = ['EngineInit', 'EngineState'] as const;
 
 function loadApiContractFixture(): ApiContractFixture {
   const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-api-v2.json');
@@ -149,7 +110,7 @@ function materializeProbeValue(value: unknown): unknown {
   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
     const maybeFixture = value as { fixture?: unknown };
     if (maybeFixture.fixture === 'empty_engine') {
-      return cc.createEngine();
+      return new cc.Engine();
     }
     const out: Record<string, unknown> = {};
     for (const [key, nested] of Object.entries(value)) {
@@ -171,9 +132,6 @@ function expectShape(value: unknown, shape: ReturnShape, label: string): void {
       expect(value).not.toBeNull();
       if (value && typeof value === 'object') {
         expect('step' in value, `${label}: engine instance should expose step`).toBe(true);
-        expect('has_pending_clarification' in value, `${label}: engine instance should expose has_pending_clarification`).toBe(
-          true
-        );
       }
     }
     return;
@@ -214,11 +172,10 @@ describe('public API parity contract (conformance fixture)', () => {
     expect(fixture.forbidden_exports.length).toBeGreaterThan(0);
   });
 
-  it('allows only canonical runtime exports plus approved TS aliases', () => {
+  it('exposes exactly the canonical runtime exports', () => {
     const fixture = loadApiContractFixture();
     const canonicalRuntimeExports = getCanonicalRuntimeExportNames(fixture);
-    const allowedRuntimeExports = [...canonicalRuntimeExports, ...Object.keys(TS_ALIAS_ALLOWLIST)].sort();
-    expect(getRuntimeExportNames()).toEqual(allowedRuntimeExports);
+    expect(getRuntimeExportNames()).toEqual(canonicalRuntimeExports.sort());
   });
 
   it('exposes every canonical runtime export from the Python fixture', () => {
@@ -232,16 +189,6 @@ describe('public API parity contract (conformance fixture)', () => {
     const fixture = loadApiContractFixture();
     for (const exportName of fixture.forbidden_exports) {
       expect(Object.prototype.hasOwnProperty.call(cc, exportName), `Forbidden export '${exportName}' should not exist`).toBe(false);
-    }
-  });
-
-  it('asserts approved TS aliases are identity bindings to canonical exports', () => {
-    for (const [aliasName, canonicalName] of Object.entries(TS_ALIAS_ALLOWLIST)) {
-      expect(Object.prototype.hasOwnProperty.call(cc, aliasName), `Missing approved TS alias '${aliasName}'`).toBe(true);
-      expect(Object.prototype.hasOwnProperty.call(cc, canonicalName), `Missing canonical export '${canonicalName}' for alias '${aliasName}'`).toBe(
-        true
-      );
-      expect(cc[aliasName as keyof typeof cc]).toBe(cc[canonicalName as keyof typeof cc]);
     }
   });
 
@@ -285,6 +232,30 @@ describe('public API parity contract (conformance fixture)', () => {
     }
   });
 
+  it('runs canonical decision construction probes', () => {
+    const fixture = loadApiContractFixture();
+    expect(new cc.NoDirectiveDecision()).toMatchObject({ kind: 'no_directive' });
+
+    const updateProbe = fixture.exports.members.UpdateDecision.construction_probes?.[0];
+    const updateKwargs = updateProbe?.kwargs as Record<string, unknown>;
+    expect(new cc.UpdateDecision(Boolean(updateKwargs.changed))).toMatchObject({ kind: 'update', changed: true });
+
+    const errorProbe = fixture.exports.members.SemanticErrorDecision.construction_probes?.[0];
+    expect(errorProbe?.kwargs).toHaveProperty('failure');
+    const directive = new CanonicalDirective({ kind: 'use_item', operands: { item: 'docker' } });
+    const error = new cc.SemanticErrorDecision({
+      failure: cc.SemanticFailure.ITEM_PROHIBITED,
+      directive
+    });
+    expect(error).toMatchObject({
+      kind: 'error',
+      failure: cc.SemanticFailure.ITEM_PROHIBITED,
+      directive,
+      repairs: []
+    });
+    expect(typeof error.message).toBe('string');
+  });
+
   it('runs lightweight canonical API-shape probes where portable', () => {
     const fixture = loadApiContractFixture();
     for (const exportName of getCanonicalRuntimeExportNames(fixture)) {
@@ -302,34 +273,24 @@ describe('public API parity contract (conformance fixture)', () => {
     }
   });
 
-  it('allows only exact canonical engine public members plus approved TS aliases', () => {
+  it('exposes exactly the canonical Engine public members', () => {
     const fixture = loadApiContractFixture();
-    const engine = cc.createEngine();
+    const engine = new cc.Engine();
     const canonicalMembers = Object.keys(fixture.engine.public_members.members);
-    const allowedMembers = [...canonicalMembers, ...Object.keys(TS_ENGINE_ALIAS_ALLOWLIST)].sort();
-    expect(getEngineRuntimePublicMembers(engine)).toEqual(allowedMembers);
+    expect(getEngineRuntimePublicMembers(engine)).toEqual(canonicalMembers.sort());
   });
 
   it('exposes every canonical engine public member from the Python fixture', () => {
     const fixture = loadApiContractFixture();
-    const engine = cc.createEngine();
+    const engine = new cc.Engine();
     for (const memberName of Object.keys(fixture.engine.public_members.members)) {
       expect(memberName in engine, `Missing canonical engine member '${memberName}'`).toBe(true);
     }
   });
 
-  it('asserts approved TS engine aliases are identity bindings to canonical members', () => {
-    const engine = cc.createEngine();
-    for (const [aliasName, canonicalName] of Object.entries(TS_ENGINE_ALIAS_ALLOWLIST)) {
-      expect(aliasName in engine, `Missing approved TS engine alias '${aliasName}'`).toBe(true);
-      expect(canonicalName in engine, `Missing canonical engine member '${canonicalName}' for alias '${aliasName}'`).toBe(true);
-      expect((engine as Record<string, unknown>)[aliasName]).toBe((engine as Record<string, unknown>)[canonicalName]);
-    }
-  });
-
   it('enforces portable engine member kinds and signatures', () => {
     const fixture = loadApiContractFixture();
-    const engine = cc.createEngine();
+    const engine = new cc.Engine();
     for (const [memberName, memberSpec] of Object.entries(fixture.engine.public_members.members)) {
       expect(memberName in engine, `Missing canonical engine member '${memberName}'`).toBe(true);
       if (!(memberName in engine)) {
@@ -354,10 +315,4 @@ describe('public API parity contract (conformance fixture)', () => {
     }
   });
 
-  it('documents intentional TS-only type exports outside the canonical Python fixture', () => {
-    expect(TS_ONLY_TYPE_EXPORTS).toEqual([
-      'EngineInit',
-      'EngineState'
-    ]);
-  });
 });

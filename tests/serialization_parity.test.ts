@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine, getPolicyItems } from '../src/index.js';
+import { create_engine, get_policy_items } from '../src/engine.js';
 
 describe('serialization parity', () => {
   it('orders policy keys by codepoint and escapes non-ascii like Python', () => {
-    const engine = createEngine();
-    engine.importJson('{"premise":null,"policies":{"ä":"use","z":"use"},"version":2}');
+    const engine = create_engine();
+    engine.import_json('{"premise":null,"policies":{"ä":"use","z":"use"},"version":2}');
 
-    expect(getPolicyItems(engine.state)).toEqual(['z', 'ä']);
-    expect(engine.exportJson()).toBe('{"policies":{"z":"use","\\u00e4":"use"},"premise":null,"version":2}');
+    expect(get_policy_items(engine._state_snapshot())).toEqual(['z', 'ä']);
+    expect(engine.export_json()).toBe('{"policies":{"z":"use","\\u00e4":"use"},"premise":null,"version":2}');
   });
 
   it('keeps export/import round-trip stable for non-ascii policy keys', () => {
-    const engine = createEngine();
-    engine.importJson('{"premise":null,"policies":{"ä":"use","z":"use"},"version":2}');
+    const engine = create_engine();
+    engine.import_json('{"premise":null,"policies":{"ä":"use","z":"use"},"version":2}');
 
-    const first = engine.exportJson();
-    const restored = createEngine();
-    restored.importJson(first);
-    const second = restored.exportJson();
+    const first = engine.export_json();
+    const restored = create_engine();
+    restored.import_json(first);
+    const second = restored.export_json();
 
     expect(second).toBe(first);
   });
@@ -25,13 +25,13 @@ describe('serialization parity', () => {
   it('produces deterministic canonical export across repeated runs', () => {
     const payload = '{"premise":null,"policies":{"ä":"use","z":"use","alpha":"prohibit"},"version":2}';
 
-    const firstEngine = createEngine();
-    firstEngine.importJson(payload);
-    const secondEngine = createEngine();
-    secondEngine.importJson(payload);
+    const firstEngine = create_engine();
+    firstEngine.import_json(payload);
+    const secondEngine = create_engine();
+    secondEngine.import_json(payload);
 
-    const first = firstEngine.exportJson();
-    const second = secondEngine.exportJson();
+    const first = firstEngine.export_json();
+    const second = secondEngine.export_json();
 
     expect(first).toBe(second);
     expect(first).toBe(
@@ -48,14 +48,14 @@ describe('serialization parity', () => {
     ];
 
     for (const payload of cases) {
-      const engine = createEngine();
-      expect(() => engine.importJson(payload)).toThrowError('Invalid state payload.');
+      const engine = create_engine();
+      expect(() => engine.import_json(payload)).toThrowError('Invalid state payload.');
     }
   });
 
   it('continues to accept valid non-empty normalized policy keys', () => {
-    const engine = createEngine();
-    engine.importJson('{"premise":null,"policies":{"Docker":"use"},"version":2}');
-    expect(engine.exportJson()).toBe('{"policies":{"docker":"use"},"premise":null,"version":2}');
+    const engine = create_engine();
+    engine.import_json('{"premise":null,"policies":{"Docker":"use"},"version":2}');
+    expect(engine.export_json()).toBe('{"policies":{"docker":"use"},"premise":null,"version":2}');
   });
 });

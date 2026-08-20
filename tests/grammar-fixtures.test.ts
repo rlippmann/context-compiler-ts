@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as cc from '../src/index.js';
+import * as grammar from '../src/grammar.js';
 import { render_directive } from '../src/grammar-render.js';
 import { loadGrammarFixtures } from './harness/fixtures.js';
 
@@ -8,8 +8,8 @@ const fixtures = await loadGrammarFixtures();
 describe('grammar fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
-      const grammar = cc as unknown as Record<string, unknown>;
-      const fn = fixture.payload.action.fn === 'render_directive' ? render_directive : grammar[fixture.payload.action.fn];
+      const publicGrammar = grammar as unknown as Record<string, unknown>;
+      const fn = fixture.payload.action.fn === 'render_directive' ? render_directive : publicGrammar[fixture.payload.action.fn];
       expect(typeof fn, `${fixture.name}: missing grammar export '${fixture.payload.action.fn}'`).toBe('function');
 
       if (fixture.payload.action.fn === 'decompose_directive') {

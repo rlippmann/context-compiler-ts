@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '../src/index.js';
+import { create_engine } from '../src/engine.js';
 
-describe('importJson atomicity', () => {
-  it('importJson is atomic when encountering invalid normalized keys', () => {
-    const engine = createEngine();
-    engine.importJson('{"premise":null,"policies":{"Docker":"use"},"version":2}');
+describe('import_json atomicity', () => {
+  it('import_json is atomic when encountering invalid normalized keys', () => {
+    const engine = create_engine();
+    engine.import_json('{"premise":null,"policies":{"Docker":"use"},"version":2}');
 
-    const snapshot = JSON.parse(JSON.stringify(engine.state));
+    const snapshot = JSON.parse(JSON.stringify(engine._state_snapshot()));
     const invalidPayload = '{"premise":null,"policies":{"Docker":"use","a":"use"},"version":2}';
 
-    expect(() => engine.importJson(invalidPayload)).toThrowError('Invalid state payload.');
-    expect(engine.state).toEqual(snapshot);
+    expect(() => engine.import_json(invalidPayload)).toThrowError('Invalid state payload.');
+    expect(engine._state_snapshot()).toEqual(snapshot);
   });
 
   it('no partial policy insertion before failure', () => {
-    const engine = createEngine();
+    const engine = create_engine();
     const invalidPayload = '{"premise":null,"policies":{"Docker":"use","a":"use"},"version":2}';
 
-    expect(() => engine.importJson(invalidPayload)).toThrowError('Invalid state payload.');
-    expect(engine.state.policies).toEqual({});
+    expect(() => engine.import_json(invalidPayload)).toThrowError('Invalid state payload.');
+    expect(engine._state_snapshot().policies).toEqual({});
   });
 });

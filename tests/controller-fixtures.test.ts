@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '../src/index.js';
+import { create_engine } from '../src/engine.js';
 import { loadControllerFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadControllerFixtures();
@@ -9,7 +9,7 @@ describe('controller fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('controller');
 
-      const engine = createEngine({ state: fixture.payload.initial_state });
+      const engine = create_engine({ state: fixture.payload.initial_state });
       const observations: Record<string, unknown> = {};
       const payloads: Record<string, string> = {};
 
@@ -51,7 +51,7 @@ describe('controller fixtures (conformance)', () => {
         expect(observations[left], `${fixture.name}: missing observation '${left}'`).toEqual(observations[right]);
       }
       expect(observations).toMatchObject(fixture.payload.expected.observations);
-      expect(engine.state).toEqual(fixture.payload.expected.state);
+      expect(engine._state_snapshot()).toEqual(fixture.payload.expected.state);
     });
   }
 });

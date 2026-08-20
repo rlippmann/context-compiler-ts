@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '../src/index.js';
+import { create_engine } from '../src/engine.js';
 
 type StructuredScenario = {
   id: string;
@@ -47,7 +47,7 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
 
       expect(expected.id).toBe(scenario.id);
 
-      const engine = createEngine({ state: (scenario.initial_state ?? undefined) as never });
+      const engine = create_engine({ state: (scenario.initial_state ?? undefined) as never });
 
       expect(expected.turns.length).toBe(scenario.inputs.length);
 
@@ -58,7 +58,7 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
 
         expect(turnExpected.input).toBe(userInput);
         expect(decision).toEqual(turnExpected.decision);
-        expect(engine.state).toEqual(turnExpected.state);
+        expect(engine._state_snapshot()).toEqual(turnExpected.state);
       }
     });
   }
