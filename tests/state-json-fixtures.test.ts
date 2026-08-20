@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { create_engine } from '../src/engine.js';
+import { Engine } from '../src/engine.js';
 import { loadStateJsonFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadStateJsonFixtures();
@@ -9,7 +9,7 @@ describe('state-json fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('state_json');
 
-      const engine = create_engine({ state: fixture.payload.initial_state });
+      const engine = new Engine({ state: fixture.payload.initial_state });
       for (const priorInput of fixture.payload.prelude ?? []) {
         engine.step(priorInput);
       }

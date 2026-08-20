@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { create_engine } from '../src/engine.js';
+import { Engine } from '../src/engine.js';
 
 describe('import_json atomicity', () => {
   it('import_json is atomic when encountering invalid normalized keys', () => {
-    const engine = create_engine();
+    const engine = new Engine();
     engine.import_json('{"premise":null,"policies":{"Docker":"use"},"version":2}');
 
     const snapshot = JSON.parse(JSON.stringify(JSON.parse(engine.export_json())));
@@ -14,7 +14,7 @@ describe('import_json atomicity', () => {
   });
 
   it('no partial policy insertion before failure', () => {
-    const engine = create_engine();
+    const engine = new Engine();
     const invalidPayload = '{"premise":null,"policies":{"Docker":"use"," docker ":"prohibit"},"version":2}';
 
     expect(() => engine.import_json(invalidPayload)).toThrowError('Invalid state payload.');

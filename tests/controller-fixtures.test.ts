@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { create_engine } from '../src/engine.js';
+import { Engine } from '../src/engine.js';
 import { CanonicalDirective, decompose_directive } from '../src/grammar.js';
 import { loadControllerFixtures } from './harness/fixtures.js';
 
@@ -10,7 +10,7 @@ describe('controller fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('controller');
 
-      const engine = create_engine({ state: fixture.payload.initial_state });
+      const engine = new Engine({ state: fixture.payload.initial_state });
       const observations: Record<string, unknown> = {};
       const payloads: Record<string, string> = {};
 

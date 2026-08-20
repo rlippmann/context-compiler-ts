@@ -8,7 +8,7 @@ import {
   UpdateDecision
 } from './decision.js';
 
-export interface EngineInit {
+interface EngineInit {
   state?: EngineState;
 }
 
@@ -194,27 +194,6 @@ function normalizeEngineInit(stateOrInit?: EngineState | EngineInit): EngineStat
   }
   return stateOrInit as EngineState;
 }
-
-export function create_engine(state?: EngineState | EngineInit): Engine {
-  return new Engine(normalizeEngineInit(state));
-}
-
-
-export function get_premise_value(state: EngineState): string | null {
-  return state.premise;
-}
-
-
-export function get_policy_items(state: EngineState, value?: 'use' | 'prohibit' | null): string[] {
-  if (value == null) {
-    return Object.keys(state.policies).sort(compareStringsByCodepoint);
-  }
-  return Object.entries(state.policies)
-    .filter(([, policy]) => policy === value)
-    .map(([item]) => item)
-    .sort(compareStringsByCodepoint);
-}
-
 
 function initialState(): EngineState {
   return {
