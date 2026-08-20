@@ -81,16 +81,17 @@ export class CanonicalDirective {
       throw new Error(`Operands do not produce a canonical ${kind} directive.`);
     }
     this.kind = kind;
-    this.operands = operands;
+    this.operands = Object.freeze(operands);
     this.text = serializeCanonicalDirective(kind, operands);
+    Object.freeze(this);
   }
 }
 
 export class InvalidDirectiveSyntax {
   readonly kind = 'invalid_directive_syntax';
   readonly failure: string;
-  readonly directive_kind?: DirectiveKindValue;
-  readonly missing_operand?: string;
+  readonly directive_kind: DirectiveKindValue | null;
+  readonly missing_operand: string | null;
 
   constructor(input: {
     failure?: string;
@@ -98,20 +99,22 @@ export class InvalidDirectiveSyntax {
     missing_operand?: string | null;
   } = {}) {
     this.failure = input.failure ?? DirectiveSyntaxFailure.MALFORMED_DIRECTIVE;
-    if (input.directive_kind != null) this.directive_kind = input.directive_kind;
-    if (input.missing_operand != null) this.missing_operand = input.missing_operand;
+    this.directive_kind = input.directive_kind ?? null;
+    this.missing_operand = input.missing_operand ?? null;
+    Object.freeze(this);
   }
 }
 
 export class DirectiveMetadata {
-  readonly directive_kind: DirectiveKindValue;
+  readonly kind: DirectiveKindValue;
   readonly canonical_start: string;
-  readonly operand_names: string[];
+  readonly operand_names: readonly string[];
 
   constructor(input: { kind: DirectiveKindValue; canonical_start: string; operand_names: string[] }) {
-    this.directive_kind = input.kind;
+    this.kind = input.kind;
     this.canonical_start = input.canonical_start;
-    this.operand_names = [...input.operand_names];
+    this.operand_names = Object.freeze([...input.operand_names]);
+    Object.freeze(this);
   }
 }
 
@@ -282,10 +285,10 @@ export function decompose_directive(text: string): CanonicalDirective | InvalidD
   return invalid(DirectiveSyntaxFailure.MALFORMED_DIRECTIVE);
 }
 
-export function get_directive_metadata(): DirectiveMetadata[] {
-  return Object.values(DIRECTIVE_SPECS).map(
+export function get_directive_metadata(): readonly DirectiveMetadata[] {
+  return Object.freeze(Object.values(DIRECTIVE_SPECS).map(
     (spec) => new DirectiveMetadata({ kind: Object.keys(DIRECTIVE_SPECS).find((kind) => DIRECTIVE_SPECS[kind as DirectiveKindValue] === spec) as DirectiveKindValue, canonical_start: spec.canonicalStart, operand_names: spec.operands })
-  );
+  ));
 }
 
 function normalizeDirectiveKind(kind: string): DirectiveKindValue {
