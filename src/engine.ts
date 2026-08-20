@@ -150,6 +150,9 @@ export class Engine {
   }
 
   apply_directive(directive: CanonicalDirective): SemanticDecision {
+    if (!(directive instanceof CanonicalDirective)) {
+      throw new TypeError('apply_directive requires a CanonicalDirective.');
+    }
     const previous = cloneState(this._state);
     const failure = this.#semanticFailure(directive);
     if (failure !== null) {
