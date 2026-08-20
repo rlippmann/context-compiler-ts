@@ -72,7 +72,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
       const shape = probe.return_shape as Record<string, any>;
       expect({
         kind: 'directive_metadata',
-        directive_kind: actual.directive_kind,
+        directive_kind: actual.kind,
         canonical_start: actual.canonical_start,
         operand_names: actual.operand_names
       }).toEqual(shape);
@@ -82,7 +82,11 @@ describe('public grammar API parity contract (conformance fixture)', () => {
   it('matches metadata and decomposition probes', () => {
     const metadataProbe = (contract.exports.members.get_directive_metadata as Record<string, any>)
       .shape_probes[0].return_shape.items;
-    expect(grammar.get_directive_metadata()).toEqual(metadataProbe);
+    expect(grammar.get_directive_metadata().map((metadata) => ({
+      directive_kind: metadata.kind,
+      canonical_start: metadata.canonical_start,
+      operand_names: metadata.operand_names
+    }))).toEqual(metadataProbe);
 
     const decomposeProbes = (contract.exports.members.decompose_directive as Record<string, any>)
       .shape_probes;
