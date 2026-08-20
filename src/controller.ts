@@ -1,4 +1,5 @@
-import type { Decision, Engine, EngineState } from './engine.js';
+import type { Engine, EngineState } from './engine.js';
+import type { Decision } from './decision.js';
 
 export const OUTPUT_VERSION = 1 as const;
 

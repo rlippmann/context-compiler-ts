@@ -5,8 +5,10 @@ import type {
   EngineCheckpointPending,
   EngineState
 } from './types.js';
-import { CanonicalDirective, DirectiveKind as GrammarDirectiveKind } from './grammar.js';
+import { CanonicalDirective, DirectiveKind as GrammarDirectiveKind, decompose_directive } from './grammar.js';
 import {
+  NoDirectiveDecision,
+  type Decision as SemanticDecision,
   SemanticErrorDecision,
   SemanticFailure,
   UpdateDecision
@@ -147,7 +149,7 @@ export class Engine {
     this.#replaceCheckpoint(loadCheckpointObject(raw));
   }
 
-  apply_directive(directive: CanonicalDirective): import('./decision.js').Decision {
+  apply_directive(directive: CanonicalDirective): SemanticDecision {
     const previous = cloneState(this._state);
     const failure = this.#semanticFailure(directive);
     if (failure !== null) {
@@ -281,65 +283,12 @@ export class Engine {
     }
   }
 
-  step(input: string): LegacyDecision {
-    if (this._pendingReplacement !== null) {
-      return this.#resolveOrRepromptPending(input);
+  step(input: string): SemanticDecision {
+    const directive = decompose_directive(input);
+    if (!(directive instanceof CanonicalDirective)) {
+      return new NoDirectiveDecision();
     }
-
-    const action = parseDirective(input);
-    if (action === null) {
-      return { ...PASSTHROUGH };
-    }
-
-    const clarifyDecision = this.#preMutationClarify(action);
-    if (clarifyDecision !== null) {
-      return clarifyDecision;
-    }
-
-    if (action.kind === 'set_premise' || action.kind === 'change_premise') {
-      this._state.premise = sanitizePremiseValue(action.value);
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'use_item') {
-      const itemKey = normalizeItem(action.item);
-      this._state.policies[itemKey] = 'use';
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'prohibit_item') {
-      const itemKey = normalizeItem(action.item);
-      this._state.policies[itemKey] = 'prohibit';
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'remove_policy_item') {
-      const itemKey = normalizeItem(action.item);
-      delete this._state.policies[itemKey];
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'replace_use') {
-      this.#applyReplacementExplicit(action.new_item, action.old_item);
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'clear_premise') {
-      this._state.premise = null;
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'reset_policies') {
-      this._state.policies = {};
-      return updateDecision(this._state);
-    }
-
-    if (action.kind === 'clear_state') {
-      this._state = initialState();
-      return updateDecision(this._state);
-    }
-
-    return { ...PASSTHROUGH };
+    return this.apply_directive(directive);
   }
 
   #replaceState(state: EngineState): void {
@@ -909,9 +858,8 @@ function normalizeItem(value: string): string {
   let normalized = value.normalize('NFKC');
   normalized = normalized.replaceAll('’', "'").replaceAll('`', "'");
   normalized = normalized.toLowerCase();
-  normalized = normalized.replace(/\bdont\b/g, "don't");
+  normalized = normalized.replaceAll('ß', 'ss');
   normalized = normalized.replace(/\s+/g, ' ').trim();
-  normalized = normalized.replace(/^(?:a|an|the)\b\s*/, '');
   return normalized.trim();
 }
 
