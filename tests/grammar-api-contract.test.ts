@@ -60,6 +60,25 @@ describe('public grammar API parity contract (conformance fixture)', () => {
     }
   });
 
+  it('matches canonical metadata construction probes', () => {
+    const probes = (contract.exports.members.DirectiveMetadata as Record<string, any>)
+      .construction_probes as Array<Record<string, any>>;
+    for (const probe of probes) {
+      const actual = new grammar.DirectiveMetadata(probe.kwargs as {
+        kind: 'use_item';
+        canonical_start: string;
+        operand_names: string[];
+      });
+      const shape = probe.return_shape as Record<string, any>;
+      expect({
+        kind: 'directive_metadata',
+        directive_kind: actual.directive_kind,
+        canonical_start: actual.canonical_start,
+        operand_names: actual.operand_names
+      }).toEqual(shape);
+    }
+  });
+
   it('matches metadata and decomposition probes', () => {
     const metadataProbe = (contract.exports.members.get_directive_metadata as Record<string, any>)
       .shape_probes[0].return_shape.items;
