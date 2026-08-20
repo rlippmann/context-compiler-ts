@@ -3,10 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
 import type {
-  CheckpointPendingReplacement,
   Decision,
-  EngineCheckpoint,
-  EngineCheckpointPending,
   EngineInit,
   EngineState,
   PreviewResult,
@@ -21,21 +18,11 @@ const _typeCheckPreviewResult: PreviewResult | null = null;
 const _typeCheckStepResult: StepResult | null = null;
 const _typeCheckStructuralDiff: StructuralDiff | null = null;
 const _typeCheckState: EngineState = { premise: null, policies: {}, version: 2 };
-const _typeCheckCheckpoint: EngineCheckpoint = {
-  checkpoint_version: 1,
-  authoritative_state: _typeCheckState,
-  pending: null
-};
-const _typeCheckCheckpointPending: EngineCheckpointPending | null = null;
-const _typeCheckPendingReplacement: CheckpointPendingReplacement | null = null;
 const _typeCheckEngineInit: EngineInit = { state: _typeCheckState };
 void _typeCheckDecision;
 void _typeCheckPreviewResult;
 void _typeCheckStepResult;
 void _typeCheckStructuralDiff;
-void _typeCheckCheckpoint;
-void _typeCheckCheckpointPending;
-void _typeCheckPendingReplacement;
 void _typeCheckEngineInit;
 
 type ParamSpec = {
@@ -109,22 +96,11 @@ const TS_ALIAS_ALLOWLIST: Record<string, string> = {
 };
 
 const TS_ENGINE_ALIAS_ALLOWLIST: Record<string, string> = {
-  exportCheckpoint: 'export_checkpoint',
-  exportCheckpointJson: 'export_checkpoint_json',
   exportJson: 'export_json',
-  hasPendingClarification: 'has_pending_clarification',
-  importCheckpoint: 'import_checkpoint',
-  importCheckpointJson: 'import_checkpoint_json',
   importJson: 'import_json'
 };
 
-const TS_ONLY_TYPE_EXPORTS = [
-  'CheckpointPendingReplacement',
-  'EngineCheckpoint',
-  'EngineCheckpointPending',
-  'EngineInit',
-  'EngineState'
-] as const;
+const TS_ONLY_TYPE_EXPORTS = ['EngineInit', 'EngineState'] as const;
 
 function loadApiContractFixture(): ApiContractFixture {
   const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-api-v2.json');
@@ -380,9 +356,6 @@ describe('public API parity contract (conformance fixture)', () => {
 
   it('documents intentional TS-only type exports outside the canonical Python fixture', () => {
     expect(TS_ONLY_TYPE_EXPORTS).toEqual([
-      'CheckpointPendingReplacement',
-      'EngineCheckpoint',
-      'EngineCheckpointPending',
       'EngineInit',
       'EngineState'
     ]);

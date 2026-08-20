@@ -5,17 +5,14 @@ import { createEngine } from '../src/index.js';
 
 type StructuredScenario = {
   id: string;
-  initial_checkpoint?: unknown;
+  initial_state?: unknown;
   inputs: string[];
 };
 
 type StructuredExpectedTurn = {
   input: string;
-  decision: {
-    kind: string;
-    prompt_to_user: string | null;
-  };
-  checkpoint: unknown;
+  decision: Record<string, unknown>;
+  state: unknown;
 };
 
 type StructuredExpected = {
@@ -50,10 +47,7 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
 
       expect(expected.id).toBe(scenario.id);
 
-      const engine = createEngine();
-      if (scenario.initial_checkpoint != null) {
-        engine.importCheckpoint(scenario.initial_checkpoint as never);
-      }
+      const engine = createEngine({ state: (scenario.initial_state ?? undefined) as never });
 
       expect(expected.turns.length).toBe(scenario.inputs.length);
 
@@ -61,12 +55,10 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
         const userInput = scenario.inputs[i];
         const turnExpected = expected.turns[i];
         const decision = engine.step(userInput);
-        const checkpoint = engine.exportCheckpoint();
 
         expect(turnExpected.input).toBe(userInput);
-        expect(decision.kind).toBe(turnExpected.decision.kind);
-        expect(decision.prompt_to_user).toBe(turnExpected.decision.prompt_to_user);
-        expect(checkpoint).toEqual(turnExpected.checkpoint);
+        expect(decision).toEqual(turnExpected.decision);
+        expect(engine.state).toEqual(turnExpected.state);
       }
     });
   }
