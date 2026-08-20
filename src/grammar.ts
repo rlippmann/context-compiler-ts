@@ -76,6 +76,10 @@ export class CanonicalDirective {
   constructor(input: { kind: string; operands: Record<string, unknown> }) {
     const kind = normalizeDirectiveKind(input.kind);
     const operands = normalizeCanonicalOperands(kind, input.operands);
+    const rendered = serializeCanonicalDirective(kind, operands);
+    if (containsMultipleCanonicalDirectives(rendered)) {
+      throw new Error(`Operands do not produce a canonical ${kind} directive.`);
+    }
     this.kind = kind;
     this.operands = operands;
     this.text = serializeCanonicalDirective(kind, operands);
@@ -304,7 +308,7 @@ function normalizeCanonicalOperands(kind: DirectiveKindValue, operands: Record<s
     normalized[name] = value;
   }
   if (kind === 'set_premise' && operandStartsWithToken(normalized.value, 'to')) throw new Error(`Operands do not produce a canonical ${kind} directive.`);
-  if (kind === 'use_item' && (normalizedForMatching(normalized.item).startsWith('instead of ') || normalizedForMatching(normalized.item).includes(INSTEAD_OF_DELIMITER))) throw new Error(`Operands do not produce a canonical ${kind} directive.`);
+  if (kind === 'use_item' && (normalizedForMatching(normalized.item) === 'instead of' || normalizedForMatching(normalized.item).startsWith('instead of ') || normalizedForMatching(normalized.item).includes(INSTEAD_OF_DELIMITER))) throw new Error(`Operands do not produce a canonical ${kind} directive.`);
   if (kind === 'replace_use' && (normalizedForMatching(normalized.new_item).includes(INSTEAD_OF_DELIMITER) || normalizedForMatching(normalized.old_item).includes(INSTEAD_OF_DELIMITER))) throw new Error(`Operands do not produce a canonical ${kind} directive.`);
   return normalized;
 }
