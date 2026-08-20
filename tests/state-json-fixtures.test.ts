@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '../src/engine.js';
+import { create_engine } from '../src/engine.js';
 import { loadStateJsonFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadStateJsonFixtures();
@@ -9,7 +9,7 @@ describe('state-json fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('state_json');
 
-      const engine = createEngine({ state: fixture.payload.initial_state });
+      const engine = create_engine({ state: fixture.payload.initial_state });
       for (const priorInput of fixture.payload.prelude ?? []) {
         engine.step(priorInput);
       }
@@ -18,18 +18,18 @@ describe('state-json fixtures (conformance)', () => {
       const action = fixture.payload.action;
 
       if (action.fn === 'export_json') {
-        const payload = engine.exportJson();
+        const payload = engine.export_json();
         expect(payload).toBe(expected.payload);
-        expect(engine.state).toEqual(expected.state);
+        expect(engine._state_snapshot()).toEqual(expected.state);
         return;
       }
 
       if (expected.error != null) {
-        expect(() => engine.importJson(String(action.payload))).toThrowError(expected.error.message_contains);
+        expect(() => engine.import_json(String(action.payload))).toThrowError(expected.error.message_contains);
       } else {
-        engine.importJson(String(action.payload));
+        engine.import_json(String(action.payload));
       }
-      expect(engine.state).toEqual(expected.state);
+      expect(engine._state_snapshot()).toEqual(expected.state);
     });
   }
 });

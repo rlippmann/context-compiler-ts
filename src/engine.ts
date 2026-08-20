@@ -5,21 +5,10 @@ import type {
   EngineCheckpointPending,
   EngineState
 } from './types.js';
+import type { CanonicalDirective } from './grammar.js';
 
 export interface EngineInit {
   state?: EngineState;
-}
-
-export interface EngineCompat {
-  step(input: string): Decision;
-  readonly state: EngineState;
-  has_pending_clarification(): boolean;
-  export_json(): string;
-  import_json(payload: string): void;
-  export_checkpoint(): EngineCheckpoint;
-  import_checkpoint(payload: EngineCheckpoint): void;
-  export_checkpoint_json(): string;
-  import_checkpoint_json(payload: string): void;
 }
 
 const PASSTHROUGH: Decision = {
@@ -76,7 +65,10 @@ const AFFIRMATIVE_CONFIRMATIONS = new Set(['yes', 'yes please', 'yep', 'yeah', '
 const NEGATIVE_CONFIRMATIONS = new Set(['no', 'nope', 'no thanks']);
 const MULTIPLE_DIRECTIVES_PROMPT = 'Multiple directives are not supported in one input.\nSubmit each directive separately.';
 
-export class Engine implements EngineCompat {
+export const POLICY_USE = 'use' as const;
+export const POLICY_PROHIBIT = 'prohibit' as const;
+
+export class Engine {
   private _state: EngineState;
   private _pendingReplacement: PendingReplacement | null;
   private _pendingPrompt: string | null;
@@ -88,11 +80,19 @@ export class Engine implements EngineCompat {
     this._pendingPrompt = null;
   }
 
-  get state(): EngineState {
+  get premise(): string | null {
+    return this._state.premise;
+  }
+
+  get policies(): Record<string, 'use' | 'prohibit'> {
+    return { ...this._state.policies };
+  }
+
+  _state_snapshot(): EngineState {
     return cloneState(this._state);
   }
 
-  has_pending_clarification(): boolean {
+  _has_pending_clarification(): boolean {
     return this._pendingReplacement !== null;
   }
 
@@ -104,7 +104,7 @@ export class Engine implements EngineCompat {
     this.#replaceState(loadStateJson(payload));
   }
 
-  export_checkpoint(): EngineCheckpoint {
+  _export_checkpoint(): EngineCheckpoint {
     const authoritativeState = loadStateJson(this.export_json());
     let pending: EngineCheckpointPending | null = null;
 
@@ -124,15 +124,15 @@ export class Engine implements EngineCompat {
     });
   }
 
-  import_checkpoint(payload: EngineCheckpoint): void {
+  _import_checkpoint(payload: EngineCheckpoint): void {
     this.#replaceCheckpoint(loadCheckpointObject(payload));
   }
 
-  export_checkpoint_json(): string {
-    return stringifyCanonicalJson(sortKeysDeep(this.export_checkpoint()));
+  _export_checkpoint_json(): string {
+    return stringifyCanonicalJson(sortKeysDeep(this._export_checkpoint()));
   }
 
-  import_checkpoint_json(payload: string): void {
+  _import_checkpoint_json(payload: string): void {
     let raw: unknown;
     try {
       raw = JSON.parse(payload);
@@ -140,6 +140,10 @@ export class Engine implements EngineCompat {
       throw new Error('Invalid JSON payload.');
     }
     this.#replaceCheckpoint(loadCheckpointObject(raw));
+  }
+
+  apply_directive(directive: CanonicalDirective): Decision {
+    return this.step(directive.text);
   }
 
   step(input: string): Decision {
@@ -356,54 +360,6 @@ export class Engine implements EngineCompat {
   }
 }
 
-export interface Engine {
-  hasPendingClarification(): boolean;
-  exportJson(): string;
-  importJson(payload: string): void;
-  exportCheckpoint(): EngineCheckpoint;
-  importCheckpoint(payload: EngineCheckpoint): void;
-  exportCheckpointJson(): string;
-  importCheckpointJson(payload: string): void;
-}
-
-Object.defineProperties(Engine.prototype, {
-  exportCheckpoint: {
-    value: Engine.prototype.export_checkpoint,
-    writable: true,
-    configurable: true
-  },
-  exportCheckpointJson: {
-    value: Engine.prototype.export_checkpoint_json,
-    writable: true,
-    configurable: true
-  },
-  exportJson: {
-    value: Engine.prototype.export_json,
-    writable: true,
-    configurable: true
-  },
-  hasPendingClarification: {
-    value: Engine.prototype.has_pending_clarification,
-    writable: true,
-    configurable: true
-  },
-  importCheckpoint: {
-    value: Engine.prototype.import_checkpoint,
-    writable: true,
-    configurable: true
-  },
-  importCheckpointJson: {
-    value: Engine.prototype.import_checkpoint_json,
-    writable: true,
-    configurable: true
-  },
-  importJson: {
-    value: Engine.prototype.import_json,
-    writable: true,
-    configurable: true
-  }
-});
-
 function normalizeEngineInit(stateOrInit?: EngineState | EngineInit): EngineState | undefined {
   if (stateOrInit === undefined) {
     return undefined;
@@ -418,13 +374,11 @@ export function create_engine(state?: EngineState | EngineInit): Engine {
   return new Engine(normalizeEngineInit(state));
 }
 
-export const createEngine = create_engine;
 
 export function get_premise_value(state: EngineState): string | null {
   return state.premise;
 }
 
-export const getPremiseValue = get_premise_value;
 
 export function get_policy_items(state: EngineState, value?: 'use' | 'prohibit' | null): string[] {
   if (value == null) {
@@ -436,7 +390,6 @@ export function get_policy_items(state: EngineState, value?: 'use' | 'prohibit' 
     .sort(compareStringsByCodepoint);
 }
 
-export const getPolicyItems = get_policy_items;
 
 function initialState(): EngineState {
   return {

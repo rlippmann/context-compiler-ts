@@ -4,6 +4,8 @@ export interface EngineState {
   version: 2;
 }
 
+export type PolicyValue = 'use' | 'prohibit';
+
 export type CheckpointPendingReplacement =
   | { kind: 'use_only'; new_item: string; old_item: null }
   | { kind: 'replace_use'; new_item: string; old_item: string };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEngine } from '../src/index.js';
+import { create_engine } from '../src/engine.js';
 import { loadMutationIsolationFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadMutationIsolationFixtures();
@@ -17,7 +17,7 @@ function setPath(target: unknown, path: (string | number)[], value: unknown): vo
 describe('mutation-isolation fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
-      const engine = createEngine({ state: fixture.payload.initial_state });
+      const engine = create_engine({ state: fixture.payload.initial_state });
       const operation = fixture.payload.operation;
       let result: unknown;
 
@@ -42,7 +42,7 @@ describe('mutation-isolation fixtures (conformance)', () => {
         setPath(mutableResult, mutation.path, mutation.value);
       }
 
-      expect(engine.state).toEqual(fixture.payload.expected.authoritative_state);
+      expect(engine._state_snapshot()).toEqual(fixture.payload.expected.authoritative_state);
     });
   }
 });

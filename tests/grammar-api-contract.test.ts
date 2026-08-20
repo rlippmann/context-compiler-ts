@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import * as cc from '../src/index.js';
 import * as grammar from '../src/grammar.js';
 
 type GrammarApiContract = {
@@ -16,7 +15,7 @@ const contract = JSON.parse(readFileSync(path, 'utf8')) as GrammarApiContract;
 
 describe('public grammar API parity contract (conformance fixture)', () => {
   it('exposes the canonical grammar exports', () => {
-    const runtime = cc as unknown as Record<string, unknown>;
+    const runtime = grammar as unknown as Record<string, unknown>;
     for (const name of contract.exports.names) {
       expect(Object.prototype.hasOwnProperty.call(runtime, name), `Missing canonical grammar export '${name}'`).toBe(
         true
@@ -29,7 +28,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
   });
 
   it('matches canonical grammar export kinds', () => {
-    const runtime = cc as unknown as Record<string, unknown>;
+    const runtime = grammar as unknown as Record<string, unknown>;
     for (const [name, member] of Object.entries(contract.exports.members)) {
       const value = runtime[name];
       if (member.kind === 'callable' || member.kind === 'class') {
@@ -42,7 +41,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
     const probes = (contract.exports.members.CanonicalDirective as Record<string, any>)
       .construction_probes as Array<Record<string, any>>;
     for (const probe of probes) {
-      const construct = () => new cc.CanonicalDirective(probe.kwargs);
+      const construct = () => new grammar.CanonicalDirective(probe.kwargs as { kind: string; operands: Record<string, unknown> });
       if (probe.raises != null) {
         expect(construct).toThrowError();
         continue;
@@ -64,12 +63,12 @@ describe('public grammar API parity contract (conformance fixture)', () => {
   it('matches metadata and decomposition probes', () => {
     const metadataProbe = (contract.exports.members.get_directive_metadata as Record<string, any>)
       .shape_probes[0].return_shape.items;
-    expect(cc.get_directive_metadata()).toEqual(metadataProbe);
+    expect(grammar.get_directive_metadata()).toEqual(metadataProbe);
 
     const decomposeProbes = (contract.exports.members.decompose_directive as Record<string, any>)
       .shape_probes;
     for (const probe of decomposeProbes) {
-      const actual = cc.decompose_directive(probe.kwargs.text);
+      const actual = grammar.decompose_directive(probe.kwargs.text as string);
       const shape = probe.return_shape as Record<string, any>;
       if (shape.type === 'null') {
         expect(actual).toBeNull();
