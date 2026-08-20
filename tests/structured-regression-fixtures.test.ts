@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { create_engine } from '../src/engine.js';
+import { Engine } from '../src/engine.js';
 
 type StructuredScenario = {
   id: string;
@@ -47,7 +47,7 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
 
       expect(expected.id).toBe(scenario.id);
 
-      const engine = create_engine({ state: (scenario.initial_state ?? undefined) as never });
+      const engine = new Engine({ state: (scenario.initial_state ?? undefined) as never });
 
       expect(expected.turns.length).toBe(scenario.inputs.length);
 

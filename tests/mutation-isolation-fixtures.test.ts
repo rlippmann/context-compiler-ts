@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { create_engine } from '../src/engine.js';
+import { Engine } from '../src/engine.js';
 import { CanonicalDirective, DirectiveMetadata } from '../src/grammar.js';
 import { loadMutationIsolationFixtures } from './harness/fixtures.js';
 
@@ -26,7 +26,7 @@ function getPath(target: unknown, path: (string | number)[]): unknown {
 describe('mutation-isolation fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
-      const engine = create_engine({ state: fixture.payload.initial_state });
+      const engine = new Engine({ state: fixture.payload.initial_state });
       const operation = fixture.payload.operation;
       let result: unknown;
 
