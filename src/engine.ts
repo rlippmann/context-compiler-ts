@@ -667,7 +667,15 @@ function loadStateObject(raw: unknown): EngineState {
     if (normalizedKey === '') {
       throw new Error('Invalid state payload.');
     }
+    if (Object.prototype.hasOwnProperty.call(normalizedPolicies, normalizedKey)) {
+      throw new Error('Invalid state payload.');
+    }
     normalizedPolicies[normalizedKey] = value;
+  }
+
+  const premise = obj.premise === null ? null : sanitizePremiseValue(obj.premise);
+  if (premise !== null && premise === '') {
+    throw new Error('Invalid state payload.');
   }
 
   const sortedEntries = Object.entries(normalizedPolicies).sort(([a], [b]) => compareStringsByCodepoint(a, b));
@@ -677,7 +685,7 @@ function loadStateObject(raw: unknown): EngineState {
   }
 
   return {
-    premise: obj.premise === null ? null : sanitizePremiseValue(obj.premise),
+    premise,
     policies: sortedPolicies,
     version: 2
   };

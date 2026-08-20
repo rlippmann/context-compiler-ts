@@ -2,31 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { create_engine, get_policy_items } from '../src/engine.js';
 
 describe('normalization parity', () => {
-  it('normalizes policy items with NFKC, lowercase, whitespace collapse, and article stripping', () => {
+  it('normalizes policy items with NFKC, lowercase, and whitespace collapse', () => {
     const engine = create_engine();
     engine.step('use   The    Ｄｏｃｋｅｒ   CLI  ');
 
-    expect(get_policy_items(engine._state_snapshot())).toEqual(['docker cli']);
-    expect(engine._state_snapshot().policies).toEqual({ 'docker cli': 'use' });
+    expect(get_policy_items(engine._state_snapshot())).toEqual(['the docker cli']);
+    expect(engine._state_snapshot().policies).toEqual({ 'the docker cli': 'use' });
   });
 
-  it("normalizes apostrophes and maps dont to don't in policy items", () => {
+  it('normalizes apostrophes without rewriting distinct operands', () => {
     const engine = create_engine();
     engine.step('use Don’t panic');
     engine.step('use dont panic');
     engine.step('use `dont` panic');
 
-    expect(get_policy_items(engine._state_snapshot())).toEqual(["'don't' panic", "don't panic"]);
+    expect(get_policy_items(engine._state_snapshot())).toEqual(["'dont' panic", "don't panic", 'dont panic']);
     expect(engine._state_snapshot().policies["don't panic"]).toBe('use');
   });
 
-  it('clarifies when policy item becomes empty after normalization', () => {
+  it('preserves a non-empty article as a policy item', () => {
     const engine = create_engine();
 
     const decision = engine.step('use   the   ');
-    expect(decision.kind).toBe('clarify');
-    expect(decision.prompt_to_user).toBe("Policy item cannot be empty.\nUse 'use <item>' with a non-empty value.");
-    expect(engine._state_snapshot()).toEqual({ premise: null, policies: {}, version: 2 });
+    expect(decision.kind).toBe('update');
+    expect(engine._state_snapshot()).toEqual({ premise: null, policies: { the: 'use' }, version: 2 });
   });
 
   it('sanitizes premise with NFKC, apostrophe normalization, and whitespace collapse', () => {
@@ -46,11 +45,12 @@ describe('normalization parity', () => {
     expect(engine._state_snapshot()).toEqual({
       premise: "Keep 'focus'",
       policies: {
-        docker: 'use',
+        'the docker': 'use',
+        'dont panic': 'prohibit',
         "don't panic": 'use'
       },
       version: 2
     });
-    expect(engine.export_json()).toBe('{"policies":{"docker":"use","don\'t panic":"use"},"premise":"Keep \'focus\'","version":2}');
+    expect(engine.export_json()).toBe('{"policies":{"don\'t panic":"use","dont panic":"prohibit","the docker":"use"},"premise":"Keep \'focus\'","version":2}');
   });
 });
