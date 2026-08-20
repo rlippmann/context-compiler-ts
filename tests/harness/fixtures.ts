@@ -83,9 +83,14 @@ export interface MutationIsolationFixtureCase {
   id: string;
   kind: 'mutation_isolation';
   initial_state: Record<string, JsonValue>;
+  prelude?: string[];
   operation: {
-    fn: 'engine.step' | 'engine.policies' | 'engine.premise';
+    fn: 'engine.step' | 'engine.policies' | 'engine.premise' | 'canonical_directive.operands' | 'directive_metadata';
     input?: string;
+    kind?: string;
+    operands?: Record<string, JsonValue>;
+    canonical_start?: string;
+    operand_names?: string[];
     result_handle: string;
   };
   handles: Record<string, { kind: string }>;
@@ -95,7 +100,13 @@ export interface MutationIsolationFixtureCase {
     op: 'set';
     value: JsonValue;
   }>;
-  expected: { authoritative_state: Record<string, JsonValue> };
+  expected: {
+    authoritative_state: Record<string, JsonValue>;
+    caller_owned_observations?: Record<
+      string,
+      { target_handle: string; path: (string | number)[]; value: JsonValue }
+    >;
+  };
 }
 
 export interface NamedFixture<T> {
