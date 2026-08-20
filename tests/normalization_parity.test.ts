@@ -6,8 +6,8 @@ describe('normalization parity', () => {
     const engine = create_engine();
     engine.step('use   The    Ｄｏｃｋｅｒ   CLI  ');
 
-    expect(get_policy_items(engine._state_snapshot())).toEqual(['the docker cli']);
-    expect(engine._state_snapshot().policies).toEqual({ 'the docker cli': 'use' });
+    expect(get_policy_items(JSON.parse(engine.export_json()))).toEqual(['the docker cli']);
+    expect(JSON.parse(engine.export_json()).policies).toEqual({ 'the docker cli': 'use' });
   });
 
   it('normalizes apostrophes without rewriting distinct operands', () => {
@@ -16,8 +16,8 @@ describe('normalization parity', () => {
     engine.step('use dont panic');
     engine.step('use `dont` panic');
 
-    expect(get_policy_items(engine._state_snapshot())).toEqual(["'dont' panic", "don't panic", 'dont panic']);
-    expect(engine._state_snapshot().policies["don't panic"]).toBe('use');
+    expect(get_policy_items(JSON.parse(engine.export_json()))).toEqual(["'dont' panic", "don't panic", 'dont panic']);
+    expect(JSON.parse(engine.export_json()).policies["don't panic"]).toBe('use');
   });
 
   it('preserves a non-empty article as a policy item', () => {
@@ -25,7 +25,7 @@ describe('normalization parity', () => {
 
     const decision = engine.step('use   the   ');
     expect(decision.kind).toBe('update');
-    expect(engine._state_snapshot()).toEqual({ premise: null, policies: { the: 'use' }, version: 2 });
+    expect(JSON.parse(engine.export_json())).toEqual({ premise: null, policies: { the: 'use' }, version: 2 });
   });
 
   it('sanitizes premise with NFKC, apostrophe normalization, and whitespace collapse', () => {
@@ -33,7 +33,7 @@ describe('normalization parity', () => {
 
     const decision = engine.step('set premise   Ｋｅｅｐ   `focus`   and   Don’t   drift   ');
     expect(decision.kind).toBe('update');
-    expect(engine._state_snapshot().premise).toBe("Keep 'focus' and Don't drift");
+    expect(JSON.parse(engine.export_json()).premise).toBe("Keep 'focus' and Don't drift");
   });
 
   it('applies normalization during import and preserves canonical export', () => {
@@ -42,7 +42,7 @@ describe('normalization parity', () => {
       '{"premise":"  Ｋｅｅｐ   `focus`  ","policies":{"The   Ｄｏｃｋｅｒ":"use","dont panic":"prohibit","Don’t Panic":"use"},"version":2}'
     );
 
-    expect(engine._state_snapshot()).toEqual({
+    expect(JSON.parse(engine.export_json())).toEqual({
       premise: "Keep 'focus'",
       policies: {
         'the docker': 'use',

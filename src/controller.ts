@@ -101,7 +101,7 @@ export function step(engine: Engine, user_input: string): StepResult {
     output_version: OUTPUT_VERSION,
     mode: 'step',
     decision,
-    state: engine._state_snapshot()
+    state: JSON.parse(engine.export_json()) as EngineState
   };
 }
 
@@ -116,16 +116,15 @@ export function get_step_state(stepResult: StepResult): EngineState {
 
 
 export function preview(engine: Engine, user_input: string): PreviewResult {
-  const checkpoint = engine._export_checkpoint();
-  const stateBefore = engine._state_snapshot();
+  const stateBefore = JSON.parse(engine.export_json()) as EngineState;
 
   let decision: Decision | null = null;
   let stateAfter: EngineState | null = null;
   try {
     decision = engine.step(user_input);
-    stateAfter = engine._state_snapshot();
+    stateAfter = JSON.parse(engine.export_json()) as EngineState;
   } finally {
-    engine._import_checkpoint(checkpoint);
+    engine.import_json(JSON.stringify(stateBefore));
   }
 
   const diff = state_diff(stateBefore, stateAfter as EngineState);

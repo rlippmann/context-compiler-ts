@@ -77,7 +77,7 @@ describe('mutation-isolation fixtures (conformance)', () => {
         }
       }
 
-      expect(engine._state_snapshot()).toEqual(fixture.payload.expected.authoritative_state);
+      expect(JSON.parse(engine.export_json())).toEqual(fixture.payload.expected.authoritative_state);
 
       for (const [label, observation] of Object.entries(fixture.payload.expected.caller_owned_observations ?? {})) {
         expect(observation, `${fixture.name}: invalid caller observation '${label}'`).toBeDefined();

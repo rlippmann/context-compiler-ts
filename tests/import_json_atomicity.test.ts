@@ -6,11 +6,11 @@ describe('import_json atomicity', () => {
     const engine = create_engine();
     engine.import_json('{"premise":null,"policies":{"Docker":"use"},"version":2}');
 
-    const snapshot = JSON.parse(JSON.stringify(engine._state_snapshot()));
+    const snapshot = JSON.parse(JSON.stringify(JSON.parse(engine.export_json())));
     const invalidPayload = '{"premise":null,"policies":{"Docker":"use"," docker ":"prohibit"},"version":2}';
 
     expect(() => engine.import_json(invalidPayload)).toThrowError('Invalid state payload.');
-    expect(engine._state_snapshot()).toEqual(snapshot);
+    expect(JSON.parse(engine.export_json())).toEqual(snapshot);
   });
 
   it('no partial policy insertion before failure', () => {
@@ -18,6 +18,6 @@ describe('import_json atomicity', () => {
     const invalidPayload = '{"premise":null,"policies":{"Docker":"use"," docker ":"prohibit"},"version":2}';
 
     expect(() => engine.import_json(invalidPayload)).toThrowError('Invalid state payload.');
-    expect(engine._state_snapshot().policies).toEqual({});
+    expect(JSON.parse(engine.export_json()).policies).toEqual({});
   });
 });

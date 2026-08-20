@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
 import { CanonicalDirective } from '../src/grammar.js';
@@ -88,7 +89,29 @@ function getEngineRuntimePublicMembers(engine: object): string[] {
   const prototype = Object.getPrototypeOf(engine) as Record<string, unknown>;
   return Object.getOwnPropertyNames(prototype)
     .filter((name) => name !== 'constructor')
-    .filter((name) => !name.startsWith('_'))
+    .sort();
+}
+
+function getEngineDeclarationPublicMembers(): string[] {
+  const path = resolve(process.cwd(), 'dist', 'src', 'engine.d.ts');
+  const source = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const engine = source.statements.find(
+    (statement): statement is ts.ClassDeclaration =>
+      ts.isClassDeclaration(statement) && statement.name?.text === 'Engine'
+  );
+  expect(engine, `Generated declaration '${path}' should declare Engine`).toBeDefined();
+  if (!engine) return [];
+
+  return engine.members
+    .filter((member) => !member.modifiers?.some((modifier) =>
+      modifier.kind === ts.SyntaxKind.PrivateKeyword || modifier.kind === ts.SyntaxKind.ProtectedKeyword
+    ))
+    .map((member) => {
+      if (ts.isConstructorDeclaration(member)) return null;
+      if (!member.name || !ts.isIdentifier(member.name)) return null;
+      return member.name.text;
+    })
+    .filter((name): name is string => name !== null)
     .sort();
 }
 
@@ -282,6 +305,12 @@ describe('public API parity contract (conformance fixture)', () => {
     const engine = new cc.Engine();
     const canonicalMembers = Object.keys(fixture.engine.public_members.members);
     expect(getEngineRuntimePublicMembers(engine)).toEqual(canonicalMembers.sort());
+  });
+
+  it('exposes exactly the canonical Engine members in generated declarations', () => {
+    const fixture = loadApiContractFixture();
+    const canonicalMembers = Object.keys(fixture.engine.public_members.members).sort();
+    expect(getEngineDeclarationPublicMembers()).toEqual(canonicalMembers);
   });
 
   it('exposes every canonical engine public member from the Python fixture', () => {
