@@ -45,6 +45,10 @@ type ExportMemberSpec = {
 type EngineMemberSpec = {
   kind: 'method' | 'property';
   signature?: SignatureSpec;
+  probes?: Array<{
+    args: unknown[];
+    raises?: { type: string };
+  }>;
 };
 
 type ApiContractFixture = {
@@ -311,6 +315,22 @@ describe('public API parity contract (conformance fixture)', () => {
       expect(typeof descriptor.value, `Engine member '${memberName}' should be a method`).toBe('function');
       if (typeof descriptor.value === 'function' && memberSpec.signature) {
         expectPortableCallableArity(descriptor.value as (...args: unknown[]) => unknown, memberSpec.signature, `Engine member '${memberName}'`);
+      }
+    }
+  });
+
+  it('executes canonical Engine member probes without adapting inputs', () => {
+    const fixture = loadApiContractFixture();
+    const engine = new cc.Engine();
+    for (const [memberName, memberSpec] of Object.entries(fixture.engine.public_members.members)) {
+      for (const [index, probe] of (memberSpec.probes ?? []).entries()) {
+        const invoke = () =>
+          (engine as unknown as Record<string, (...args: unknown[]) => unknown>)[memberName](...probe.args);
+        if (probe.raises != null) {
+          expect(invoke, `${memberName} probe ${index} should raise`).toThrow();
+        } else {
+          expect(invoke, `${memberName} probe ${index} should not raise`).not.toThrow();
+        }
       }
     }
   });

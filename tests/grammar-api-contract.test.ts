@@ -95,8 +95,8 @@ describe('public grammar API parity contract (conformance fixture)', () => {
         expect(actual).toEqual({
           kind: shape.kind,
           failure: shape.failure,
-          ...(shape.directive_kind != null ? { directive_kind: shape.directive_kind } : {}),
-          ...(shape.missing_operand != null ? { missing_operand: shape.missing_operand } : {})
+          directive_kind: shape.directive_kind ?? null,
+          missing_operand: shape.missing_operand ?? null
         });
       } else {
         expect(actual).toEqual({
