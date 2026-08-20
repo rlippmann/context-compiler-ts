@@ -38,53 +38,68 @@ export interface StateJsonFixtureCase {
   };
 }
 
-export interface CheckpointFixtureCase {
-  id: string;
-  kind: 'checkpoint';
-  initial_state: Record<string, JsonValue>;
-  prelude?: string[];
-  action: {
-    fn: 'import_checkpoint' | 'export_checkpoint_json' | 'import_checkpoint_json' | 'checkpoint_json_round_trip';
-    payload?: unknown;
-  };
-  expected: {
-    state: Record<string, JsonValue>;
-    has_pending_clarification?: boolean;
-    payload_json_parseable?: boolean;
-    payload_object?: Record<string, JsonValue>;
-    error?: {
-      type: string;
-      message_contains: string;
-    };
-    followup?: {
-      input: string;
-      decision: {
-        kind: string;
-        state: Record<string, JsonValue> | null;
-        prompt_to_user: string | null;
-      };
-      state: Record<string, JsonValue>;
-      has_pending_clarification?: boolean;
-    };
-  };
-}
-
 export interface ControllerFixtureCase {
   id: string;
   kind: 'controller';
   initial_state: Record<string, JsonValue>;
-  prelude?: string[];
-  action:
-    | { fn: 'step'; input: string }
-    | { fn: 'preview'; input: string }
-    | { fn: 'state_diff'; before: Record<string, JsonValue>; after: Record<string, JsonValue> };
+  operations: Array<{
+    fn: 'step' | 'apply_directive' | 'export_json' | 'import_json';
+    input?: string;
+    text?: string;
+    payload?: string;
+    payload_ref?: string;
+    label?: string;
+  }>;
   expected: {
-    result?: Record<string, JsonValue>;
-    diff?: Record<string, JsonValue>;
-    state?: Record<string, JsonValue>;
-    state_after_preview?: Record<string, JsonValue>;
-    has_pending_clarification?: boolean;
+    observations: Record<string, JsonValue>;
+    equal: string[][];
+    state: Record<string, JsonValue>;
   };
+}
+
+export interface GrammarFixtureCase {
+  id: string;
+  kind: 'grammar';
+  action: {
+    fn: 'decompose_directive' | 'render_directive';
+    text?: string;
+    kind?: string;
+    operands?: Record<string, JsonValue>;
+  };
+  expected: {
+    directive?: Record<string, JsonValue> | null;
+    error?: { type: string; message_contains: string };
+  };
+}
+
+export interface ApplyDirectiveFixtureCase {
+  id: string;
+  kind: 'apply_directive';
+  initial_state: Record<string, JsonValue>;
+  action: { fn: 'apply_directive'; text: string };
+  expected: {
+    decision: Record<string, JsonValue>;
+    state: Record<string, JsonValue>;
+  };
+}
+
+export interface MutationIsolationFixtureCase {
+  id: string;
+  kind: 'mutation_isolation';
+  initial_state: Record<string, JsonValue>;
+  operation: {
+    fn: 'engine.step' | 'engine.policies' | 'engine.premise';
+    input?: string;
+    result_handle: string;
+  };
+  handles: Record<string, { kind: string }>;
+  mutations: Array<{
+    target_handle: string;
+    path: (string | number)[];
+    op: 'set';
+    value: JsonValue;
+  }>;
+  expected: { authoritative_state: Record<string, JsonValue> };
 }
 
 export interface NamedFixture<T> {
@@ -113,7 +128,15 @@ async function listJsonFilesRecursive(dir: string): Promise<string[]> {
 
 async function loadFixtureFiles<T>(subdir: string): Promise<NamedFixture<T>[]> {
   const dir = join(FIXTURE_ROOT, subdir);
-  const files = await listJsonFilesRecursive(dir);
+  let files: string[];
+  try {
+    files = await listJsonFilesRecursive(dir);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
   files.sort((a, b) => a.localeCompare(b));
 
   const loaded = await Promise.all(
@@ -139,12 +162,20 @@ export async function loadStateJsonFixtures(): Promise<NamedFixture<StateJsonFix
   return loadFixtureFiles<StateJsonFixtureCase>('state-json');
 }
 
-export async function loadCheckpointFixtures(): Promise<NamedFixture<CheckpointFixtureCase>[]> {
-  return loadFixtureFiles<CheckpointFixtureCase>('checkpoint');
-}
-
 export async function loadControllerFixtures(): Promise<NamedFixture<ControllerFixtureCase>[]> {
   return loadFixtureFiles<ControllerFixtureCase>('controller');
+}
+
+export async function loadGrammarFixtures(): Promise<NamedFixture<GrammarFixtureCase>[]> {
+  return loadFixtureFiles<GrammarFixtureCase>('grammar');
+}
+
+export async function loadApplyDirectiveFixtures(): Promise<NamedFixture<ApplyDirectiveFixtureCase>[]> {
+  return loadFixtureFiles<ApplyDirectiveFixtureCase>('apply-directive');
+}
+
+export async function loadMutationIsolationFixtures(): Promise<NamedFixture<MutationIsolationFixtureCase>[]> {
+  return loadFixtureFiles<MutationIsolationFixtureCase>('mutation-isolation');
 }
 
 export { FIXTURE_ROOT };

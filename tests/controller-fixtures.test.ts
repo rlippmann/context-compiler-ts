@@ -1,78 +1,57 @@
 import { describe, expect, it } from 'vitest';
-import * as cc from '../src/index.js';
 import { createEngine } from '../src/index.js';
 import { loadControllerFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadControllerFixtures();
-const controller = cc as unknown as Record<string, unknown>;
-
-function assertOptionalPendingFlag(expectedObj: unknown, engine: object, fixtureName: string): void {
-  if (typeof expectedObj !== 'object' || expectedObj === null) {
-    return;
-  }
-  if (!Object.prototype.hasOwnProperty.call(expectedObj, 'has_pending_clarification')) {
-    return;
-  }
-
-  const expectedPending = (expectedObj as Record<string, unknown>).has_pending_clarification;
-  expect(typeof expectedPending, `${fixtureName}: has_pending_clarification must be boolean`).toBe('boolean');
-
-  const maybeEngine = engine as Record<string, unknown>;
-  expect(typeof maybeEngine.has_pending_clarification, `${fixtureName}: missing has_pending_clarification()`).toBe(
-    'function'
-  );
-  const actualPending = (maybeEngine.has_pending_clarification as () => unknown)();
-  expect(actualPending).toBe(expectedPending);
-}
 
 describe('controller fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('controller');
 
-      let engine = createEngine({ state: fixture.payload.initial_state });
-      for (const priorInput of fixture.payload.prelude ?? []) {
-        engine.step(priorInput);
-      }
+      const engine = createEngine({ state: fixture.payload.initial_state });
+      const observations: Record<string, unknown> = {};
+      const payloads: Record<string, string> = {};
 
-      const action = fixture.payload.action;
-      const expected = fixture.payload.expected;
-
-      if (action.fn === 'step') {
-        expect(typeof controller.step).toBe('function');
-        const result = (controller.step as (eng: unknown, input: string) => unknown)(engine, action.input);
-        expect(result).toEqual(expected.result);
-        expect(engine.state).toEqual(expected.state);
-        assertOptionalPendingFlag(expected, engine, fixture.name);
-        return;
-      }
-
-      if (action.fn === 'preview') {
-        expect(typeof controller.preview).toBe('function');
-
-        const before = engine.state;
-        const maybeEngine = engine as unknown as Record<string, unknown>;
-        const pendingBefore =
-          typeof maybeEngine.has_pending_clarification === 'function'
-            ? (maybeEngine.has_pending_clarification as () => unknown)()
-            : undefined;
-
-        const result = (controller.preview as (eng: unknown, input: string) => unknown)(engine, action.input);
-        expect(result).toEqual(expected.result);
-        expect(engine.state).toEqual(before);
-        expect(engine.state).toEqual(expected.state_after_preview);
-
-        if (pendingBefore !== undefined) {
-          const pendingAfter = (maybeEngine.has_pending_clarification as () => unknown)();
-          expect(pendingAfter).toBe(pendingBefore);
+      for (const operation of fixture.payload.operations) {
+        let result: unknown;
+        switch (operation.fn) {
+          case 'step':
+            result = engine.step(operation.input as string);
+            break;
+          case 'apply_directive': {
+            const applyDirective = (engine as unknown as Record<string, unknown>).apply_directive;
+            expect(typeof applyDirective, `${fixture.name}: Engine.apply_directive is required by this fixture`).toBe(
+              'function'
+            );
+            result = (applyDirective as (text: string) => unknown).call(engine, operation.text as string);
+            break;
+          }
+          case 'export_json':
+            result = engine.export_json();
+            break;
+          case 'import_json': {
+            const payload = operation.payload_ref == null ? operation.payload : payloads[operation.payload_ref];
+            expect(typeof payload, `${fixture.name}: import_json payload is missing`).toBe('string');
+            engine.import_json(payload as string);
+            result = undefined;
+            break;
+          }
         }
-        assertOptionalPendingFlag(expected, engine, fixture.name);
-        return;
+
+        if (operation.label != null) {
+          observations[operation.label] = result;
+          if (operation.fn === 'export_json') {
+            payloads[operation.label] = result as string;
+          }
+        }
       }
 
-      expect(typeof controller.state_diff).toBe('function');
-      const diff = (controller.state_diff as (before: unknown, after: unknown) => unknown)(action.before, action.after);
-      expect(diff).toEqual(expected.diff);
+      for (const [left, right] of fixture.payload.expected.equal) {
+        expect(observations[left], `${fixture.name}: missing observation '${left}'`).toEqual(observations[right]);
+      }
+      expect(observations).toMatchObject(fixture.payload.expected.observations);
+      expect(engine.state).toEqual(fixture.payload.expected.state);
     });
   }
 });
