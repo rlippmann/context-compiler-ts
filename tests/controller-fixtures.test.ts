@@ -54,7 +54,7 @@ describe('controller fixtures (conformance)', () => {
         expect(observations[left], `${fixture.name}: missing observation '${left}'`).toEqual(observations[right]);
       }
       expect(observations).toMatchObject(fixture.payload.expected.observations);
-      expect(engine._state_snapshot()).toEqual(fixture.payload.expected.state);
+      expect(JSON.parse(engine.export_json())).toEqual(fixture.payload.expected.state);
     });
   }
 });

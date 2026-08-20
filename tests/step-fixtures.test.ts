@@ -24,7 +24,7 @@ describe('step fixtures (conformance)', () => {
 
       expect(decision).toEqual(expectedDecision);
 
-      expect(engine._state_snapshot()).toEqual(expected.state);
+      expect(JSON.parse(engine.export_json())).toEqual(expected.state);
     });
   }
 });

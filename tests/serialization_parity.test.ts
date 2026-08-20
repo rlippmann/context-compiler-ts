@@ -6,7 +6,7 @@ describe('serialization parity', () => {
     const engine = create_engine();
     engine.import_json('{"premise":null,"policies":{"ä":"use","z":"use"},"version":2}');
 
-    expect(get_policy_items(engine._state_snapshot())).toEqual(['z', 'ä']);
+    expect(get_policy_items(JSON.parse(engine.export_json()))).toEqual(['z', 'ä']);
     expect(engine.export_json()).toBe('{"policies":{"z":"use","\\u00e4":"use"},"premise":null,"version":2}');
   });
 

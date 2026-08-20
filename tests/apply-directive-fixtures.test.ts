@@ -18,7 +18,7 @@ describe('apply-directive fixtures (conformance)', () => {
       expect(directive).toBeInstanceOf(CanonicalDirective);
       const decision = (applyDirective as (value: CanonicalDirective) => unknown).call(engine, directive);
       expect(decision).toEqual(fixture.payload.expected.decision);
-      expect(engine._state_snapshot()).toEqual(fixture.payload.expected.state);
+      expect(JSON.parse(engine.export_json())).toEqual(fixture.payload.expected.state);
     });
   }
 });

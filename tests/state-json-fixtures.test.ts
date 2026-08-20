@@ -20,7 +20,7 @@ describe('state-json fixtures (conformance)', () => {
       if (action.fn === 'export_json') {
         const payload = engine.export_json();
         expect(payload).toBe(expected.payload);
-        expect(engine._state_snapshot()).toEqual(expected.state);
+        expect(JSON.parse(engine.export_json())).toEqual(expected.state);
         return;
       }
 
@@ -29,7 +29,7 @@ describe('state-json fixtures (conformance)', () => {
       } else {
         engine.import_json(String(action.payload));
       }
-      expect(engine._state_snapshot()).toEqual(expected.state);
+      expect(JSON.parse(engine.export_json())).toEqual(expected.state);
     });
   }
 });

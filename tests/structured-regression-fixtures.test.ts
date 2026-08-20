@@ -58,7 +58,7 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
 
         expect(turnExpected.input).toBe(userInput);
         expect(decision).toEqual(turnExpected.decision);
-        expect(engine._state_snapshot()).toEqual(turnExpected.state);
+        expect(JSON.parse(engine.export_json())).toEqual(turnExpected.state);
       }
     });
   }
