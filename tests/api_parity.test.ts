@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
@@ -54,6 +55,8 @@ type EngineMemberSpec = {
 
 type ApiContractFixture = {
   forbidden_exports: string[];
+  forbidden_engine_members: string[];
+  forbidden_state_keys: string[];
   exports: {
     mode: 'exact';
     names: string[];
@@ -67,6 +70,33 @@ type ApiContractFixture = {
     };
   };
 };
+
+function getGeneratedDeclarationExportNames(): Map<string, string[]> {
+  const root = resolve(process.cwd(), 'dist', 'src');
+  const exportsByFile = new Map<string, string[]>();
+  for (const fileName of readdirSync(root).filter((name) => name.endsWith('.d.ts'))) {
+    const path = resolve(root, fileName);
+    const source = ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const names: string[] = [];
+    for (const statement of source.statements) {
+      if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement) || ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement) || ts.isEnumDeclaration(statement)) {
+        if (statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) && statement.name) {
+          names.push(statement.name.text);
+        }
+      }
+      if (ts.isVariableStatement(statement) && statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)) {
+        for (const declaration of statement.declarationList.declarations) {
+          if (ts.isIdentifier(declaration.name)) names.push(declaration.name.text);
+        }
+      }
+      if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+        for (const element of statement.exportClause.elements) names.push(element.name.text);
+      }
+    }
+    exportsByFile.set(fileName, names.sort());
+  }
+  return exportsByFile;
+}
 
 function loadApiContractFixture(): ApiContractFixture {
   const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-api-v2.json');
@@ -219,6 +249,14 @@ describe('public API parity contract (conformance fixture)', () => {
     }
   });
 
+  it('does not expose forbidden names in generated declarations', () => {
+    const fixture = loadApiContractFixture();
+    const forbidden = new Set(fixture.forbidden_exports);
+    for (const [fileName, names] of getGeneratedDeclarationExportNames()) {
+      expect(names.filter((name) => forbidden.has(name)), `${fileName}: obsolete declarations remain`).toEqual([]);
+    }
+  });
+
   it('enforces portable runtime export kinds and constant values', () => {
     const fixture = loadApiContractFixture();
     for (const exportName of getCanonicalRuntimeExportNames(fixture)) {
@@ -307,6 +345,14 @@ describe('public API parity contract (conformance fixture)', () => {
     expect(getEngineRuntimePublicMembers(engine)).toEqual(canonicalMembers.sort());
   });
 
+  it('does not expose forbidden Engine members', () => {
+    const fixture = loadApiContractFixture();
+    const engine = new cc.Engine() as unknown as Record<string, unknown>;
+    for (const memberName of fixture.forbidden_engine_members) {
+      expect(memberName in engine, `Forbidden Engine member '${memberName}' should not exist`).toBe(false);
+    }
+  });
+
   it('exposes exactly the canonical Engine members in generated declarations', () => {
     const fixture = loadApiContractFixture();
     const canonicalMembers = Object.keys(fixture.engine.public_members.members).sort();
@@ -361,6 +407,14 @@ describe('public API parity contract (conformance fixture)', () => {
           expect(invoke, `${memberName} probe ${index} should not raise`).not.toThrow();
         }
       }
+    }
+  });
+
+  it('does not expose forbidden state keys', () => {
+    const fixture = loadApiContractFixture();
+    const state = JSON.parse(new cc.Engine().export_json()) as Record<string, unknown>;
+    for (const key of fixture.forbidden_state_keys) {
+      expect(Object.prototype.hasOwnProperty.call(state, key), `Forbidden state key '${key}' should not exist`).toBe(false);
     }
   });
 
