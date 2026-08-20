@@ -73,3 +73,12 @@ export type {
   EngineState as State,
   EngineState
 } from './types.js';
+export {
+  CanonicalDirective,
+  DirectiveKind,
+  DirectiveMetadata,
+  DirectiveSyntaxFailure,
+  InvalidDirectiveSyntax,
+  decompose_directive,
+  get_directive_metadata
+} from './grammar.js';
