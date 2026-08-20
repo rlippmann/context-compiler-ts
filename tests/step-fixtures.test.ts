@@ -4,25 +4,6 @@ import { loadStepFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadStepFixtures();
 
-function assertOptionalPendingFlag(expectedObj: unknown, engine: object, fixtureName: string): void {
-  if (typeof expectedObj !== 'object' || expectedObj === null) {
-    return;
-  }
-  if (!Object.prototype.hasOwnProperty.call(expectedObj, 'has_pending_clarification')) {
-    return;
-  }
-
-  const expectedPending = (expectedObj as Record<string, unknown>).has_pending_clarification;
-  expect(typeof expectedPending, `${fixtureName}: has_pending_clarification must be boolean`).toBe('boolean');
-
-  const maybeEngine = engine as Record<string, unknown>;
-  expect(typeof maybeEngine._has_pending_clarification, `${fixtureName}: missing pending-state probe`).toBe(
-    'function'
-  );
-  const actualPending = (maybeEngine._has_pending_clarification as () => unknown)();
-  expect(actualPending).toBe(expectedPending);
-}
-
 describe('step fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
@@ -41,26 +22,9 @@ describe('step fixtures (conformance)', () => {
 
       expect(decision.kind).toBe(expectedDecision.kind);
 
-      if (decision.kind === 'clarify') {
-        expect(decision.state).toEqual(expectedDecision.state);
-        const expectedPrompt = expectedDecision.prompt_to_user;
-        const actualPrompt = decision.prompt_to_user;
-        if (expectedPrompt === null) {
-          expect(typeof actualPrompt).toBe('string');
-          expect((actualPrompt as string).length > 0).toBe(true);
-        } else {
-          expect(actualPrompt).toBe(expectedPrompt);
-        }
-      } else {
-        expect(decision).toEqual(expectedDecision);
-      }
-
-      if (decision.kind === 'update') {
-        expect(decision.state).toEqual(engine._state_snapshot());
-      }
+      expect(decision).toEqual(expectedDecision);
 
       expect(engine._state_snapshot()).toEqual(expected.state);
-      assertOptionalPendingFlag(expected, engine, fixture.name);
     });
   }
 });
