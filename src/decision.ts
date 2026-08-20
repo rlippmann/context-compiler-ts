@@ -1,4 +1,4 @@
-import type { CanonicalDirective } from './grammar.js';
+import { CanonicalDirective } from './grammar.js';
 
 export const DECISION_ERROR = 'error' as const;
 export const DECISION_NO_DIRECTIVE = 'no_directive' as const;
@@ -22,7 +22,10 @@ export class SemanticFailure {
 
 export class NoDirectiveDecision {
   readonly kind = DECISION_NO_DIRECTIVE;
-  readonly message = null;
+
+  constructor() {
+    Object.freeze(this);
+  }
 }
 
 export class UpdateDecision {
@@ -31,6 +34,7 @@ export class UpdateDecision {
 
   constructor(changed: boolean) {
     this.changed = changed;
+    Object.freeze(this);
   }
 }
 
@@ -38,7 +42,7 @@ export class SemanticErrorDecision {
   readonly kind = DECISION_ERROR;
   readonly failure: string;
   readonly directive: CanonicalDirective;
-  readonly repairs: CanonicalDirective[];
+  readonly repairs: readonly CanonicalDirective[];
   readonly message: string;
 
   constructor(input: {
@@ -47,9 +51,10 @@ export class SemanticErrorDecision {
     repairs?: CanonicalDirective[];
   }) {
     this.failure = input.failure;
-    this.directive = input.directive;
-    this.repairs = [...(input.repairs ?? [])];
+    this.directive = freezeDirective(input.directive);
+    this.repairs = Object.freeze([...(input.repairs ?? [])].map(freezeDirective));
     this.message = formatFailure(this.failure, this.directive);
+    Object.freeze(this);
   }
 }
 
@@ -90,4 +95,13 @@ function normalizeItemForMessage(value: string): string {
     .replaceAll('ß', 'ss')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function freezeDirective(directive: CanonicalDirective): CanonicalDirective {
+  const frozen = new CanonicalDirective({
+    kind: directive.kind,
+    operands: { ...directive.operands }
+  });
+  Object.freeze(frozen.operands);
+  return Object.freeze(frozen);
 }
