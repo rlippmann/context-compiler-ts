@@ -22,6 +22,7 @@ export class SemanticFailure {
 
 export class NoDirectiveDecision {
   readonly kind = DECISION_NO_DIRECTIVE;
+  readonly message = null;
 }
 
 export class UpdateDecision {
@@ -63,10 +64,10 @@ function formatFailure(failure: string, directive: CanonicalDirective): string {
     return "No premise is set.\nUse 'set premise <value>' to define one.";
   }
   if (failure === SemanticFailure.ITEM_PROHIBITED) {
-    return `"${item.toLowerCase()}" is currently prohibited.\nRemove or replace it before using it.`;
+    return `"${normalizeItemForMessage(item)}" is currently prohibited.\nRemove or replace it before using it.`;
   }
   if (failure === SemanticFailure.ITEM_ALREADY_IN_USE) {
-    return `"${item.toLowerCase()}" is currently in use.\nRemove or replace it before prohibiting it.`;
+    return `"${normalizeItemForMessage(item)}" is currently in use.\nRemove or replace it before prohibiting it.`;
   }
   if (failure === SemanticFailure.REPLACEMENT_SOURCE_MISSING) {
     return `"${directive.operands.old_item ?? ''}" is not currently in use.\nReplacement requires an active 'use' policy.`;
@@ -78,4 +79,15 @@ function formatFailure(failure: string, directive: CanonicalDirective): string {
     return `"${directive.operands.new_item ?? ''}" is currently prohibited.\nSubmit explicit directive(s) to remove it or use a different item.`;
   }
   throw new Error(`Unhandled semantic failure: ${failure}`);
+}
+
+function normalizeItemForMessage(value: string): string {
+  return value
+    .normalize('NFKC')
+    .replaceAll('’', "'")
+    .replaceAll('`', "'")
+    .toLowerCase()
+    .replaceAll('ß', 'ss')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
