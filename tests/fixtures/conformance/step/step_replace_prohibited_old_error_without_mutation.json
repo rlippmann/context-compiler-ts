@@ -1,0 +1,38 @@
+{
+  "id": "step_replace_prohibited_old_error_without_mutation",
+  "kind": "step",
+  "initial_state": {
+    "premise": null,
+    "policies": {},
+    "version": 2
+  },
+  "prelude": [
+    "prohibit docker",
+    "use pytest"
+  ],
+  "input": "use kubectl instead of docker",
+  "expected": {
+    "decision": {
+      "kind": "error",
+      "failure": "replacement_source_prohibited",
+      "directive": {
+        "kind": "replace_use",
+        "text": "use kubectl instead of docker",
+        "operands": {
+          "new_item": "kubectl",
+          "old_item": "docker"
+        }
+      },
+      "repairs": [],
+      "message": "\"docker\" is currently prohibited.\nSubmit explicit directive(s) to remove it or use a different item."
+    },
+    "state": {
+      "premise": null,
+      "policies": {
+        "docker": "prohibit",
+        "pytest": "use"
+      },
+      "version": 2
+    }
+  }
+}

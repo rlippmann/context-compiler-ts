@@ -1,0 +1,54 @@
+{
+  "id": "step_replace_prohibited_new_error_without_mutation",
+  "kind": "step",
+  "initial_state": {
+    "premise": null,
+    "policies": {},
+    "version": 2
+  },
+  "prelude": [
+    "use docker",
+    "prohibit kubectl"
+  ],
+  "input": "use kubectl instead of docker",
+  "expected": {
+    "decision": {
+      "kind": "error",
+      "failure": "replacement_target_prohibited",
+      "directive": {
+        "kind": "replace_use",
+        "text": "use kubectl instead of docker",
+        "operands": {
+          "new_item": "kubectl",
+          "old_item": "docker"
+        }
+      },
+      "repairs": [
+        {
+          "kind": "remove_policy",
+          "text": "remove policy kubectl",
+          "operands": {
+            "item": "kubectl"
+          }
+        },
+        {
+          "kind": "replace_use",
+          "text": "use kubectl instead of docker",
+          "operands": {
+            "new_item": "kubectl",
+            "old_item": "docker"
+          }
+        }
+      ],
+      "message": "\"kubectl\" is currently prohibited.\nSubmit explicit directive(s) to remove it or use a different item."
+    },
+    "state": {
+      "premise": null,
+      "policies": {
+        "docker": "use",
+        "kubectl": "prohibit"
+      },
+      "version": 2
+    }
+  }
+}

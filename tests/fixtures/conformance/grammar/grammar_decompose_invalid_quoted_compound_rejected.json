@@ -1,0 +1,14 @@
+{
+  "id": "grammar_decompose_invalid_quoted_compound_rejected",
+  "kind": "grammar",
+  "action": {
+    "fn": "decompose_directive",
+    "text": "use \"docker and prohibit peanuts\""
+  },
+  "expected": {
+    "directive": {
+      "kind": "invalid_directive_syntax",
+      "failure": "compound_directive"
+    }
+  }
+}

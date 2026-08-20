@@ -1,0 +1,30 @@
+{
+  "id": "state_json_import_json_empty_sanitized_premise_rejected_atomically",
+  "kind": "state_json",
+  "initial_state": {
+    "premise": null,
+    "policies": {},
+    "version": 2
+  },
+  "prelude": [
+    "set premise baseline",
+    "use kubectl"
+  ],
+  "action": {
+    "fn": "import_json",
+    "payload": "{\"premise\":\" \\t \",\"policies\":{},\"version\":2}"
+  },
+  "expected": {
+    "error": {
+      "type": "ValueError",
+      "message_contains": "Invalid state payload"
+    },
+    "state": {
+      "premise": "baseline",
+      "policies": {
+        "kubectl": "use"
+      },
+      "version": 2
+    }
+  }
+}

@@ -1,8 +1,0 @@
-{
-  "description": "Replacement from missing old item creates pending clarify",
-  "id": "replacement_clarify",
-  "initial_checkpoint": null,
-  "inputs": [
-    "use podman instead of docker"
-  ]
-}

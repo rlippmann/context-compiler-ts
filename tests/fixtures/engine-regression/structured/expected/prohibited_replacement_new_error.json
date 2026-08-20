@@ -1,0 +1,90 @@
+{
+  "id": "prohibited_replacement_new_error",
+  "turns": [
+    {
+      "state": {
+        "policies": {
+          "docker": "use"
+        },
+        "premise": null,
+        "version": 2
+      },
+      "decision": {
+        "kind": "update",
+        "message": null
+      },
+      "input": "use docker"
+    },
+    {
+      "state": {
+        "policies": {
+          "docker": "use",
+          "kubectl": "prohibit"
+        },
+        "premise": null,
+        "version": 2
+      },
+      "decision": {
+        "kind": "update",
+        "message": null
+      },
+      "input": "prohibit kubectl"
+    },
+    {
+      "state": {
+        "policies": {
+          "docker": "use",
+          "kubectl": "prohibit"
+        },
+        "premise": null,
+        "version": 2
+      },
+      "decision": {
+        "kind": "error",
+        "failure": "replacement_target_prohibited",
+        "directive": {
+          "kind": "replace_use",
+          "text": "use kubectl instead of docker",
+          "operands": {
+            "new_item": "kubectl",
+            "old_item": "docker"
+          }
+        },
+        "repairs": [
+          {
+            "kind": "remove_policy",
+            "text": "remove policy kubectl",
+            "operands": {
+              "item": "kubectl"
+            }
+          },
+          {
+            "kind": "replace_use",
+            "text": "use kubectl instead of docker",
+            "operands": {
+              "new_item": "kubectl",
+              "old_item": "docker"
+            }
+          }
+        ],
+        "message": "\"kubectl\" is currently prohibited.\nSubmit explicit directive(s) to remove it or use a different item."
+      },
+      "input": "use kubectl instead of docker"
+    },
+    {
+      "state": {
+        "policies": {
+          "docker": "use",
+          "kubectl": "prohibit"
+        },
+        "premise": null,
+        "version": 2
+      },
+      "decision": {
+        "kind": "no_directive",
+        "message": null
+      },
+      "input": "no"
+    }
+  ]
+}

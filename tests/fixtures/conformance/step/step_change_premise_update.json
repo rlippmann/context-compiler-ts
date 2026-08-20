@@ -1,0 +1,21 @@
+{
+  "id": "step_change_premise_update",
+  "kind": "step",
+  "initial_state": {
+    "premise": "verbose replies",
+    "policies": {},
+    "version": 2
+  },
+  "input": "change premise to concise replies",
+  "expected": {
+    "decision": {
+      "kind": "update",
+      "message": null
+    },
+    "state": {
+      "premise": "concise replies",
+      "policies": {},
+      "version": 2
+    }
+  }
+}

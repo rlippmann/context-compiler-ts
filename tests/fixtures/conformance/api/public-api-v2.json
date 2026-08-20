@@ -1,0 +1,180 @@
+{
+  "id": "public-api-v2",
+  "kind": "api-contract",
+  "target": "context-compiler-ports",
+  "module": "context_compiler",
+  "forbidden_exports": [
+    "CheckpointPending",
+    "CheckpointPendingReplacement",
+    "PendingReplacement",
+    "get_decision_state",
+    "_NO_DIRECTIVE"
+  ],
+  "exports": {
+    "mode": "exact",
+    "names": [
+      "Decision",
+      "DecisionKind",
+      "NoDirectiveDecision",
+      "SemanticErrorDecision",
+      "SemanticFailure",
+      "UpdateDecision",
+      "DECISION_ERROR",
+      "DECISION_NO_DIRECTIVE",
+      "DECISION_UPDATE",
+      "Engine",
+      "POLICY_PROHIBIT",
+      "POLICY_USE",
+      "PolicyValue"
+    ],
+    "members": {
+      "Decision": {
+        "kind": "type_alias"
+      },
+      "DecisionKind": {
+        "kind": "class"
+      },
+      "NoDirectiveDecision": {
+        "kind": "class",
+        "construction_probes": [
+          {
+            "return_shape": {
+              "kind": "decision_variant",
+              "type": "NoDirectiveDecision",
+              "required_attributes": ["kind"]
+            }
+          }
+        ]
+      },
+      "SemanticErrorDecision": {
+        "kind": "class",
+        "construction_probes": [
+          {
+            "kwargs": {
+              "failure": {"fixture": "item_prohibited_failure"},
+              "directive": {"fixture": "use_docker_directive"}
+            },
+            "return_shape": {
+              "kind": "decision_variant",
+              "type": "SemanticErrorDecision",
+              "required_attributes": [
+                "kind",
+                "failure",
+                "directive",
+                "repairs",
+                "message"
+              ]
+            }
+          }
+        ]
+      },
+      "SemanticFailure": {
+        "kind": "class"
+      },
+      "UpdateDecision": {
+        "kind": "class",
+        "construction_probes": [
+          {
+            "kwargs": {"changed": true},
+            "return_shape": {
+              "kind": "decision_variant",
+              "type": "UpdateDecision",
+              "required_attributes": ["kind", "changed"]
+            }
+          }
+        ]
+      },
+      "DECISION_ERROR": {
+        "kind": "constant",
+        "value": "error"
+      },
+      "DECISION_NO_DIRECTIVE": {
+        "kind": "constant",
+        "value": "no_directive"
+      },
+      "DECISION_UPDATE": {
+        "kind": "constant",
+        "value": "update"
+      },
+      "Engine": {
+        "kind": "class"
+      },
+      "POLICY_PROHIBIT": {
+        "kind": "constant",
+        "value": "prohibit"
+      },
+      "POLICY_USE": {
+        "kind": "constant",
+        "value": "use"
+      },
+      "PolicyValue": {
+        "kind": "type_alias"
+      }
+    }
+  },
+  "engine": {
+    "type": "Engine",
+    "public_members": {
+      "mode": "exact",
+      "members": {
+        "export_json": {
+          "kind": "method",
+          "signature": {
+            "params": []
+          }
+        },
+        "apply_directive": {
+          "kind": "method",
+          "signature": {
+            "params": [
+              {
+                "name": "directive",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              }
+            ],
+            "returns": [
+              "UpdateDecision",
+              "SemanticErrorDecision"
+            ]
+          }
+        },
+        "import_json": {
+          "kind": "method",
+          "signature": {
+            "params": [
+              {
+                "name": "payload",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              }
+            ]
+          }
+        },
+        "policies": {
+          "kind": "property"
+        },
+        "premise": {
+          "kind": "property"
+        },
+        "step": {
+          "kind": "method",
+          "signature": {
+            "params": [
+              {
+                "name": "user_input",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "has_default": false
+              }
+            ],
+            "returns": [
+              "NoDirectiveDecision",
+              "UpdateDecision",
+              "SemanticErrorDecision"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
