@@ -127,7 +127,7 @@ const TS_ONLY_TYPE_EXPORTS = [
 ] as const;
 
 function loadApiContractFixture(): ApiContractFixture {
-  const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-api-v1.json');
+  const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-api-v2.json');
   const raw = readFileSync(path, 'utf8');
   return JSON.parse(raw) as ApiContractFixture;
 }

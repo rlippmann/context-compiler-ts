@@ -1,0 +1,11 @@
+{
+  "description": "Replacement to a prohibited new item stays an ordinary error",
+  "id": "prohibited_replacement_new_error",
+  "initial_state": null,
+  "inputs": [
+    "use docker",
+    "prohibit kubectl",
+    "use kubectl instead of docker",
+    "no"
+  ]
+}

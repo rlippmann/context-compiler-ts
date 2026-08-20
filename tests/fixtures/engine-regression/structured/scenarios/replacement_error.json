@@ -1,0 +1,8 @@
+{
+  "description": "Replacement from missing old item returns semantic error without mutation",
+  "id": "replacement_error",
+  "initial_state": null,
+  "inputs": [
+    "use podman instead of docker"
+  ]
+}

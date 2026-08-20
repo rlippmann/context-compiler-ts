@@ -1,0 +1,57 @@
+{
+  "id": "contradiction_error",
+  "turns": [
+    {
+      "state": {
+        "policies": {
+          "docker": "use"
+        },
+        "premise": null,
+        "version": 2
+      },
+      "decision": {
+        "kind": "update",
+        "message": null
+      },
+      "input": "use docker"
+    },
+    {
+      "state": {
+        "policies": {
+          "docker": "use"
+        },
+        "premise": null,
+        "version": 2
+      },
+      "decision": {
+        "kind": "error",
+        "failure": "item_already_in_use",
+        "directive": {
+          "kind": "prohibit_item",
+          "text": "prohibit docker",
+          "operands": {
+            "item": "docker"
+          }
+        },
+        "repairs": [
+          {
+            "kind": "remove_policy",
+            "text": "remove policy docker",
+            "operands": {
+              "item": "docker"
+            }
+          },
+          {
+            "kind": "prohibit_item",
+            "text": "prohibit docker",
+            "operands": {
+              "item": "docker"
+            }
+          }
+        ],
+        "message": "\"docker\" is currently in use.\nRemove or replace it before prohibiting it."
+      },
+      "input": "prohibit docker"
+    }
+  ]
+}

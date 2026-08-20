@@ -1,0 +1,50 @@
+{
+  "id": "step_policy_identity_unicode_casefold_contradiction_error",
+  "kind": "step",
+  "initial_state": {
+    "premise": null,
+    "policies": {},
+    "version": 2
+  },
+  "prelude": [
+    "use Straße"
+  ],
+  "input": "prohibit STRASSE",
+  "expected": {
+    "decision": {
+      "kind": "error",
+      "failure": "item_already_in_use",
+      "directive": {
+        "kind": "prohibit_item",
+        "text": "prohibit STRASSE",
+        "operands": {
+          "item": "STRASSE"
+        }
+      },
+      "repairs": [
+        {
+          "kind": "remove_policy",
+          "text": "remove policy STRASSE",
+          "operands": {
+            "item": "STRASSE"
+          }
+        },
+        {
+          "kind": "prohibit_item",
+          "text": "prohibit STRASSE",
+          "operands": {
+            "item": "STRASSE"
+          }
+        }
+      ],
+      "message": "\"strasse\" is currently in use.\nRemove or replace it before prohibiting it."
+    },
+    "state": {
+      "premise": null,
+      "policies": {
+        "strasse": "use"
+      },
+      "version": 2
+    }
+  }
+}

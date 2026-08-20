@@ -1,0 +1,21 @@
+{
+  "id": "step_exact_prefix_no_directive_leading_space",
+  "kind": "step",
+  "initial_state": {
+    "premise": null,
+    "policies": {},
+    "version": 2
+  },
+  "input": " set premise concise",
+  "expected": {
+    "decision": {
+      "kind": "update",
+      "message": null
+    },
+    "state": {
+      "premise": "concise",
+      "policies": {},
+      "version": 2
+    }
+  }
+}

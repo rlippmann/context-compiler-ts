@@ -1,0 +1,25 @@
+{
+  "id": "step_compound_clear_state_then_set_premise_invalid_boundary",
+  "kind": "step",
+  "initial_state": {
+    "premise": "baseline",
+    "policies": {
+      "docker": "use"
+    },
+    "version": 2
+  },
+  "input": "clear state then set premise project",
+  "expected": {
+    "decision": {
+      "kind": "no_directive",
+      "message": null
+    },
+    "state": {
+      "premise": "baseline",
+      "policies": {
+        "docker": "use"
+      },
+      "version": 2
+    }
+  }
+}

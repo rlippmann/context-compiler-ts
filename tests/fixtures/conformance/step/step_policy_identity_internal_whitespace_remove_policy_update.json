@@ -1,0 +1,23 @@
+{
+  "id": "step_policy_identity_internal_whitespace_remove_policy_update",
+  "kind": "step",
+  "initial_state": {
+    "premise": null,
+    "policies": {
+      "docker desktop": "use"
+    },
+    "version": 2
+  },
+  "input": "remove policy docker   desktop",
+  "expected": {
+    "decision": {
+      "kind": "update",
+      "message": null
+    },
+    "state": {
+      "premise": null,
+      "policies": {},
+      "version": 2
+    }
+  }
+}

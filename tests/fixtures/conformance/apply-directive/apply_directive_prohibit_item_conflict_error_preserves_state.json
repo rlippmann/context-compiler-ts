@@ -1,0 +1,52 @@
+{
+  "id": "apply_directive_prohibit_item_conflict_error_preserves_state",
+  "kind": "apply_directive",
+  "initial_state": {
+    "premise": null,
+    "policies": {
+      "docker": "use"
+    },
+    "version": 2
+  },
+  "action": {
+    "fn": "apply_directive",
+    "text": "prohibit docker"
+  },
+  "expected": {
+    "decision": {
+      "kind": "error",
+      "failure": "item_already_in_use",
+      "directive": {
+        "kind": "prohibit_item",
+        "text": "prohibit docker",
+        "operands": {
+          "item": "docker"
+        }
+      },
+      "repairs": [
+        {
+          "kind": "remove_policy",
+          "text": "remove policy docker",
+          "operands": {
+            "item": "docker"
+          }
+        },
+        {
+          "kind": "prohibit_item",
+          "text": "prohibit docker",
+          "operands": {
+            "item": "docker"
+          }
+        }
+      ],
+      "message": "\"docker\" is currently in use.\nRemove or replace it before prohibiting it."
+    },
+    "state": {
+      "premise": null,
+      "policies": {
+        "docker": "use"
+      },
+      "version": 2
+    }
+  }
+}

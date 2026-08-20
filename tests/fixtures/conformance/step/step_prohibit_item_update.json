@@ -1,0 +1,23 @@
+{
+  "id": "step_prohibit_item_update",
+  "kind": "step",
+  "initial_state": {
+    "premise": null,
+    "policies": {},
+    "version": 2
+  },
+  "input": "prohibit peanuts",
+  "expected": {
+    "decision": {
+      "kind": "update",
+      "message": null
+    },
+    "state": {
+      "premise": null,
+      "policies": {
+        "peanuts": "prohibit"
+      },
+      "version": 2
+    }
+  }
+}
