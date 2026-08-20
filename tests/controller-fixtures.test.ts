@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { create_engine } from '../src/engine.js';
+import { CanonicalDirective, decompose_directive } from '../src/grammar.js';
 import { loadControllerFixtures } from './harness/fixtures.js';
 
 const fixtures = await loadControllerFixtures();
@@ -24,7 +25,9 @@ describe('controller fixtures (conformance)', () => {
             expect(typeof applyDirective, `${fixture.name}: Engine.apply_directive is required by this fixture`).toBe(
               'function'
             );
-            result = (applyDirective as (text: string) => unknown).call(engine, operation.text as string);
+            const directive = decompose_directive(operation.text as string);
+            expect(directive, `${fixture.name}: apply_directive input must be canonical`).toBeInstanceOf(CanonicalDirective);
+            result = (applyDirective as (value: CanonicalDirective) => unknown).call(engine, directive);
             break;
           }
           case 'export_json':
