@@ -45,14 +45,13 @@ export class SemanticErrorDecision {
   readonly repairs: readonly CanonicalDirective[];
   readonly message: string;
 
-  constructor(input: {
-    failure: string;
-    directive: CanonicalDirective;
-    repairs?: CanonicalDirective[];
-  }) {
-    this.failure = input.failure;
-    this.directive = freezeDirective(input.directive);
-    this.repairs = Object.freeze([...(input.repairs ?? [])].map(freezeDirective));
+  constructor(failure: string, directive: CanonicalDirective, repairs: CanonicalDirective[] = []) {
+    if (arguments.length < 2 || arguments.length > 3) {
+      throw new TypeError('SemanticErrorDecision requires failure and directive.');
+    }
+    this.failure = failure;
+    this.directive = freezeDirective(directive);
+    this.repairs = Object.freeze(repairs.map(freezeDirective));
     this.message = formatFailure(this.failure, this.directive);
     Object.freeze(this);
   }
@@ -98,10 +97,7 @@ function normalizeItemForMessage(value: string): string {
 }
 
 function freezeDirective(directive: CanonicalDirective): CanonicalDirective {
-  const frozen = new CanonicalDirective({
-    kind: directive.kind,
-    operands: { ...directive.operands }
-  });
+  const frozen = new CanonicalDirective(directive.kind, { ...directive.operands });
   Object.freeze(frozen.operands);
   return Object.freeze(frozen);
 }

@@ -46,17 +46,14 @@ describe('mutation-isolation fixtures (conformance)', () => {
         expect('premise' in (engine as object), `${fixture.name}: Engine.premise is required by this fixture`).toBe(true);
         result = { value: engine.premise };
       } else if (operation.fn === 'canonical_directive.operands') {
-        const directive = new CanonicalDirective({
-          kind: operation.kind as string,
-          operands: operation.operands as Record<string, unknown>
-        });
+        const directive = new CanonicalDirective(operation.kind as string, operation.operands as Record<string, unknown>);
         result = directive.operands;
       } else if (operation.fn === 'directive_metadata') {
-        result = new DirectiveMetadata({
-          kind: operation.kind as 'use_item',
-          canonical_start: operation.canonical_start as string,
-          operand_names: operation.operand_names as string[]
-        });
+        result = new DirectiveMetadata(
+          operation.kind as 'use_item',
+          operation.canonical_start as string,
+          operation.operand_names as string[]
+        );
       } else {
         throw new Error(`${fixture.name}: unsupported mutation-isolation operation '${operation.fn}'`);
       }

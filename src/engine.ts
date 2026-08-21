@@ -54,46 +54,46 @@ export class Engine {
 
   #semanticFailure(directive: CanonicalDirective): SemanticErrorDecision | null {
     if (directive.kind === GrammarDirectiveKind.SET_PREMISE && this._state.premise !== null) {
-      return new SemanticErrorDecision({
-        failure: SemanticFailure.PREMISE_ALREADY_SET,
+      return new SemanticErrorDecision(
+        SemanticFailure.PREMISE_ALREADY_SET,
         directive,
-        repairs: [this.#repair(GrammarDirectiveKind.CHANGE_PREMISE, { value: directive.operands.value })]
-      });
+        [this.#repair(GrammarDirectiveKind.CHANGE_PREMISE, { value: directive.operands.value })]
+      );
     }
 
     if (directive.kind === GrammarDirectiveKind.CHANGE_PREMISE && this._state.premise === null) {
-      return new SemanticErrorDecision({
-        failure: SemanticFailure.PREMISE_NOT_SET,
+      return new SemanticErrorDecision(
+        SemanticFailure.PREMISE_NOT_SET,
         directive,
-        repairs: [this.#repair(GrammarDirectiveKind.SET_PREMISE, { value: directive.operands.value })]
-      });
+        [this.#repair(GrammarDirectiveKind.SET_PREMISE, { value: directive.operands.value })]
+      );
     }
 
     if (directive.kind === GrammarDirectiveKind.USE_ITEM) {
       const itemKey = normalizeItem(directive.operands.item);
       if (this._state.policies[itemKey] === POLICY_PROHIBIT) {
-        return new SemanticErrorDecision({
-          failure: SemanticFailure.ITEM_PROHIBITED,
+        return new SemanticErrorDecision(
+          SemanticFailure.ITEM_PROHIBITED,
           directive,
-          repairs: [
+          [
             this.#repair(GrammarDirectiveKind.REMOVE_POLICY, { item: directive.operands.item }),
             this.#repair(GrammarDirectiveKind.USE_ITEM, { item: directive.operands.item })
           ]
-        });
+        );
       }
     }
 
     if (directive.kind === GrammarDirectiveKind.PROHIBIT_ITEM) {
       const itemKey = normalizeItem(directive.operands.item);
       if (this._state.policies[itemKey] === POLICY_USE) {
-        return new SemanticErrorDecision({
-          failure: SemanticFailure.ITEM_ALREADY_IN_USE,
+        return new SemanticErrorDecision(
+          SemanticFailure.ITEM_ALREADY_IN_USE,
           directive,
-          repairs: [
+          [
             this.#repair(GrammarDirectiveKind.REMOVE_POLICY, { item: directive.operands.item }),
             this.#repair(GrammarDirectiveKind.PROHIBIT_ITEM, { item: directive.operands.item })
           ]
-        });
+        );
       }
     }
 
@@ -105,26 +105,20 @@ export class Engine {
       if (newKey === oldKey) return null;
 
       if (this._state.policies[oldKey] === POLICY_PROHIBIT) {
-        return new SemanticErrorDecision({
-          failure: SemanticFailure.REPLACEMENT_SOURCE_PROHIBITED,
-          directive
-        });
+        return new SemanticErrorDecision(SemanticFailure.REPLACEMENT_SOURCE_PROHIBITED, directive);
       }
       if (this._state.policies[newKey] === POLICY_PROHIBIT) {
-        return new SemanticErrorDecision({
-          failure: SemanticFailure.REPLACEMENT_TARGET_PROHIBITED,
+        return new SemanticErrorDecision(
+          SemanticFailure.REPLACEMENT_TARGET_PROHIBITED,
           directive,
-          repairs: [
+          [
             this.#repair(GrammarDirectiveKind.REMOVE_POLICY, { item: newItem }),
             directive
           ]
-        });
+        );
       }
       if (this._state.policies[oldKey] !== POLICY_USE) {
-        return new SemanticErrorDecision({
-          failure: SemanticFailure.REPLACEMENT_SOURCE_MISSING,
-          directive
-        });
+        return new SemanticErrorDecision(SemanticFailure.REPLACEMENT_SOURCE_MISSING, directive);
       }
     }
 
@@ -132,7 +126,7 @@ export class Engine {
   }
 
   #repair(kind: string, operands: Record<string, string>): CanonicalDirective {
-    return new CanonicalDirective({ kind, operands });
+    return new CanonicalDirective(kind, operands);
   }
 
   #applyCanonicalDirective(directive: CanonicalDirective): void {

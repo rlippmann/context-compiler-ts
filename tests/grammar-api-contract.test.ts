@@ -41,7 +41,13 @@ describe('public grammar API parity contract (conformance fixture)', () => {
     const probes = (contract.exports.members.CanonicalDirective as Record<string, any>)
       .construction_probes as Array<Record<string, any>>;
     for (const probe of probes) {
-      const construct = () => new grammar.CanonicalDirective(probe.kwargs as { kind: string; operands: Record<string, unknown> });
+      const kwargs = probe.kwargs as Record<string, any> | undefined;
+      const args = Array.isArray(probe.args)
+        ? probe.args
+        : kwargs === undefined
+          ? []
+          : [kwargs.kind, kwargs.operands, ...(Object.keys(kwargs).includes('unexpected') ? [true] : [])];
+      const construct = () => new grammar.CanonicalDirective(...args as [string, Record<string, unknown>]);
       if (probe.raises != null) {
         expect(construct).toThrowError();
         continue;
@@ -64,11 +70,18 @@ describe('public grammar API parity contract (conformance fixture)', () => {
     const probes = (contract.exports.members.DirectiveMetadata as Record<string, any>)
       .construction_probes as Array<Record<string, any>>;
     for (const probe of probes) {
-      const actual = new grammar.DirectiveMetadata(probe.kwargs as {
-        kind: 'use_item';
-        canonical_start: string;
-        operand_names: string[];
-      });
+      const kwargs = probe.kwargs as Record<string, any> | undefined;
+      const args = Array.isArray(probe.args)
+        ? probe.args
+        : kwargs === undefined
+          ? []
+          : [kwargs.kind, kwargs.canonical_start, kwargs.operand_names, ...(Object.keys(kwargs).includes('unexpected') ? [true] : [])];
+      const construct = () => new grammar.DirectiveMetadata(...args as ['use_item', string, string[]]);
+      if (probe.raises != null) {
+        expect(construct).toThrowError(TypeError);
+        continue;
+      }
+      const actual = construct();
       const shape = probe.return_shape as Record<string, any>;
       expect({
         kind: 'directive_metadata',
@@ -110,5 +123,31 @@ describe('public grammar API parity contract (conformance fixture)', () => {
         });
       }
     }
+    });
   });
-});
+
+  it('matches InvalidDirectiveSyntax construction probes', () => {
+    const probes = (contract.exports.members.InvalidDirectiveSyntax as Record<string, any>)
+      .construction_probes as Array<Record<string, any>>;
+    for (const probe of probes) {
+      const kwargs = probe.kwargs as Record<string, any> | undefined;
+      const args = Array.isArray(probe.args)
+        ? probe.args
+        : kwargs === undefined
+          ? []
+          : [kwargs.failure, kwargs.directive_kind, kwargs.missing_operand, ...(Object.keys(kwargs).includes('unexpected') ? [true] : [])];
+      const construct = () => new grammar.InvalidDirectiveSyntax(...args as [string?, grammar.DirectiveKindValue?, string?]);
+      if (probe.raises != null) {
+        expect(construct).toThrowError(TypeError);
+        continue;
+      }
+      const actual = construct() as Record<string, unknown>;
+      const shape = probe.return_shape as Record<string, any>;
+      expect(actual).toMatchObject({
+        kind: shape.kind,
+        failure: shape.failure,
+        directive_kind: shape.directive_kind,
+        missing_operand: shape.missing_operand
+      });
+    }
+  });
