@@ -272,10 +272,17 @@ function sanitizePremiseValue(value: string): string {
 function normalizeItem(value: string): string {
   let normalized = value.normalize('NFKC');
   normalized = normalized.replaceAll('’', "'").replaceAll('`', "'");
-  normalized = normalized.toLowerCase();
-  normalized = normalized.replaceAll('ß', 'ss');
+  normalized = unicodeCaseFold(normalized);
   normalized = normalized.replace(/\s+/g, ' ').trim();
   return normalized.trim();
+}
+
+function unicodeCaseFold(value: string): string {
+  return value
+    .toLowerCase()
+    .replaceAll('ß', 'ss')
+    .replaceAll('ς', 'σ')
+    .replaceAll('ſ', 's');
 }
 
 function sortKeysDeep(value: unknown): unknown {

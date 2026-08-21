@@ -92,6 +92,8 @@ function normalizeItemForMessage(value: string): string {
     .replaceAll('`', "'")
     .toLowerCase()
     .replaceAll('ß', 'ss')
+    .replaceAll('ς', 'σ')
+    .replaceAll('ſ', 's')
     .replace(/\s+/g, ' ')
     .trim();
 }

@@ -144,7 +144,14 @@ function collapseHorizontalWhitespace(text: string): string {
 }
 
 function normalizedForMatching(text: string): string {
-  return collapseHorizontalWhitespace(trimAsciiWhitespace(text)).toLowerCase();
+  return asciiLowercase(collapseHorizontalWhitespace(trimAsciiWhitespace(text)));
+}
+
+function asciiLowercase(text: string): string {
+  return [...text].map((character) => {
+    const code = character.charCodeAt(0);
+    return code >= 0x41 && code <= 0x5a ? String.fromCharCode(code + 0x20) : character;
+  }).join('');
 }
 
 function operandHasContent(value: string): boolean {
@@ -166,7 +173,7 @@ function matchDirectiveToken(text: string, start: number, token: string, require
       if (!HORIZONTAL_WHITESPACE.includes(text[index])) return null;
       while (index < text.length && HORIZONTAL_WHITESPACE.includes(text[index])) index += 1;
     } else {
-      if (text[index].toLowerCase() !== tokenChar) return null;
+      if (asciiLowercase(text[index]) !== tokenChar) return null;
       index += 1;
     }
     tokenIndex += 1;
