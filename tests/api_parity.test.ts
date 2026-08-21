@@ -321,6 +321,43 @@ describe('public API parity contract (conformance fixture)', () => {
     expect(typeof error.message).toBe('string');
   });
 
+  it('runs all canonical Engine construction probes separately from instance probes', () => {
+    const fixture = loadApiContractFixture();
+    const engineSpec = fixture.exports.members.Engine;
+    expect(engineSpec.signature, 'Engine constructor signature is required').toBeDefined();
+    if (engineSpec.signature) {
+      expectPortableCallableArity(cc.Engine as unknown as (...args: unknown[]) => unknown, engineSpec.signature, 'Engine constructor');
+    }
+
+    const probes = engineSpec.construction_probes;
+    expect(probes, 'Engine construction probes are required').toBeDefined();
+    expect(probes?.length, 'All Engine construction probes must be present').toBeGreaterThan(0);
+
+    for (const [index, probe] of (probes ?? []).entries()) {
+      const args = Array.isArray(probe.args) ? probe.args.map(materializeProbeValue) : [];
+      const kwargs = probe.kwargs as Record<string, unknown> | undefined;
+      const construct = () => {
+        // Python keyword probes are represented by the corresponding object
+        // argument in TypeScript so the runtime receives the exact input shape.
+        const constructorArgs = kwargs === undefined ? args : [...args, materializeProbeValue(kwargs)];
+        return Reflect.construct(cc.Engine, constructorArgs);
+      };
+
+      if (probe.raises != null) {
+        if (probe.raises.type === 'TypeError') {
+          expect(construct, `Engine construction probe ${index} should raise TypeError`).toThrowError(TypeError);
+        } else {
+          expect(construct, `Engine construction probe ${index} should raise`).toThrow();
+        }
+        continue;
+      }
+
+      const shape = probe.return_shape as ReturnShape | undefined;
+      expect(shape, `Engine construction probe ${index} should define a return shape`).toBeDefined();
+      if (shape) expectShape(construct(), shape, `Engine construction probe ${index}`);
+    }
+  });
+
   it('runs lightweight canonical API-shape probes where portable', () => {
     const fixture = loadApiContractFixture();
     for (const exportName of getCanonicalRuntimeExportNames(fixture)) {

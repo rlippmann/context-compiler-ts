@@ -26,7 +26,8 @@ function getPath(target: unknown, path: (string | number)[]): unknown {
 describe('mutation-isolation fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
-      const engine = new Engine({ state: fixture.payload.initial_state });
+      const engine = new Engine();
+      engine.import_json(JSON.stringify(fixture.payload.initial_state));
       const operation = fixture.payload.operation;
       let result: unknown;
 

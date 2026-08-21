@@ -9,7 +9,8 @@ describe('state-json fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('state_json');
 
-      const engine = new Engine({ state: fixture.payload.initial_state });
+      const engine = new Engine();
+      engine.import_json(JSON.stringify(fixture.payload.initial_state));
       for (const priorInput of fixture.payload.prelude ?? []) {
         engine.step(priorInput);
       }
