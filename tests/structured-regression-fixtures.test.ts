@@ -47,7 +47,10 @@ describe('structured regression fixtures (engine-regression/structured)', () => 
 
       expect(expected.id).toBe(scenario.id);
 
-      const engine = new Engine({ state: (scenario.initial_state ?? undefined) as never });
+      const engine = new Engine();
+      if (scenario.initial_state !== undefined && scenario.initial_state !== null) {
+        engine.import_json(JSON.stringify(scenario.initial_state));
+      }
 
       expect(expected.turns.length).toBe(scenario.inputs.length);
 

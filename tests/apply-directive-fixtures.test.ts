@@ -8,7 +8,8 @@ const fixtures = await loadApplyDirectiveFixtures();
 describe('apply-directive fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
-      const engine = new Engine({ state: fixture.payload.initial_state });
+      const engine = new Engine();
+      engine.import_json(JSON.stringify(fixture.payload.initial_state));
       const applyDirective = (engine as unknown as Record<string, unknown>).apply_directive;
       expect(typeof applyDirective, `${fixture.name}: Engine.apply_directive is required by this fixture`).toBe(
         'function'

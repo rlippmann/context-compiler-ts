@@ -10,7 +10,8 @@ describe('controller fixtures (conformance)', () => {
     it(fixture.name, () => {
       expect(fixture.payload.kind).toBe('controller');
 
-      const engine = new Engine({ state: fixture.payload.initial_state });
+      const engine = new Engine();
+      engine.import_json(JSON.stringify(fixture.payload.initial_state));
       const observations: Record<string, unknown> = {};
       const payloads: Record<string, string> = {};
 

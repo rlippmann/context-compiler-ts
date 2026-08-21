@@ -8,19 +8,17 @@ import {
   UpdateDecision
 } from './decision.js';
 
-interface EngineInit {
-  state?: EngineState;
-}
-
 export const POLICY_USE = 'use' as const;
 export const POLICY_PROHIBIT = 'prohibit' as const;
 
 export class Engine {
   private _state: EngineState;
 
-  constructor(state?: EngineState | EngineInit) {
-    const normalizedState = normalizeEngineInit(state);
-    this._state = normalizedState ? loadStateObject(normalizedState) : initialState();
+  constructor() {
+    if (arguments.length > 0) {
+      throw new TypeError('Engine constructor takes no arguments.');
+    }
+    this._state = initialState();
   }
 
   get premise(): string | null {
@@ -183,16 +181,6 @@ export class Engine {
     }
     return this.apply_directive(directive);
   }
-}
-
-function normalizeEngineInit(stateOrInit?: EngineState | EngineInit): EngineState | undefined {
-  if (stateOrInit === undefined) {
-    return undefined;
-  }
-  if ('state' in stateOrInit && Object.keys(stateOrInit).length <= 1) {
-    return stateOrInit.state;
-  }
-  return stateOrInit as EngineState;
 }
 
 function initialState(): EngineState {
