@@ -169,6 +169,12 @@ function materializeProbeValue(value: unknown): unknown {
     if (maybeFixture.fixture === 'empty_engine') {
       return new cc.Engine();
     }
+    if (maybeFixture.fixture === 'item_prohibited_failure') {
+      return cc.SemanticFailure.ITEM_PROHIBITED;
+    }
+    if (maybeFixture.fixture === 'use_docker_directive') {
+      return new CanonicalDirective('use_item', { item: 'docker' });
+    }
     const out: Record<string, unknown> = {};
     for (const [key, nested] of Object.entries(value)) {
       out[key] = materializeProbeValue(nested);
@@ -307,11 +313,8 @@ describe('public API parity contract (conformance fixture)', () => {
 
     const errorProbe = fixture.exports.members.SemanticErrorDecision.construction_probes?.[0];
     expect(errorProbe?.kwargs).toHaveProperty('failure');
-    const directive = new CanonicalDirective({ kind: 'use_item', operands: { item: 'docker' } });
-    const error = new cc.SemanticErrorDecision({
-      failure: cc.SemanticFailure.ITEM_PROHIBITED,
-      directive
-    });
+    const directive = new CanonicalDirective('use_item', { item: 'docker' });
+    const error = new cc.SemanticErrorDecision(cc.SemanticFailure.ITEM_PROHIBITED, directive);
     expect(error).toMatchObject({
       kind: 'error',
       failure: cc.SemanticFailure.ITEM_PROHIBITED,
@@ -319,6 +322,32 @@ describe('public API parity contract (conformance fixture)', () => {
       repairs: []
     });
     expect(typeof error.message).toBe('string');
+  });
+
+  it('runs all SemanticErrorDecision construction probes', () => {
+    const fixture = loadApiContractFixture();
+    const probes = fixture.exports.members.SemanticErrorDecision.construction_probes ?? [];
+    for (const [index, probe] of probes.entries()) {
+      const args = Array.isArray(probe.args)
+        ? probe.args.map(materializeProbeValue)
+        : (() => {
+            const kwargs = probe.kwargs as Record<string, unknown> | undefined;
+            if (kwargs === undefined) return [];
+            const values = [kwargs.failure, kwargs.directive];
+            if (Object.prototype.hasOwnProperty.call(kwargs, 'repairs')) values.push(kwargs.repairs);
+            if (Object.keys(kwargs).some((key) => !['failure', 'directive', 'repairs'].includes(key))) values.push(true);
+            return values.map(materializeProbeValue);
+          })();
+      const construct = () => Reflect.construct(cc.SemanticErrorDecision, args);
+      if (probe.raises != null) {
+        expect(construct, `SemanticErrorDecision construction probe ${index} should raise`).toThrowError(TypeError);
+        continue;
+      }
+      const value = construct() as Record<string, unknown>;
+      for (const attribute of (probe.return_shape as { required_attributes?: string[] }).required_attributes ?? []) {
+        expect(attribute in value, `SemanticErrorDecision probe ${index} should expose '${attribute}'`).toBe(true);
+      }
+    }
   });
 
   it('runs all canonical Engine construction probes separately from instance probes', () => {

@@ -73,9 +73,10 @@ export class CanonicalDirective {
   readonly operands: Operands;
   readonly text: string;
 
-  constructor(input: { kind: string; operands: Record<string, unknown> }) {
-    const kind = normalizeDirectiveKind(input.kind);
-    const operands = normalizeCanonicalOperands(kind, input.operands);
+  constructor(kindInput: string, operandsInput: Record<string, unknown>) {
+    if (arguments.length !== 2) throw new TypeError('CanonicalDirective requires kind and operands.');
+    const kind = normalizeDirectiveKind(kindInput);
+    const operands = normalizeCanonicalOperands(kind, operandsInput);
     const rendered = serializeCanonicalDirective(kind, operands);
     if (containsMultipleCanonicalDirectives(rendered)) {
       throw new Error(`Operands do not produce a canonical ${kind} directive.`);
@@ -93,14 +94,15 @@ export class InvalidDirectiveSyntax {
   readonly directive_kind: DirectiveKindValue | null;
   readonly missing_operand: string | null;
 
-  constructor(input: {
-    failure?: string;
-    directive_kind?: DirectiveKindValue | null;
-    missing_operand?: string | null;
-  } = {}) {
-    this.failure = input.failure ?? DirectiveSyntaxFailure.MALFORMED_DIRECTIVE;
-    this.directive_kind = input.directive_kind ?? null;
-    this.missing_operand = input.missing_operand ?? null;
+  constructor(
+    failure: string = DirectiveSyntaxFailure.MALFORMED_DIRECTIVE,
+    directive_kind: DirectiveKindValue | null = null,
+    missing_operand: string | null = null
+  ) {
+    if (arguments.length > 3) throw new TypeError('InvalidDirectiveSyntax accepts at most three arguments.');
+    this.failure = failure;
+    this.directive_kind = directive_kind;
+    this.missing_operand = missing_operand;
     Object.freeze(this);
   }
 }
@@ -110,10 +112,11 @@ export class DirectiveMetadata {
   readonly canonical_start: string;
   readonly operand_names: readonly string[];
 
-  constructor(input: { kind: DirectiveKindValue; canonical_start: string; operand_names: string[] }) {
-    this.kind = input.kind;
-    this.canonical_start = input.canonical_start;
-    this.operand_names = Object.freeze([...input.operand_names]);
+  constructor(kind: DirectiveKindValue, canonical_start: string, operand_names: string[]) {
+    if (arguments.length !== 3) throw new TypeError('DirectiveMetadata requires three arguments.');
+    this.kind = kind;
+    this.canonical_start = canonical_start;
+    this.operand_names = Object.freeze([...operand_names]);
     Object.freeze(this);
   }
 }
@@ -213,7 +216,7 @@ function invalid(
   directive_kind?: DirectiveKindValue,
   missing_operand?: string
 ): InvalidDirectiveSyntax {
-  return new InvalidDirectiveSyntax({ failure, directive_kind, missing_operand });
+  return new InvalidDirectiveSyntax(failure, directive_kind, missing_operand);
 }
 
 function parseReplacement(text: string): CanonicalDirective | null {
@@ -225,7 +228,7 @@ function parseReplacement(text: string): CanonicalDirective | null {
     return null;
   }
   if (normalizedForMatching(text).split(INSTEAD_OF_DELIMITER).length !== 2) return null;
-  return new CanonicalDirective({ kind: 'replace_use', operands: { new_item: newItem, old_item: oldItem } });
+  return new CanonicalDirective('replace_use', { new_item: newItem, old_item: oldItem });
 }
 
 export function decompose_directive(text: string): CanonicalDirective | InvalidDirectiveSyntax | null {
@@ -234,9 +237,9 @@ export function decompose_directive(text: string): CanonicalDirective | InvalidD
   if (containsMultipleCanonicalDirectives(trimmed)) return invalid(DirectiveSyntaxFailure.COMPOUND_DIRECTIVE);
 
   const normalized = normalizedForMatching(trimmed);
-  if (normalized === 'clear premise') return new CanonicalDirective({ kind: 'clear_premise', operands: {} });
-  if (normalized === 'reset policies') return new CanonicalDirective({ kind: 'reset_policies', operands: {} });
-  if (normalized === 'clear state') return new CanonicalDirective({ kind: 'clear_state', operands: {} });
+  if (normalized === 'clear premise') return new CanonicalDirective('clear_premise', {});
+  if (normalized === 'reset policies') return new CanonicalDirective('reset_policies', {});
+  if (normalized === 'clear state') return new CanonicalDirective('clear_state', {});
 
   if (normalized === 'set premise') return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'set_premise', 'value');
   if (normalized.startsWith('set premise ')) {
@@ -244,14 +247,14 @@ export function decompose_directive(text: string): CanonicalDirective | InvalidD
     if (match == null || !operandHasContent(match[1]) || operandStartsWithToken(match[1], 'to')) {
       return invalid(DirectiveSyntaxFailure.MALFORMED_DIRECTIVE, 'set_premise');
     }
-    return new CanonicalDirective({ kind: 'set_premise', operands: { value: match[1] } });
+    return new CanonicalDirective('set_premise', { value: match[1] });
   }
 
   if (normalized === 'change premise to') return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'change_premise', 'value');
   if (normalized.startsWith('change premise to ')) {
     const match = /^change[ \t]+premise[ \t]+to[ \t]+(.+)$/i.exec(trimmed);
     if (match == null || !operandHasContent(match[1])) return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'change_premise', 'value');
-    return new CanonicalDirective({ kind: 'change_premise', operands: { value: match[1] } });
+    return new CanonicalDirective('change_premise', { value: match[1] });
   }
 
   const replacement = parseReplacement(trimmed);
@@ -265,21 +268,21 @@ export function decompose_directive(text: string): CanonicalDirective | InvalidD
     if (normalizedItem === 'instead of' || normalizedItem.startsWith('instead of ')) return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'replace_use', 'new_item');
     if (normalizedItem.endsWith(' instead of')) return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'replace_use', 'old_item');
     if (normalizedItem.includes(INSTEAD_OF_DELIMITER)) return invalid(DirectiveSyntaxFailure.MALFORMED_DIRECTIVE, 'use_item');
-    return new CanonicalDirective({ kind: 'use_item', operands: { item } });
+    return new CanonicalDirective('use_item', { item });
   }
 
   if (normalized === 'prohibit') return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'prohibit_item', 'item');
   if (normalized.startsWith('prohibit ')) {
     const match = /^prohibit[ \t]+(.+)$/i.exec(trimmed);
     if (match == null || !operandHasContent(match[1])) return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'prohibit_item', 'item');
-    return new CanonicalDirective({ kind: 'prohibit_item', operands: { item: match[1] } });
+    return new CanonicalDirective('prohibit_item', { item: match[1] });
   }
 
   if (normalized === 'remove policy') return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'remove_policy', 'item');
   if (normalized.startsWith('remove policy ')) {
     const match = /^remove[ \t]+policy[ \t]+(.+)$/i.exec(trimmed);
     if (match == null || !operandHasContent(match[1])) return invalid(DirectiveSyntaxFailure.MISSING_REQUIRED_OPERAND, 'remove_policy', 'item');
-    return new CanonicalDirective({ kind: 'remove_policy', operands: { item: match[1] } });
+    return new CanonicalDirective('remove_policy', { item: match[1] });
   }
 
   return invalid(DirectiveSyntaxFailure.MALFORMED_DIRECTIVE);
@@ -287,7 +290,7 @@ export function decompose_directive(text: string): CanonicalDirective | InvalidD
 
 export function get_directive_metadata(): readonly DirectiveMetadata[] {
   return Object.freeze(Object.values(DIRECTIVE_SPECS).map(
-    (spec) => new DirectiveMetadata({ kind: Object.keys(DIRECTIVE_SPECS).find((kind) => DIRECTIVE_SPECS[kind as DirectiveKindValue] === spec) as DirectiveKindValue, canonical_start: spec.canonicalStart, operand_names: spec.operands })
+    (spec) => new DirectiveMetadata(Object.keys(DIRECTIVE_SPECS).find((kind) => DIRECTIVE_SPECS[kind as DirectiveKindValue] === spec) as DirectiveKindValue, spec.canonicalStart, spec.operands)
   ));
 }
 
