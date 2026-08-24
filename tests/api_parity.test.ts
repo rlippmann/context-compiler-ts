@@ -42,6 +42,8 @@ type ExportMemberSpec = {
   signature?: SignatureSpec;
   shape_probes?: ShapeProbe[];
   construction_probes?: Array<Record<string, unknown>>;
+  immutable_definition?: boolean;
+  member_values?: Record<string, string>;
 };
 
 type EngineMemberSpec = {
@@ -163,6 +165,25 @@ function expectPortableCallableArity(fn: (...args: unknown[]) => unknown, signat
   ).toBeLessThanOrEqual(totalCount);
 }
 
+function expectImmutableDefinition(value: unknown, memberValues: Record<string, string>, label: string): void {
+  expect(value, `${label}: immutable definition should exist`).toBeTruthy();
+  if (value == null || (typeof value !== 'object' && typeof value !== 'function')) return;
+
+  for (const [memberName, expected] of Object.entries(memberValues)) {
+    const definition = value as Record<string, unknown>;
+    expect(definition[memberName], `${label}.${memberName} has the wrong value`).toBe(expected);
+    let rejected = false;
+    try {
+      definition[memberName] = '__contract_mutation__';
+    } catch {
+      rejected = true;
+    }
+    if (!rejected) definition[memberName] = expected;
+    expect(rejected, `${label}.${memberName} should reject mutation`).toBe(true);
+    expect(definition[memberName], `${label}.${memberName} was mutated`).toBe(expected);
+  }
+}
+
 function materializeProbeValue(value: unknown): unknown {
   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
     const maybeFixture = value as { fixture?: unknown };
@@ -282,6 +303,9 @@ describe('public API parity contract (conformance fixture)', () => {
       } else if (member.kind === 'class') {
         expect(typeof value, `Export '${exportName}' should be a class constructor`).toBe('function');
         expect('prototype' in (value as object), `Export '${exportName}' should expose a prototype`).toBe(true);
+        if (member.immutable_definition) {
+          expectImmutableDefinition(value, member.member_values ?? {}, `Export '${exportName}'`);
+        }
       }
     }
   });
