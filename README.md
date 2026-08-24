@@ -11,7 +11,7 @@ asking for clarification before anything changes.
 
 A dict stores state. Context Compiler makes state changes verifiable.
 
-This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.8 behavior and contract.
+This package is the TypeScript implementation of the Context Compiler engine, aligned with Python 0.9 behavior and contract.
 
 It is useful for hosts that need explicit conversational state to stay stable
 across turns: chat apps, tool-using assistants, schema-routing workflows, and

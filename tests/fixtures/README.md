@@ -15,7 +15,7 @@ Both synchronized fixture families must come from the same Python checkout revis
 
 ## API contract fixture
 
-[`conformance/api/public-api-v1.json`](conformance/api/public-api-v1.json) defines a small portable core API presence contract for the current Python 0.8 surface that ports must expose.
+[`conformance/api/public-api-v1.json`](conformance/api/public-api-v1.json) defines a small portable core API presence contract for the current Python 0.9 surface that ports must expose.
 
 Ports may sync this artifact with conformance fixtures.
 
