@@ -30,7 +30,7 @@ type DirectiveKindValue =
   | 'reset_policies'
   | 'clear_state';
 
-type Operands = Record<string, string>;
+type Operands = Readonly<Record<string, string>>;
 
 const DIRECTIVE_KINDS = new Set<string>([
   DirectiveKind.SET_PREMISE,
@@ -319,7 +319,7 @@ function normalizeCanonicalOperands(kind: DirectiveKindValue, operands: Record<s
   const unexpected = [...actual].filter((name) => !expected.has(name));
   if (missing.length > 0) throw new Error(`Missing required operands for ${kind}: ${missing.sort().join(', ')}`);
   if (unexpected.length > 0) throw new Error(`Unexpected operands for ${kind}: ${unexpected.sort().join(', ')}`);
-  const normalized: Operands = {};
+  const normalized: Record<string, string> = {};
   for (const name of DIRECTIVE_SPECS[kind].operands) {
     const value = operands[name];
     if (typeof value !== 'string') throw new Error(`Operand '${name}' for ${kind} must be a string.`);
