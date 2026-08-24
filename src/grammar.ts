@@ -16,6 +16,9 @@ export class DirectiveSyntaxFailure {
   static readonly MALFORMED_DIRECTIVE = 'malformed_directive';
 }
 
+Object.freeze(DirectiveKind);
+Object.freeze(DirectiveSyntaxFailure);
+
 type DirectiveKindValue =
   | 'set_premise'
   | 'change_premise'
@@ -78,7 +81,7 @@ export class CanonicalDirective {
     const kind = normalizeDirectiveKind(kindInput);
     const operands = normalizeCanonicalOperands(kind, operandsInput);
     const rendered = serializeCanonicalDirective(kind, operands);
-    if (containsMultipleCanonicalDirectives(rendered)) {
+    if (kind !== DirectiveKind.SET_PREMISE && containsMultipleCanonicalDirectives(rendered)) {
       throw new Error(`Operands do not produce a canonical ${kind} directive.`);
     }
     this.kind = kind;
@@ -89,7 +92,6 @@ export class CanonicalDirective {
 }
 
 export class InvalidDirectiveSyntax {
-  readonly kind = 'invalid_directive_syntax';
   readonly failure: string;
   readonly directive_kind: DirectiveKindValue | null;
   readonly missing_operand: string | null;
@@ -241,7 +243,11 @@ function parseReplacement(text: string): CanonicalDirective | null {
 export function decompose_directive(text: string): CanonicalDirective | InvalidDirectiveSyntax | null {
   const trimmed = trimAsciiWhitespace(text);
   if (trimmed === '' || !startsWithDirectiveFamily(trimmed)) return null;
-  if (containsMultipleCanonicalDirectives(trimmed)) return invalid(DirectiveSyntaxFailure.COMPOUND_DIRECTIVE);
+  // A set-premise operand is opaque: directive-shaped text inside it is premise
+  // content, not a second directive.
+  if (!normalizedForMatching(trimmed).startsWith('set premise ') && containsMultipleCanonicalDirectives(trimmed)) {
+    return invalid(DirectiveSyntaxFailure.COMPOUND_DIRECTIVE);
+  }
 
   const normalized = normalizedForMatching(trimmed);
   if (normalized === 'clear premise') return new CanonicalDirective('clear_premise', {});

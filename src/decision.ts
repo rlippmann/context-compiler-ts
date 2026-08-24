@@ -20,6 +20,9 @@ export class SemanticFailure {
   static readonly REPLACEMENT_SOURCE_MISSING = 'replacement_source_missing';
 }
 
+Object.freeze(DecisionKind);
+Object.freeze(SemanticFailure);
+
 export class NoDirectiveDecision {
   readonly kind = DECISION_NO_DIRECTIVE;
 

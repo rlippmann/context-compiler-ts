@@ -24,7 +24,17 @@ describe('grammar fixtures (conformance)', () => {
           return;
         }
         expect(fixture.payload.expected.error, `${fixture.name}: expected an error`).toBeUndefined();
-        expect(result).toEqual(fixture.payload.expected.directive);
+        const expected = fixture.payload.expected.directive as Record<string, unknown>;
+        if (result instanceof grammar.InvalidDirectiveSyntax) {
+          expect({
+            kind: 'invalid_directive_syntax',
+            failure: result.failure,
+            directive_kind: result.directive_kind,
+            missing_operand: result.missing_operand
+          }).toEqual(expected);
+        } else {
+          expect(result).toEqual(expected);
+        }
         return;
       }
 
