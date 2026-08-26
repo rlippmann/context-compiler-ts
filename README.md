@@ -6,8 +6,7 @@ Context Compiler solves a common state-management problem: storing user rules is
 easy, but deciding when those rules are allowed to change is not.
 
 It gives your app deterministic rules for explicit state changes such as
-setting a premise, replacing a policy, blocking a conflicting update, or
-asking for clarification before anything changes.
+setting a premise, replacing a policy, or blocking a conflicting update.
 
 A dict stores state. Context Compiler makes state changes verifiable.
 
@@ -27,24 +26,23 @@ availability, or other host behavior, but your app still needs rules for when
 that state is allowed to change:
 
 - when a replacement is valid
-- when a conflicting update should stop and ask for confirmation
 - when a change should be rejected instead of silently overwriting state
-- how to restore both saved state and an in-progress clarification flow
+- how to save and restore authoritative state
 
 ## How it solves it
 
 Context Compiler lets a host application:
 
 - prevent silent overwrites when a new update conflicts with what is already saved
-- require clarification before conflicting or confirmation-only changes are accepted
-- let the host preview a change before applying it and keep live state unchanged until it is accepted
-- restore both saved state and an in-progress clarification flow safely between requests
+- preserve state until an explicit directive is accepted
+- let the host inspect advisory repairs without applying them automatically
+- save and restore state through the JSON persistence API
 
 Each user input produces a decision for the host:
 
-- `update` -> stored premise/policy rules changed
-- `passthrough` -> input does not affect saved state
-- `clarify` -> do not mutate state; ask the user to confirm or clarify
+- `update` -> the directive was accepted; `changed` reports whether state changed
+- `no_directive` -> input did not produce a canonical directive
+- `error` -> the directive was rejected; the result identifies the semantic failure and advisory repairs
 
 Directive examples:
 
@@ -78,11 +76,23 @@ changing them.
 ## Public API
 
 The package root exposes the Python 0.9 decision model, policy constants, and
-the `Engine` surface. Checkpoint persistence and the former controller/helper
-aliases are not part of the 0.9 package API.
+the `Engine` surface. The supported engine persistence methods are
+`export_json()` and `import_json()`.
 
 The public grammar API is available from the `@rlippmann/context-compiler/grammar`
 namespace.
+
+```ts
+import {
+  CanonicalDirective,
+  DirectiveKind,
+  decompose_directive
+} from '@rlippmann/context-compiler/grammar';
+```
+
+The grammar namespace contains the public directive constructors, metadata,
+syntax classifications, and parsing helpers. Internal parsing helpers are not
+part of the supported API.
 
 ## Directive Drafting
 
