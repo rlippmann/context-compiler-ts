@@ -81,6 +81,9 @@ The package root exposes the Python 0.9 decision model, policy constants, and
 the `Engine` surface. Checkpoint persistence and the former controller/helper
 aliases are not part of the 0.9 package API.
 
+The public grammar API is available from the `@rlippmann/context-compiler/grammar`
+namespace.
+
 ## Directive Drafting
 
 Directive drafting now lives in

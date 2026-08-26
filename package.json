@@ -29,6 +29,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./grammar": {
+      "types": "./dist/src/grammar.d.ts",
+      "import": "./dist/src/grammar.js"
     }
   },
   "files": [
