@@ -90,16 +90,26 @@
             "return_shape": {
               "kind": "decision_variant",
               "type": "NoDirectiveDecision",
-              "required_attributes": ["kind"]
+              "required_attributes": [
+                "kind"
+              ]
             }
           },
           {
-            "args": ["unexpected"],
-            "raises": {"type": "TypeError"}
+            "args": [
+              "unexpected"
+            ],
+            "raises": {
+              "type": "TypeError"
+            }
           },
           {
-            "kwargs": {"value": "unexpected"},
-            "raises": {"type": "TypeError"}
+            "kwargs": {
+              "value": "unexpected"
+            },
+            "raises": {
+              "type": "TypeError"
+            }
           }
         ]
       },
@@ -107,16 +117,32 @@
         "kind": "class",
         "signature": {
           "params": [
-            {"name": "failure", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
-            {"name": "directive", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false},
-            {"name": "repairs", "kind": "POSITIONAL_OR_KEYWORD", "has_default": true}
+            {
+              "name": "failure",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "directive",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            },
+            {
+              "name": "repairs",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": true
+            }
           ]
         },
         "construction_probes": [
           {
             "kwargs": {
-              "failure": {"fixture": "item_prohibited_failure"},
-              "directive": {"fixture": "use_docker_directive"}
+              "failure": {
+                "fixture": "item_prohibited_failure"
+              },
+              "directive": {
+                "fixture": "use_docker_directive"
+              }
             },
             "return_shape": {
               "kind": "decision_variant",
@@ -132,26 +158,44 @@
           },
           {
             "args": [
-              {"fixture": "item_prohibited_failure"},
-              {"fixture": "use_docker_directive"}
+              {
+                "fixture": "item_prohibited_failure"
+              },
+              {
+                "fixture": "use_docker_directive"
+              }
             ],
             "return_shape": {
               "kind": "decision_variant",
               "type": "SemanticErrorDecision",
-              "required_attributes": ["kind", "failure", "directive", "repairs", "message"]
+              "required_attributes": [
+                "kind",
+                "failure",
+                "directive",
+                "repairs",
+                "message"
+              ]
             }
           },
           {
             "args": [],
-            "raises": {"type": "TypeError"}
+            "raises": {
+              "type": "TypeError"
+            }
           },
           {
             "kwargs": {
-              "failure": {"fixture": "item_prohibited_failure"},
-              "directive": {"fixture": "use_docker_directive"},
+              "failure": {
+                "fixture": "item_prohibited_failure"
+              },
+              "directive": {
+                "fixture": "use_docker_directive"
+              },
               "unexpected": true
             },
-            "raises": {"type": "TypeError"}
+            "raises": {
+              "type": "TypeError"
+            }
           }
         ]
       },
@@ -172,33 +216,53 @@
         "kind": "class",
         "signature": {
           "params": [
-            {"name": "changed", "kind": "POSITIONAL_OR_KEYWORD", "has_default": false}
+            {
+              "name": "changed",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "has_default": false
+            }
           ]
         },
         "construction_probes": [
           {
-            "kwargs": {"changed": true},
+            "kwargs": {
+              "changed": true
+            },
             "return_shape": {
               "kind": "decision_variant",
               "type": "UpdateDecision",
-              "required_attributes": ["kind", "changed"]
+              "required_attributes": [
+                "kind",
+                "changed"
+              ]
             }
           },
           {
-            "args": [true],
+            "args": [
+              true
+            ],
             "return_shape": {
               "kind": "decision_variant",
               "type": "UpdateDecision",
-              "required_attributes": ["kind", "changed"]
+              "required_attributes": [
+                "kind",
+                "changed"
+              ]
             }
           },
           {
             "args": [],
-            "raises": {"type": "TypeError"}
+            "raises": {
+              "type": "TypeError"
+            }
           },
           {
-            "kwargs": {"value": true},
-            "raises": {"type": "TypeError"}
+            "kwargs": {
+              "value": true
+            },
+            "raises": {
+              "type": "TypeError"
+            }
           }
         ]
       },
@@ -221,15 +285,25 @@
         },
         "construction_probes": [
           {
-            "return_shape": {"kind": "engine_instance"}
+            "return_shape": {
+              "kind": "engine_instance"
+            }
           },
           {
-            "args": ["unexpected"],
-            "raises": {"type": "TypeError"}
+            "args": [
+              "unexpected"
+            ],
+            "raises": {
+              "type": "TypeError"
+            }
           },
           {
-            "kwargs": {"state": {}},
-            "raises": {"type": "TypeError"}
+            "kwargs": {
+              "state": {}
+            },
+            "raises": {
+              "type": "TypeError"
+            }
           }
         ]
       },
@@ -274,25 +348,33 @@
           },
           "probes": [
             {
-              "args": ["use docker"],
+              "args": [
+                "use docker"
+              ],
               "raises": {
                 "type": "AttributeError"
               }
             },
             {
-              "args": [null],
+              "args": [
+                null
+              ],
               "raises": {
                 "type": "AttributeError"
               }
             },
             {
-              "args": [1],
+              "args": [
+                1
+              ],
               "raises": {
                 "type": "AttributeError"
               }
             },
             {
-              "args": [{}],
+              "args": [
+                {}
+              ],
               "raises": {
                 "type": "AttributeError"
               }
@@ -335,6 +417,11 @@
           }
         }
       }
+    }
+  },
+  "namespaces": {
+    "context_compiler.grammar": {
+      "contract": "public-grammar-v1"
     }
   }
 }
