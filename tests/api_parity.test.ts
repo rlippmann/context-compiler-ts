@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import * as ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import * as cc from '../src/index.js';
+import * as grammar from '../src/grammar.js';
 import { CanonicalDirective } from '../src/grammar.js';
 import type { Decision } from '../src/index.js';
 
@@ -71,6 +72,7 @@ type ApiContractFixture = {
       members: Record<string, EngineMemberSpec>;
     };
   };
+  namespaces?: Record<string, { contract: string }>;
 };
 
 function getGeneratedDeclarationExportNames(): Map<string, string[]> {
@@ -105,6 +107,13 @@ function loadApiContractFixture(): ApiContractFixture {
   const raw = readFileSync(path, 'utf8');
   return JSON.parse(raw) as ApiContractFixture;
 }
+
+function loadGrammarContract(): { exports: { names: string[] } } {
+  const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-grammar-v1.json');
+  return JSON.parse(readFileSync(path, 'utf8')) as { exports: { names: string[] } };
+}
+
+const contract = loadApiContractFixture();
 
 function getCanonicalRuntimeExportNames(fixture: ApiContractFixture): string[] {
   return fixture.exports.names.filter((name) => {
@@ -249,6 +258,17 @@ function expectShape(value: unknown, shape: ReturnShape, label: string): void {
 }
 
 describe('public API parity contract (conformance fixture)', () => {
+  it('consumes declared public namespace contracts', () => {
+    const namespaces = contract.namespaces ?? {};
+    const grammarNamespace = namespaces['context_compiler.grammar'];
+    expect(grammarNamespace, 'Missing grammar namespace contract').toEqual({ contract: 'public-grammar-v1' });
+
+    if (grammarNamespace?.contract === 'public-grammar-v1') {
+      const grammarContract = loadGrammarContract();
+      expect(Object.keys(grammar).sort(), 'Grammar namespace exports').toEqual([...grammarContract.exports.names].sort());
+    }
+  });
+
   it('syncs the stricter canonical Python fixture schema', () => {
     const fixture = loadApiContractFixture();
     expect(fixture.exports.mode).toBe('exact');
