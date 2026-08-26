@@ -269,6 +269,24 @@ describe('public API parity contract (conformance fixture)', () => {
     }
   });
 
+  it('exposes declared namespaces through the package exports map', async () => {
+    const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as {
+      exports?: Record<string, { types?: string; import?: string }>;
+    };
+    const grammarNamespace = contract.namespaces?.['context_compiler.grammar'];
+    expect(grammarNamespace, 'Missing grammar namespace contract').toEqual({ contract: 'public-grammar-v1' });
+    expect(packageJson.exports?.['./grammar'], 'Missing package ./grammar export').toEqual({
+      types: './dist/src/grammar.d.ts',
+      import: './dist/src/grammar.js'
+    });
+
+    const packageGrammar = await import('@rlippmann/context-compiler/grammar');
+    const grammarContract = loadGrammarContract();
+    expect(Object.keys(packageGrammar).sort(), 'Packaged grammar namespace exports').toEqual(
+      [...grammarContract.exports.names].sort()
+    );
+  });
+
   it('syncs the stricter canonical Python fixture schema', () => {
     const fixture = loadApiContractFixture();
     expect(fixture.exports.mode).toBe('exact');
