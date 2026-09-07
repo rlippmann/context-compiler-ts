@@ -7,6 +7,7 @@ import {
   SemanticFailure,
   UpdateDecision
 } from './decision.js';
+import { unicodeCaseFold } from './unicode.js';
 
 export const POLICY_USE = 'use' as const;
 export const POLICY_PROHIBIT = 'prohibit' as const;
@@ -275,14 +276,6 @@ function normalizeItem(value: string): string {
   normalized = unicodeCaseFold(normalized);
   normalized = normalized.replace(/\s+/g, ' ').trim();
   return normalized.trim();
-}
-
-function unicodeCaseFold(value: string): string {
-  return value
-    .toLowerCase()
-    .replaceAll('ß', 'ss')
-    .replaceAll('ς', 'σ')
-    .replaceAll('ſ', 's');
 }
 
 function sortKeysDeep(value: unknown): unknown {
