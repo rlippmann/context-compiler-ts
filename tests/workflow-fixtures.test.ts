@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { Engine } from '../src/engine.js';
 import { CanonicalDirective, decompose_directive } from '../src/grammar.js';
-import { loadControllerFixtures } from './harness/fixtures.js';
+import { loadWorkflowFixtures } from './harness/fixtures.js';
 
-const fixtures = await loadControllerFixtures();
+const fixtures = await loadWorkflowFixtures();
 
-describe('controller fixtures (conformance)', () => {
+describe('workflow fixtures (conformance)', () => {
   for (const fixture of fixtures) {
     it(fixture.name, () => {
-      expect(fixture.payload.kind).toBe('controller');
-
       const engine = new Engine();
       engine.import_json(JSON.stringify(fixture.payload.initial_state));
       const observations: Record<string, unknown> = {};
@@ -22,13 +20,16 @@ describe('controller fixtures (conformance)', () => {
             result = engine.step(operation.input as string);
             break;
           case 'apply_directive': {
-            const applyDirective = (engine as unknown as Record<string, unknown>).apply_directive;
-            expect(typeof applyDirective, `${fixture.name}: Engine.apply_directive is required by this fixture`).toBe(
-              'function'
-            );
             const directive = decompose_directive(operation.text as string);
             expect(directive, `${fixture.name}: apply_directive input must be canonical`).toBeInstanceOf(CanonicalDirective);
-            result = (applyDirective as (value: CanonicalDirective) => unknown).call(engine, directive);
+            result = engine.apply_directive(directive as CanonicalDirective);
+            break;
+          }
+          case 'apply_repair': {
+            const decision = observations[operation.decision_ref as string] as { repairs: CanonicalDirective[] };
+            const repair = decision?.repairs?.[operation.repair_index as number];
+            expect(repair, `${fixture.name}: repair reference is missing`).toBeInstanceOf(CanonicalDirective);
+            result = engine.apply_directive(repair);
             break;
           }
           case 'export_json':
@@ -41,13 +42,13 @@ describe('controller fixtures (conformance)', () => {
             result = undefined;
             break;
           }
+          default:
+            throw new Error(`${fixture.name}: unsupported workflow operation '${operation.fn}'`);
         }
 
         if (operation.label != null) {
           observations[operation.label] = result;
-          if (operation.fn === 'export_json') {
-            payloads[operation.label] = result as string;
-          }
+          if (operation.fn === 'export_json') payloads[operation.label] = result as string;
         }
       }
 

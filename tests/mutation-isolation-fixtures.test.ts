@@ -30,6 +30,7 @@ describe('mutation-isolation fixtures (conformance)', () => {
       engine.import_json(JSON.stringify(fixture.payload.initial_state));
       const operation = fixture.payload.operation;
       let result: unknown;
+      const handleValues: Record<string, unknown> = {};
 
       for (const priorInput of fixture.payload.prelude ?? []) {
         engine.step(priorInput);
@@ -48,6 +49,10 @@ describe('mutation-isolation fixtures (conformance)', () => {
       } else if (operation.fn === 'canonical_directive.operands') {
         const directive = new CanonicalDirective(operation.kind as string, operation.operands as Record<string, unknown>);
         result = directive.operands;
+      } else if (operation.fn === 'canonical_directive.constructor_operands') {
+        const sourceOperands = { ...(operation.operands as Record<string, unknown>) };
+        handleValues.source_operands = sourceOperands;
+        result = new CanonicalDirective(operation.kind as string, sourceOperands);
       } else if (operation.fn === 'directive_metadata') {
         result = new DirectiveMetadata(
           operation.kind as 'use_item',
@@ -65,9 +70,12 @@ describe('mutation-isolation fixtures (conformance)', () => {
         operation.fn === 'canonical_directive.operands' ||
         operation.fn === 'directive_metadata';
       for (const mutation of fixture.payload.mutations) {
-        expect(mutation.target_handle).toBe(operation.result_handle);
         expect(mutation.op).toBe('set');
-        const mutate = () => setPath(result, mutation.path, mutation.value);
+        const target = mutation.target_handle === operation.result_handle
+          ? result
+          : handleValues[mutation.target_handle];
+        expect(target, `${fixture.name}: missing mutation target '${mutation.target_handle}'`).toBeDefined();
+        const mutate = () => setPath(target, mutation.path, mutation.value);
         if (immutableResult) {
           expect(mutate, `${fixture.name}: mutation should be rejected`).toThrow();
         } else {

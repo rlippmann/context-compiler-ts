@@ -81,7 +81,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
       .construction_probes as Array<Record<string, any>>;
     for (const probe of probes) {
       const construct = () => constructGrammar('CanonicalDirective', probe);
-      if (probe.raises != null) {
+      if (probe.raises != null || probe.rejects === true) {
         expect(construct).toThrowError();
         continue;
       }
@@ -104,7 +104,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
       .construction_probes as Array<Record<string, any>>;
     for (const probe of probes) {
       const construct = () => constructGrammar('DirectiveMetadata', probe);
-      if (probe.raises != null) {
+      if (probe.raises != null || probe.rejects === true) {
         expect(construct).toThrowError(TypeError);
         continue;
       }
@@ -122,7 +122,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
   it('matches declared public grammar object fields', () => {
     for (const [name, member] of Object.entries(contract.exports.members)) {
       if (member.public_fields === undefined) continue;
-      const probe = (member.construction_probes ?? []).find((candidate) => candidate.raises == null);
+      const probe = (member.construction_probes ?? []).find((candidate) => candidate.raises == null && candidate.rejects !== true);
       expect(probe, `${name} requires a successful construction probe`).toBeDefined();
       if (probe === undefined) continue;
       const actual = constructGrammar(name, probe) as object;
@@ -182,7 +182,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
           ? []
           : [kwargs.failure, kwargs.directive_kind, kwargs.missing_operand, ...(Object.keys(kwargs).includes('unexpected') ? [true] : [])];
       const construct = () => new grammar.InvalidDirectiveSyntax(...args as [string?, grammar.DirectiveKindValue?, string?]);
-      if (probe.raises != null) {
+      if (probe.raises != null || probe.rejects === true) {
         expect(construct).toThrowError(TypeError);
         continue;
       }
