@@ -37,6 +37,7 @@
     "_NO_DIRECTIVE"
   ],
   "forbidden_engine_members": [
+    "apply_transcript",
     "export_checkpoint",
     "export_checkpoint_json",
     "has_pending_clarification",
@@ -99,17 +100,13 @@
             "args": [
               "unexpected"
             ],
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           },
           {
             "kwargs": {
               "value": "unexpected"
             },
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           }
         ]
       },
@@ -179,9 +176,7 @@
           },
           {
             "args": [],
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           },
           {
             "kwargs": {
@@ -193,9 +188,7 @@
               },
               "unexpected": true
             },
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           }
         ]
       },
@@ -252,17 +245,13 @@
           },
           {
             "args": [],
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           },
           {
             "kwargs": {
               "value": true
             },
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           }
         ]
       },
@@ -293,17 +282,13 @@
             "args": [
               "unexpected"
             ],
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           },
           {
             "kwargs": {
               "state": {}
             },
-            "raises": {
-              "type": "TypeError"
-            }
+            "rejects": true
           }
         ]
       },
@@ -351,33 +336,25 @@
               "args": [
                 "use docker"
               ],
-              "raises": {
-                "type": "AttributeError"
-              }
+              "rejects": true
             },
             {
               "args": [
                 null
               ],
-              "raises": {
-                "type": "AttributeError"
-              }
+              "rejects": true
             },
             {
               "args": [
                 1
               ],
-              "raises": {
-                "type": "AttributeError"
-              }
+              "rejects": true
             },
             {
               "args": [
                 {}
               ],
-              "raises": {
-                "type": "AttributeError"
-              }
+              "rejects": true
             }
           ]
         },
@@ -394,10 +371,14 @@
           }
         },
         "policies": {
-          "kind": "property"
+          "kind": "property",
+          "readable": true,
+          "writable": false
         },
         "premise": {
-          "kind": "property"
+          "kind": "property",
+          "readable": true,
+          "writable": false
         },
         "step": {
           "kind": "method",

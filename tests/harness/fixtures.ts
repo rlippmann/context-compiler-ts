@@ -28,7 +28,7 @@ export interface StateJsonFixtureCase {
     payload?: string;
     state: Record<string, JsonValue>;
     error?: {
-      type: string;
+      type?: string;
       message_contains: string;
     };
   };
@@ -53,18 +53,38 @@ export interface ControllerFixtureCase {
   };
 }
 
+export interface WorkflowFixtureCase {
+  id: string;
+  kind: 'workflow';
+  initial_state: Record<string, JsonValue>;
+  operations: Array<{
+    fn: 'step' | 'apply_directive' | 'apply_repair' | 'export_json' | 'import_json';
+    input?: string;
+    text?: string;
+    payload?: string;
+    payload_ref?: string;
+    decision_ref?: string;
+    repair_index?: number;
+    label?: string;
+  }>;
+  expected: { observations: Record<string, JsonValue>; equal: string[][]; state: Record<string, JsonValue> };
+}
+
 export interface GrammarFixtureCase {
   id: string;
   kind: 'grammar';
   action: {
-    fn: 'decompose_directive' | 'render_directive';
+    fn: 'decompose_directive' | 'render_directive' | 'construct_canonical_directive';
     text?: string;
     kind?: string;
     operands?: Record<string, JsonValue>;
   };
   expected: {
     directive?: Record<string, JsonValue> | null;
-    error?: { type: string; message_contains: string };
+    directive_kind?: string;
+    text?: string;
+    operands?: Record<string, JsonValue>;
+    error?: { type?: string; message_contains: string };
   };
 }
 
@@ -72,7 +92,7 @@ export interface ApplyDirectiveFixtureCase {
   id: string;
   kind: 'apply_directive';
   initial_state: Record<string, JsonValue>;
-  action: { fn: 'apply_directive'; text: string };
+  action: { fn: 'apply_directive'; text?: string; directive?: { kind: string; operands: Record<string, JsonValue> } };
   expected: {
     decision: Record<string, JsonValue>;
     state: Record<string, JsonValue>;
@@ -85,7 +105,7 @@ export interface MutationIsolationFixtureCase {
   initial_state: Record<string, JsonValue>;
   prelude?: string[];
   operation: {
-    fn: 'engine.step' | 'engine.policies' | 'engine.premise' | 'canonical_directive.operands' | 'directive_metadata';
+    fn: 'engine.step' | 'engine.policies' | 'engine.premise' | 'canonical_directive.operands' | 'canonical_directive.constructor_operands' | 'directive_metadata';
     input?: string;
     kind?: string;
     operands?: Record<string, JsonValue>;
@@ -183,6 +203,10 @@ export async function loadApplyDirectiveFixtures(): Promise<NamedFixture<ApplyDi
 
 export async function loadMutationIsolationFixtures(): Promise<NamedFixture<MutationIsolationFixtureCase>[]> {
   return loadFixtureFiles<MutationIsolationFixtureCase>('mutation-isolation');
+}
+
+export async function loadWorkflowFixtures(): Promise<NamedFixture<WorkflowFixtureCase>[]> {
+  return loadFixtureFiles<WorkflowFixtureCase>('workflow');
 }
 
 export { FIXTURE_ROOT };

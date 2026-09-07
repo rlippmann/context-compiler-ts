@@ -10,6 +10,25 @@ describe('grammar fixtures (conformance)', () => {
     it(fixture.name, () => {
       const publicGrammar = grammar as unknown as Record<string, unknown>;
       const fn = fixture.payload.action.fn === 'render_directive' ? render_directive : publicGrammar[fixture.payload.action.fn];
+      if (fixture.payload.action.fn === 'construct_canonical_directive') {
+        let result: unknown;
+        try {
+          result = new grammar.CanonicalDirective(
+            fixture.payload.action.kind as string,
+            fixture.payload.action.operands as Record<string, string>
+          );
+        } catch (error) {
+          if (fixture.payload.expected.error == null) throw error;
+          expect(String(error)).toContain(fixture.payload.expected.error.message_contains);
+          return;
+        }
+        expect(fixture.payload.expected.error, `${fixture.name}: expected an error`).toBeUndefined();
+        expect(result).toMatchObject({
+          kind: fixture.payload.expected.directive_kind,
+          text: fixture.payload.expected.text
+        });
+        return;
+      }
       expect(typeof fn, `${fixture.name}: missing grammar export '${fixture.payload.action.fn}'`).toBe('function');
 
       if (fixture.payload.action.fn === 'decompose_directive') {

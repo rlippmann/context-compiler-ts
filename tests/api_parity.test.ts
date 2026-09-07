@@ -53,6 +53,7 @@ type EngineMemberSpec = {
   probes?: Array<{
     args: unknown[];
     raises?: { type: string };
+    rejects?: boolean;
   }>;
 };
 
@@ -401,7 +402,7 @@ describe('public API parity contract (conformance fixture)', () => {
             return values.map(materializeProbeValue);
           })();
       const construct = () => Reflect.construct(cc.SemanticErrorDecision, args);
-      if (probe.raises != null) {
+      if (probe.raises != null || probe.rejects === true) {
         expect(construct, `SemanticErrorDecision construction probe ${index} should raise`).toThrowError(TypeError);
         continue;
       }
@@ -434,8 +435,8 @@ describe('public API parity contract (conformance fixture)', () => {
         return Reflect.construct(cc.Engine, constructorArgs);
       };
 
-      if (probe.raises != null) {
-        if (probe.raises.type === 'TypeError') {
+      if (probe.raises != null || probe.rejects === true) {
+        if (probe.raises?.type === 'TypeError') {
           expect(construct, `Engine construction probe ${index} should raise TypeError`).toThrowError(TypeError);
         } else {
           expect(construct, `Engine construction probe ${index} should raise`).toThrow();
@@ -529,7 +530,7 @@ describe('public API parity contract (conformance fixture)', () => {
       for (const [index, probe] of (memberSpec.probes ?? []).entries()) {
         const invoke = () =>
           (engine as unknown as Record<string, (...args: unknown[]) => unknown>)[memberName](...probe.args);
-        if (probe.raises != null) {
+        if (probe.raises != null || probe.rejects === true) {
           expect(invoke, `${memberName} probe ${index} should raise`).toThrow();
         } else {
           expect(invoke, `${memberName} probe ${index} should not raise`).not.toThrow();

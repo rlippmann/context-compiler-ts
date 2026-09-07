@@ -15,7 +15,9 @@ describe('apply-directive fixtures (conformance)', () => {
         'function'
       );
 
-      const directive = decompose_directive(fixture.payload.action.text);
+      const directive = fixture.payload.action.directive === undefined
+        ? decompose_directive(fixture.payload.action.text as string)
+        : new CanonicalDirective(fixture.payload.action.directive.kind, fixture.payload.action.directive.operands as Record<string, string>);
       expect(directive).toBeInstanceOf(CanonicalDirective);
       const decision = (applyDirective as (value: CanonicalDirective) => unknown).call(engine, directive);
       expect(decision).toEqual(fixture.payload.expected.decision);
