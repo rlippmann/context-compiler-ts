@@ -1,4 +1,5 @@
 import { CanonicalDirective } from './grammar.js';
+import { unicodeCaseFold } from './unicode.js';
 
 export const DECISION_ERROR = 'error' as const;
 export const DECISION_NO_DIRECTIVE = 'no_directive' as const;
@@ -89,16 +90,11 @@ function formatFailure(failure: string, directive: CanonicalDirective): string {
 }
 
 function normalizeItemForMessage(value: string): string {
-  return value
+  const normalized = value
     .normalize('NFKC')
     .replaceAll('’', "'")
-    .replaceAll('`', "'")
-    .toLowerCase()
-    .replaceAll('ß', 'ss')
-    .replaceAll('ς', 'σ')
-    .replaceAll('ſ', 's')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replaceAll('`', "'");
+  return unicodeCaseFold(normalized).replace(/\s+/g, ' ').trim();
 }
 
 function freezeDirective(directive: CanonicalDirective): CanonicalDirective {
