@@ -10,6 +10,15 @@ describe('normalization parity', () => {
     expect(JSON.parse(engine.export_json()).policies).toEqual({ 'the docker cli': 'use' });
   });
 
+  it('uses full Unicode case folding for policy identity', () => {
+    const engine = new Engine();
+    engine.step('use ǰ');
+    const decision = engine.step('use J̌');
+
+    expect(decision).toMatchObject({ kind: 'update', changed: false });
+    expect(JSON.parse(engine.export_json()).policies).toEqual({ 'ǰ': 'use' });
+  });
+
   it('normalizes apostrophes without rewriting distinct operands', () => {
     const engine = new Engine();
     engine.step('use Don’t panic');
