@@ -81,11 +81,7 @@ export class CanonicalDirective {
     const kind = normalizeDirectiveKind(kindInput);
     const operands = normalizeCanonicalOperands(kind, operandsInput);
     const rendered = serializeCanonicalDirective(kind, operands);
-    const containsCompound =
-      kind === DirectiveKind.SET_PREMISE || kind === DirectiveKind.CHANGE_PREMISE
-        ? containsMultiplePremiseDirectives(rendered)
-        : containsMultipleCanonicalDirectives(rendered);
-    if (containsCompound) {
+    if (containsMultipleCanonicalDirectives(rendered)) {
       throw new Error(`Operands do not produce a canonical ${kind} directive.`);
     }
     this.kind = kind;
@@ -214,15 +210,6 @@ function containsMultipleCanonicalDirectives(text: string): boolean {
   return false;
 }
 
-function containsMultiplePremiseDirectives(text: string): boolean {
-  const first = matchCanonicalStart(text, 0);
-  if (first == null) return false;
-  for (let index = first; index < text.length; index += 1) {
-    if (text[index] === '\n' && matchCanonicalStart(text, index + 1) != null) return true;
-  }
-  return false;
-}
-
 function startsWithDirectiveFamily(text: string): boolean {
   return (
     matchDirectiveToken(text, 0, 'change premise', true) != null ||
@@ -256,12 +243,7 @@ function parseReplacement(text: string): CanonicalDirective | null {
 export function decompose_directive(text: string): CanonicalDirective | InvalidDirectiveSyntax | null {
   const trimmed = trimAsciiWhitespace(text);
   if (trimmed === '' || !startsWithDirectiveFamily(trimmed)) return null;
-  const premiseDirective =
-    matchDirectiveToken(trimmed, 0, 'set premise', true) != null ||
-    matchDirectiveToken(trimmed, 0, 'change premise to', true) != null;
-  if (
-    (premiseDirective ? containsMultiplePremiseDirectives(trimmed) : containsMultipleCanonicalDirectives(trimmed))
-  ) {
+  if (containsMultipleCanonicalDirectives(trimmed)) {
     return invalid(DirectiveSyntaxFailure.COMPOUND_DIRECTIVE);
   }
 
