@@ -25,30 +25,80 @@ function applySequence(engine: Engine, directives: CanonicalDirective[]): void {
   for (const directive of directives) engine.apply_directive(directive);
 }
 
+const policyAtomPairArb = fc.constantFrom(
+  ['alpha', 'ALPHA'],
+  ['docker', 'ＤＯＣＫＥＲ'],
+  ["don't", 'DON’T'],
+  ['café', 'cafe\u0301'],
+  ['straße', 'STRASSE'],
+  ['ǰ', 'J\u030C'],
+  ['οδός', 'ΟΔΌΣ'],
+  ['kelvin', 'KELVIN']
+).map(([base, equivalent]) => ({ base, equivalent }));
+
 const equivalentPolicyPairArb = fc.record({
-  base: fc.constantFrom("don't panic", 'the docker', 'ǰ rollout', 'straße'),
-  upper: fc.boolean(),
-  whitespace: fc.boolean(),
-  apostrophe: fc.boolean()
-}).map(({ base, upper, whitespace, apostrophe }) => {
-  let variant = upper ? base.toUpperCase() : base;
-  if (whitespace) variant = variant.replaceAll(' ', '   ');
+  atoms: fc.array(policyAtomPairArb, { minLength: 1, maxLength: 5 }),
+  separators: fc.array(fc.constantFrom(' ', '   ', '\t', '\u00a0'), { minLength: 0, maxLength: 4 }),
+  apostrophe: fc.boolean(),
+  caseVariant: fc.boolean()
+}).map(({ atoms, separators, apostrophe, caseVariant }) => {
+  const base = atoms.map(({ base }) => base).join(' ');
+  let variant = atoms.map(({ equivalent }) => equivalent).join(' ');
+  if (separators.length > 0) {
+    variant = atoms.map(({ equivalent }, index) => index === atoms.length - 1
+      ? equivalent
+      : equivalent + separators[index % separators.length]).join('');
+  }
   if (apostrophe) variant = variant.replaceAll("'", '’');
+  if (caseVariant) variant = variant.toUpperCase();
   return [base, variant] as const;
 });
 
-const invalidPayloadArb = fc.constantFrom(
-  '{',
-  JSON.stringify(null),
-  JSON.stringify([]),
-  JSON.stringify({ premise: null, policies: {}, version: 1 }),
-  JSON.stringify({ premise: 42, policies: {}, version: 2 }),
-  JSON.stringify({ premise: null, policies: [], version: 2 }),
-  JSON.stringify({ premise: null, policies: { docker: 'invalid' }, version: 2 }),
-  JSON.stringify({ premise: null, policies: { A: 'use', a: 'prohibit' }, version: 2 }),
-  JSON.stringify({ premise: null, policies: { '   ': 'use' }, version: 2 }),
-  JSON.stringify({ premise: '   ', policies: {}, version: 2 }),
-  JSON.stringify({ premise: null, policies: {} })
+type StatePayload = { premise: string | null; policies: Record<string, 'use' | 'prohibit'>; version: 2 };
+
+const validStatePayloadArb = reachableSequenceArb.map((directives): StatePayload => {
+  const engine = new Engine();
+  applySequence(engine, directives);
+  return JSON.parse(engine.export_json()) as StatePayload;
+});
+
+const whitespaceOnlyArb = fc.array(fc.constantFrom(' ', '\t', '\n', '\u00a0'), { minLength: 1, maxLength: 8 })
+  .map((parts) => parts.join(''));
+const invalidJsonArb = fc.string().map((value) => JSON.stringify(value).slice(0, -1));
+const invalidPremiseValueArb = fc.oneof(fc.integer(), fc.boolean(), fc.array(fc.integer()), fc.dictionary(fc.string(), fc.integer()));
+const invalidPolicyValueArb = fc.oneof(fc.constant(null), fc.integer(), fc.boolean(), fc.array(fc.string()), fc.constant('invalid'));
+
+const invalidPayloadArb = fc.oneof(
+  invalidJsonArb,
+  fc.oneof(fc.constant(null), fc.boolean(), fc.integer(), fc.array(fc.string())).map((value) => JSON.stringify(value)),
+  validStatePayloadArb.chain((state) => fc.constantFrom('premise', 'policies', 'version').map((missing) => {
+    const invalid = { ...state } as Partial<StatePayload>;
+    delete invalid[missing as keyof StatePayload];
+    return JSON.stringify(invalid);
+  })),
+  validStatePayloadArb.chain((state) => fc.oneof(
+    fc.integer({ max: 1 }),
+    fc.integer({ min: 3 }),
+    fc.constant('2'),
+    fc.constant(null)
+  ).map((version) => JSON.stringify({ ...state, version }))),
+  validStatePayloadArb.chain((state) => invalidPremiseValueArb.map((premise) => JSON.stringify({ ...state, premise }))),
+  validStatePayloadArb.chain((state) => fc.oneof(
+    fc.constant(null),
+    fc.array(fc.string()),
+    fc.string()
+  ).map((policies) => JSON.stringify({ ...state, policies }))),
+  validStatePayloadArb.chain((state) => invalidPolicyValueArb.map((value) => JSON.stringify({
+    ...state,
+    policies: { item: value }
+  }))),
+  whitespaceOnlyArb.chain((premise) => validStatePayloadArb.map((state) => JSON.stringify({ ...state, premise }))),
+  whitespaceOnlyArb.map((key) => JSON.stringify({ premise: null, policies: { [key]: 'use' }, version: 2 })),
+  equivalentPolicyPairArb.map(([base, equivalent]) => JSON.stringify({
+    premise: null,
+    policies: { [base]: 'use', [equivalent]: 'prohibit' },
+    version: 2
+  }))
 );
 
 describe('fast-check property hardening', () => {
@@ -109,11 +159,8 @@ describe('fast-check property hardening', () => {
       const engine = new Engine();
       applySequence(engine, directives);
       const before = engine.export_json();
-      try {
-        engine.import_json(payload);
-      } catch {
-        expect(engine.export_json()).toBe(before);
-      }
+      expect(() => engine.import_json(payload)).toThrow();
+      expect(engine.export_json()).toBe(before);
     }), { numRuns: 200 });
-  });
+});
 });
