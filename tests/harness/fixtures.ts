@@ -74,7 +74,7 @@ export interface GrammarFixtureCase {
   id: string;
   kind: 'grammar';
   action: {
-    fn: 'decompose_directive' | 'render_directive' | 'construct_canonical_directive';
+    fn: 'decompose_directive' | 'construct_canonical_directive';
     text?: string;
     kind?: string;
     operands?: Record<string, JsonValue>;
