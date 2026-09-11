@@ -34,8 +34,16 @@ export class Engine {
     return stringifyCanonicalJson(sortKeysDeep(this._state));
   }
 
+  exportJson(): string {
+    return this.export_json();
+  }
+
   import_json(payload: string): void {
     this._state = loadStateJson(payload);
+  }
+
+  importJson(payload: string): void {
+    this.import_json(payload);
   }
 
   apply_directive(directive: CanonicalDirective): SemanticDecision {
@@ -51,6 +59,10 @@ export class Engine {
 
     this.#applyCanonicalDirective(directive);
     return new UpdateDecision(!statesEqual(previous, this._state));
+  }
+
+  applyDirective(directive: CanonicalDirective): SemanticDecision {
+    return this.apply_directive(directive);
   }
 
   #semanticFailure(directive: CanonicalDirective): SemanticErrorDecision | null {
