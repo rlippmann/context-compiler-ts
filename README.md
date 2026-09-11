@@ -66,6 +66,9 @@ import { Engine } from '@rlippmann/context-compiler';
 const engine = new Engine();
 const decision = engine.step('set premise current project uses uv');
 console.log(decision);
+
+const savedState = engine.exportJson();
+engine.importJson(savedState);
 ```
 
 ## Why not just a dict?
@@ -76,8 +79,10 @@ changing them.
 ## Public API
 
 The package root exposes the Python 0.9 decision model, policy constants, and
-the `Engine` surface. The supported engine persistence methods are
-`export_json()` and `import_json()`.
+the `Engine` surface. TypeScript consumers can use the camelCase methods
+`exportJson()`, `importJson()`, and `applyDirective()`. The snake_case forms
+`export_json()`, `import_json()`, and `apply_directive()` remain supported as
+parity equivalents.
 
 The public grammar API is available from the `@rlippmann/context-compiler/grammar`
 namespace.
@@ -86,13 +91,18 @@ namespace.
 import {
   CanonicalDirective,
   DirectiveKind,
-  decompose_directive
+  decomposeDirective
 } from '@rlippmann/context-compiler/grammar';
+
+const parsed = decomposeDirective('use sqlite');
 ```
 
 The grammar namespace contains the public directive constructors, metadata,
-syntax classifications, and parsing helpers. Internal parsing helpers are not
-part of the supported API.
+syntax classifications, and parsing helpers. Its TypeScript-friendly
+camelCase helpers are `decomposeDirective()` and `getDirectiveMetadata()`;
+`decompose_directive()` and `get_directive_metadata()` remain supported as
+parity equivalents. Internal parsing helpers are not part of the supported
+API.
 
 ## Directive Drafting
 

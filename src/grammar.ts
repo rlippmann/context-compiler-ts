@@ -299,10 +299,18 @@ export function decompose_directive(text: string): CanonicalDirective | InvalidD
   return invalid(DirectiveSyntaxFailure.MALFORMED_DIRECTIVE);
 }
 
+export function decomposeDirective(text: string): CanonicalDirective | InvalidDirectiveSyntax | null {
+  return decompose_directive(text);
+}
+
 export function get_directive_metadata(): readonly DirectiveMetadata[] {
   return Object.freeze(Object.values(DIRECTIVE_SPECS).map(
     (spec) => new DirectiveMetadata(Object.keys(DIRECTIVE_SPECS).find((kind) => DIRECTIVE_SPECS[kind as DirectiveKindValue] === spec) as DirectiveKindValue, spec.canonicalStart, spec.operands)
   ));
+}
+
+export function getDirectiveMetadata(): readonly DirectiveMetadata[] {
+  return get_directive_metadata();
 }
 
 function normalizeDirectiveKind(kind: string): DirectiveKindValue {

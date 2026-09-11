@@ -12,6 +12,7 @@ type GrammarApiContract = {
 
 const path = resolve(process.cwd(), 'tests', 'fixtures', 'conformance', 'api', 'public-grammar-v1.json');
 const contract = JSON.parse(readFileSync(path, 'utf8')) as GrammarApiContract;
+const typescriptAliases = new Set(['decomposeDirective', 'getDirectiveMetadata']);
 
 function constructorArgs(name: string, probe: Record<string, any>): unknown[] {
   if (Array.isArray(probe.args)) return probe.args;
@@ -63,7 +64,7 @@ describe('public grammar API parity contract (conformance fixture)', () => {
   });
 
   it('does not expose private grammar helpers', () => {
-    expect(Object.keys(grammar).sort()).toEqual([...contract.exports.names].sort());
+    expect(Object.keys(grammar).filter((name) => !typescriptAliases.has(name)).sort()).toEqual([...contract.exports.names].sort());
   });
 
   it('matches canonical grammar export kinds', () => {
