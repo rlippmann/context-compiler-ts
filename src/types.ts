@@ -1,4 +1,4 @@
-export interface EngineState {
+export interface WorkingMemory {
   premise: string | null;
   policies: Record<string, 'use' | 'prohibit'>;
   version: 2;
