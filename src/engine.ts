@@ -1,4 +1,4 @@
-import type { EngineState } from './types.js';
+import type { WorkingMemory } from './types.js';
 import { CanonicalDirective, DirectiveKind as GrammarDirectiveKind, decompose_directive } from './grammar.js';
 import {
   NoDirectiveDecision,
@@ -13,25 +13,25 @@ export const POLICY_USE = 'use' as const;
 export const POLICY_PROHIBIT = 'prohibit' as const;
 
 export class Engine {
-  private _state: EngineState;
+  #workingMemory: WorkingMemory;
 
   constructor() {
     if (arguments.length > 0) {
       throw new TypeError('Engine constructor takes no arguments.');
     }
-    this._state = initialState();
+    this.#workingMemory = initialWorkingMemory();
   }
 
   get premise(): string | null {
-    return this._state.premise;
+    return this.#workingMemory.premise;
   }
 
   get policies(): Record<string, 'use' | 'prohibit'> {
-    return { ...this._state.policies };
+    return { ...this.#workingMemory.policies };
   }
 
   export_json(): string {
-    return stringifyCanonicalJson(sortKeysDeep(this._state));
+    return stringifyCanonicalJson(sortKeysDeep(this.#workingMemory));
   }
 
   exportJson(): string {
@@ -39,7 +39,7 @@ export class Engine {
   }
 
   import_json(payload: string): void {
-    this._state = loadStateJson(payload);
+    this.#workingMemory = loadWorkingMemoryJson(payload);
   }
 
   importJson(payload: string): void {
@@ -50,15 +50,15 @@ export class Engine {
     if (!(directive instanceof CanonicalDirective)) {
       throw new TypeError('apply_directive requires a CanonicalDirective.');
     }
-    const previous = cloneState(this._state);
+    const previousWorkingMemory = cloneWorkingMemory(this.#workingMemory);
     const failure = this.#semanticFailure(directive);
     if (failure !== null) {
-      this._state = previous;
+      this.#workingMemory = previousWorkingMemory;
       return failure;
     }
 
     this.#applyCanonicalDirective(directive);
-    return new UpdateDecision(!statesEqual(previous, this._state));
+    return new UpdateDecision(!workingMemoriesEqual(previousWorkingMemory, this.#workingMemory));
   }
 
   applyDirective(directive: CanonicalDirective): SemanticDecision {
@@ -66,7 +66,7 @@ export class Engine {
   }
 
   #semanticFailure(directive: CanonicalDirective): SemanticErrorDecision | null {
-    if (directive.kind === GrammarDirectiveKind.SET_PREMISE && this._state.premise !== null) {
+    if (directive.kind === GrammarDirectiveKind.SET_PREMISE && this.#workingMemory.premise !== null) {
       return new SemanticErrorDecision(
         SemanticFailure.PREMISE_ALREADY_SET,
         directive,
@@ -74,7 +74,7 @@ export class Engine {
       );
     }
 
-    if (directive.kind === GrammarDirectiveKind.CHANGE_PREMISE && this._state.premise === null) {
+    if (directive.kind === GrammarDirectiveKind.CHANGE_PREMISE && this.#workingMemory.premise === null) {
       return new SemanticErrorDecision(
         SemanticFailure.PREMISE_NOT_SET,
         directive,
@@ -84,7 +84,7 @@ export class Engine {
 
     if (directive.kind === GrammarDirectiveKind.USE_ITEM) {
       const itemKey = normalizeItem(directive.operands.item);
-      if (this._state.policies[itemKey] === POLICY_PROHIBIT) {
+      if (this.#workingMemory.policies[itemKey] === POLICY_PROHIBIT) {
         return new SemanticErrorDecision(
           SemanticFailure.ITEM_PROHIBITED,
           directive,
@@ -98,7 +98,7 @@ export class Engine {
 
     if (directive.kind === GrammarDirectiveKind.PROHIBIT_ITEM) {
       const itemKey = normalizeItem(directive.operands.item);
-      if (this._state.policies[itemKey] === POLICY_USE) {
+      if (this.#workingMemory.policies[itemKey] === POLICY_USE) {
         return new SemanticErrorDecision(
           SemanticFailure.ITEM_ALREADY_IN_USE,
           directive,
@@ -117,10 +117,10 @@ export class Engine {
       const oldKey = normalizeItem(oldItem);
       if (newKey === oldKey) return null;
 
-      if (this._state.policies[oldKey] === POLICY_PROHIBIT) {
+      if (this.#workingMemory.policies[oldKey] === POLICY_PROHIBIT) {
         return new SemanticErrorDecision(SemanticFailure.REPLACEMENT_SOURCE_PROHIBITED, directive);
       }
-      if (this._state.policies[newKey] === POLICY_PROHIBIT) {
+      if (this.#workingMemory.policies[newKey] === POLICY_PROHIBIT) {
         return new SemanticErrorDecision(
           SemanticFailure.REPLACEMENT_TARGET_PROHIBITED,
           directive,
@@ -130,7 +130,7 @@ export class Engine {
           ]
         );
       }
-      if (this._state.policies[oldKey] !== POLICY_USE) {
+      if (this.#workingMemory.policies[oldKey] !== POLICY_USE) {
         return new SemanticErrorDecision(SemanticFailure.REPLACEMENT_SOURCE_MISSING, directive);
       }
     }
@@ -144,40 +144,40 @@ export class Engine {
 
   #applyCanonicalDirective(directive: CanonicalDirective): void {
     if (directive.kind === GrammarDirectiveKind.SET_PREMISE || directive.kind === GrammarDirectiveKind.CHANGE_PREMISE) {
-      this._state.premise = sanitizePremiseValue(directive.operands.value);
+      this.#workingMemory.premise = sanitizePremiseValue(directive.operands.value);
       return;
     }
     if (directive.kind === GrammarDirectiveKind.USE_ITEM) {
-      this._state.policies[normalizeItem(directive.operands.item)] = POLICY_USE;
+      this.#workingMemory.policies[normalizeItem(directive.operands.item)] = POLICY_USE;
       return;
     }
     if (directive.kind === GrammarDirectiveKind.PROHIBIT_ITEM) {
-      this._state.policies[normalizeItem(directive.operands.item)] = POLICY_PROHIBIT;
+      this.#workingMemory.policies[normalizeItem(directive.operands.item)] = POLICY_PROHIBIT;
       return;
     }
     if (directive.kind === GrammarDirectiveKind.REMOVE_POLICY) {
-      delete this._state.policies[normalizeItem(directive.operands.item)];
+      delete this.#workingMemory.policies[normalizeItem(directive.operands.item)];
       return;
     }
     if (directive.kind === GrammarDirectiveKind.REPLACE_USE) {
       const oldKey = normalizeItem(directive.operands.old_item);
       const newKey = normalizeItem(directive.operands.new_item);
       if (oldKey !== newKey) {
-        delete this._state.policies[oldKey];
-        this._state.policies[newKey] = POLICY_USE;
+        delete this.#workingMemory.policies[oldKey];
+        this.#workingMemory.policies[newKey] = POLICY_USE;
       }
       return;
     }
     if (directive.kind === GrammarDirectiveKind.CLEAR_PREMISE) {
-      this._state.premise = null;
+      this.#workingMemory.premise = null;
       return;
     }
     if (directive.kind === GrammarDirectiveKind.RESET_POLICIES) {
-      this._state.policies = {};
+      this.#workingMemory.policies = {};
       return;
     }
     if (directive.kind === GrammarDirectiveKind.CLEAR_STATE) {
-      this._state = initialState();
+      this.#workingMemory = initialWorkingMemory();
     }
   }
 
@@ -190,7 +190,7 @@ export class Engine {
   }
 }
 
-function initialState(): EngineState {
+function initialWorkingMemory(): WorkingMemory {
   return {
     premise: null,
     policies: {},
@@ -198,15 +198,15 @@ function initialState(): EngineState {
   };
 }
 
-function cloneState(state: EngineState): EngineState {
+function cloneWorkingMemory(workingMemory: WorkingMemory): WorkingMemory {
   return {
-    premise: state.premise,
-    policies: { ...state.policies },
+    premise: workingMemory.premise,
+    policies: { ...workingMemory.policies },
     version: 2
   };
 }
 
-function statesEqual(left: EngineState, right: EngineState): boolean {
+function workingMemoriesEqual(left: WorkingMemory, right: WorkingMemory): boolean {
   if (left.premise !== right.premise) return false;
   const leftKeys = Object.keys(left.policies);
   const rightKeys = Object.keys(right.policies);
@@ -214,17 +214,17 @@ function statesEqual(left: EngineState, right: EngineState): boolean {
   return leftKeys.every((key) => left.policies[key] === right.policies[key]);
 }
 
-function loadStateJson(payload: string): EngineState {
+function loadWorkingMemoryJson(payload: string): WorkingMemory {
   let raw: unknown;
   try {
     raw = JSON.parse(payload);
   } catch {
     throw new Error('Invalid JSON payload.');
   }
-  return loadStateObject(raw);
+  return loadWorkingMemoryObject(raw);
 }
 
-function loadStateObject(raw: unknown): EngineState {
+function loadWorkingMemoryObject(raw: unknown): WorkingMemory {
   if (raw === null || typeof raw !== 'object') {
     throw new Error('Invalid state payload.');
   }
@@ -336,4 +336,4 @@ function stringifyCanonicalJson(value: unknown): string {
   );
 }
 
-export type { EngineState };
+export type { WorkingMemory };
