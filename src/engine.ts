@@ -19,7 +19,7 @@ export class Engine {
     if (arguments.length > 0) {
       throw new TypeError('Engine constructor takes no arguments.');
     }
-    this.#workingMemory = initialWorkingMemory();
+    this.#workingMemory = initialState();
   }
 
   get premise(): string | null {
@@ -39,7 +39,7 @@ export class Engine {
   }
 
   import_json(payload: string): void {
-    this.#workingMemory = loadWorkingMemoryJson(payload);
+    this.#workingMemory = loadStateJson(payload);
   }
 
   importJson(payload: string): void {
@@ -50,15 +50,15 @@ export class Engine {
     if (!(directive instanceof CanonicalDirective)) {
       throw new TypeError('apply_directive requires a CanonicalDirective.');
     }
-    const previousWorkingMemory = cloneWorkingMemory(this.#workingMemory);
+    const previousState = cloneState(this.#workingMemory);
     const failure = this.#semanticFailure(directive);
     if (failure !== null) {
-      this.#workingMemory = previousWorkingMemory;
+      this.#workingMemory = previousState;
       return failure;
     }
 
     this.#applyCanonicalDirective(directive);
-    return new UpdateDecision(!workingMemoriesEqual(previousWorkingMemory, this.#workingMemory));
+    return new UpdateDecision(!statesEqual(previousState, this.#workingMemory));
   }
 
   applyDirective(directive: CanonicalDirective): SemanticDecision {
@@ -177,7 +177,7 @@ export class Engine {
       return;
     }
     if (directive.kind === GrammarDirectiveKind.CLEAR_STATE) {
-      this.#workingMemory = initialWorkingMemory();
+      this.#workingMemory = initialState();
     }
   }
 
@@ -190,7 +190,7 @@ export class Engine {
   }
 }
 
-function initialWorkingMemory(): WorkingMemory {
+function initialState(): WorkingMemory {
   return {
     premise: null,
     policies: {},
@@ -198,15 +198,15 @@ function initialWorkingMemory(): WorkingMemory {
   };
 }
 
-function cloneWorkingMemory(workingMemory: WorkingMemory): WorkingMemory {
+function cloneState(state: WorkingMemory): WorkingMemory {
   return {
-    premise: workingMemory.premise,
-    policies: { ...workingMemory.policies },
+    premise: state.premise,
+    policies: { ...state.policies },
     version: 2
   };
 }
 
-function workingMemoriesEqual(left: WorkingMemory, right: WorkingMemory): boolean {
+function statesEqual(left: WorkingMemory, right: WorkingMemory): boolean {
   if (left.premise !== right.premise) return false;
   const leftKeys = Object.keys(left.policies);
   const rightKeys = Object.keys(right.policies);
@@ -214,17 +214,17 @@ function workingMemoriesEqual(left: WorkingMemory, right: WorkingMemory): boolea
   return leftKeys.every((key) => left.policies[key] === right.policies[key]);
 }
 
-function loadWorkingMemoryJson(payload: string): WorkingMemory {
+function loadStateJson(payload: string): WorkingMemory {
   let raw: unknown;
   try {
     raw = JSON.parse(payload);
   } catch {
     throw new Error('Invalid JSON payload.');
   }
-  return loadWorkingMemoryObject(raw);
+  return loadStateObject(raw);
 }
 
-function loadWorkingMemoryObject(raw: unknown): WorkingMemory {
+function loadStateObject(raw: unknown): WorkingMemory {
   if (raw === null || typeof raw !== 'object') {
     throw new Error('Invalid state payload.');
   }
