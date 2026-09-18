@@ -335,5 +335,3 @@ function stringifyCanonicalJson(value: unknown): string {
     `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
   );
 }
-
-export type { WorkingMemory };
